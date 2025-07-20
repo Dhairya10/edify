@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Edify</string>
+    <string name="chat_with_gemma">Chat with Gemma</string>
+    <string name="continue_reading">Continue Reading</string>
+    <string name="your_subjects">Your Subjects</string>
+    <string name="search_subjects">Search subjects...</string>
+    <string name="welcome_back">Welcome back,</string>
+    <string name="alex">Alex</string>
+    <string name="learning">Learning</string>
+    <string name="revision">Revision</string>
+    <string name="all">All</string>
+    <string name="notes">Notes</string>
+    <string name="highlights">Highlights</string>
+    <string name="add_note">Add Note</string>
+    <string name="explain">Explain</string>
+    <string name="highlight">Highlight</string>
+    <string name="quiz">Quiz</string>
+    <string name="exercises">Exercises</string>
+    <string name="complete">Complete</string>
+    <string name="mathematics">Mathematics</string>
+    <string name="science">Science</string>
+    <string name="english">English</string>
+    <string name="social_science">Social Science</string>
+    <string name="chapter">Chapter</string>
+    <string name="estimated_reading_time">Estimated reading time: %d minutes</string>
+    <string name="progress_percentage">%d%% Complete</string>
+    <string name="send_message">Send message</string>
+    <string name="type_message">Type your message...</string>
+    <string name="gemma_thinking">Gemma is thinking...</string>
+    <string name="error_loading_data">Error loading data</string>
+    <string name="retry">Retry</string>
+</resources>
