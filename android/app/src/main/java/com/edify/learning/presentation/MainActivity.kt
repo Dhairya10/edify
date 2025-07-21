@@ -9,11 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.edify.learning.presentation.components.BottomNavigationBar
 import com.edify.learning.presentation.home.HomeScreen
 import com.edify.learning.presentation.home.HomeViewModel
 import com.edify.learning.presentation.subject.SubjectScreen
@@ -21,9 +24,10 @@ import com.edify.learning.presentation.subject.SubjectViewModel
 import com.edify.learning.presentation.chapter.ChapterScreen
 import com.edify.learning.presentation.chapter.ChapterViewModel
 import com.edify.learning.presentation.notes.NotesScreen
-import com.edify.learning.presentation.notes.NotesViewModel
 import com.edify.learning.presentation.chat.ChatScreen
 import com.edify.learning.presentation.chat.ChatViewModel
+import com.edify.learning.presentation.revision.RevisionScreen
+import com.edify.learning.presentation.profile.ProfileScreen
 import com.edify.learning.ui.theme.EdifyTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -43,14 +47,42 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun EdifyApp() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+    // Routes that should show bottom navigation
+    val bottomNavRoutes = listOf("library", "notes", "profile")
+    val showBottomNav = currentRoute in bottomNavRoutes
+    
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            if (showBottomNav) {
+                BottomNavigationBar(
+                    currentRoute = currentRoute,
+                    onNavigateToTab = { route ->
+                        navController.navigate(route) {
+                            // Pop up to the start destination to avoid building up a large stack
+                            popUpTo("library") {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination
+                            launchSingleTop = true
+                            // Restore state when reselecting a previously selected item
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+        }
+    ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "home",
+            startDestination = "library",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") {
+            // Bottom Navigation Screens
+            composable("library") {
                 val viewModel: HomeViewModel = hiltViewModel()
                 HomeScreen(
                     viewModel = viewModel,
@@ -63,6 +95,15 @@ fun EdifyApp() {
                 )
             }
             
+            composable("notes") {
+                NotesScreen()
+            }
+            
+            composable("profile") {
+                ProfileScreen()
+            }
+            
+            // Detail Screens (without bottom navigation)
             composable("subject/{subjectId}") { backStackEntry ->
                 val subjectId = backStackEntry.arguments?.getString("subjectId") ?: ""
                 val viewModel: SubjectViewModel = hiltViewModel()
@@ -102,16 +143,8 @@ fun EdifyApp() {
             
             composable("notes/{chapterId}") { backStackEntry ->
                 val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
-                val viewModel: NotesViewModel = hiltViewModel()
-                
-                LaunchedEffect(chapterId) {
-                    viewModel.loadNotes(chapterId)
-                }
-                
-                NotesScreen(
-                    viewModel = viewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
+                // Use the unified NotesScreen - it will show all notes with subject filtering
+                NotesScreen()
             }
             
             composable("chat/{chapterId}?selectedText={selectedText}") { backStackEntry ->
@@ -123,6 +156,17 @@ fun EdifyApp() {
                     viewModel = viewModel,
                     chapterId = chapterId,
                     selectedText = selectedText,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable("revision/{chapterId}?title={title}") { backStackEntry ->
+                val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+                val chapterTitle = backStackEntry.arguments?.getString("title") ?: "Chapter"
+                
+                RevisionScreen(
+                    chapterId = chapterId,
+                    chapterTitle = chapterTitle,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

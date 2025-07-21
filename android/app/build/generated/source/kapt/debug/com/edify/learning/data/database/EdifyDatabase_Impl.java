@@ -19,6 +19,8 @@ import com.edify.learning.data.dao.NoteDao;
 import com.edify.learning.data.dao.NoteDao_Impl;
 import com.edify.learning.data.dao.SubjectDao;
 import com.edify.learning.data.dao.SubjectDao_Impl;
+import com.edify.learning.data.dao.UserResponseDao;
+import com.edify.learning.data.dao.UserResponseDao_Impl;
 import java.lang.Class;
 import java.lang.Override;
 import java.lang.String;
@@ -41,18 +43,22 @@ public final class EdifyDatabase_Impl extends EdifyDatabase {
 
   private volatile ChatDao _chatDao;
 
+  private volatile UserResponseDao _userResponseDao;
+
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(1) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `subjects` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `color` TEXT NOT NULL, `iconRes` TEXT NOT NULL, `totalChapters` INTEGER NOT NULL, `completedChapters` INTEGER NOT NULL, `lastReadChapterId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `chapters` (`id` TEXT NOT NULL, `subjectId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `content` TEXT NOT NULL, `chapterNumber` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL, `readingProgress` REAL NOT NULL, `estimatedReadingTime` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`subjectId`) REFERENCES `subjects`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE TABLE IF NOT EXISTS `notes` (`id` TEXT NOT NULL, `chapterId` TEXT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `type` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`chapterId`) REFERENCES `chapters`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE TABLE IF NOT EXISTS `chat_messages` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `content` TEXT NOT NULL, `isFromUser` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `messageType` TEXT NOT NULL, `attachmentPath` TEXT, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `user_responses` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `chapterId` TEXT NOT NULL, `exerciseIndex` INTEGER NOT NULL, `textResponse` TEXT, `imageUri` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, FOREIGN KEY(`chapterId`) REFERENCES `chapters`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_user_responses_chapterId_exerciseIndex` ON `user_responses` (`chapterId`, `exerciseIndex`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'aaefe76c9a0319316ff8fd0d9aff7b94')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e24711f3f01479f4858ee8fcc01befe2')");
       }
 
       @Override
@@ -61,6 +67,7 @@ public final class EdifyDatabase_Impl extends EdifyDatabase {
         db.execSQL("DROP TABLE IF EXISTS `chapters`");
         db.execSQL("DROP TABLE IF EXISTS `notes`");
         db.execSQL("DROP TABLE IF EXISTS `chat_messages`");
+        db.execSQL("DROP TABLE IF EXISTS `user_responses`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -182,9 +189,28 @@ public final class EdifyDatabase_Impl extends EdifyDatabase {
                   + " Expected:\n" + _infoChatMessages + "\n"
                   + " Found:\n" + _existingChatMessages);
         }
+        final HashMap<String, TableInfo.Column> _columnsUserResponses = new HashMap<String, TableInfo.Column>(7);
+        _columnsUserResponses.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserResponses.put("chapterId", new TableInfo.Column("chapterId", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserResponses.put("exerciseIndex", new TableInfo.Column("exerciseIndex", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserResponses.put("textResponse", new TableInfo.Column("textResponse", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserResponses.put("imageUri", new TableInfo.Column("imageUri", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserResponses.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserResponses.put("updatedAt", new TableInfo.Column("updatedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysUserResponses = new HashSet<TableInfo.ForeignKey>(1);
+        _foreignKeysUserResponses.add(new TableInfo.ForeignKey("chapters", "CASCADE", "NO ACTION", Arrays.asList("chapterId"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesUserResponses = new HashSet<TableInfo.Index>(1);
+        _indicesUserResponses.add(new TableInfo.Index("index_user_responses_chapterId_exerciseIndex", true, Arrays.asList("chapterId", "exerciseIndex"), Arrays.asList("ASC", "ASC")));
+        final TableInfo _infoUserResponses = new TableInfo("user_responses", _columnsUserResponses, _foreignKeysUserResponses, _indicesUserResponses);
+        final TableInfo _existingUserResponses = TableInfo.read(db, "user_responses");
+        if (!_infoUserResponses.equals(_existingUserResponses)) {
+          return new RoomOpenHelper.ValidationResult(false, "user_responses(com.edify.learning.data.model.UserResponse).\n"
+                  + " Expected:\n" + _infoUserResponses + "\n"
+                  + " Found:\n" + _existingUserResponses);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "aaefe76c9a0319316ff8fd0d9aff7b94", "22759ddf964a8f82c40008c7c8b8a71e");
+    }, "e24711f3f01479f4858ee8fcc01befe2", "d1557f27b4c1b537a8448f86fac0d356");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -195,7 +221,7 @@ public final class EdifyDatabase_Impl extends EdifyDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "subjects","chapters","notes","chat_messages");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "subjects","chapters","notes","chat_messages","user_responses");
   }
 
   @Override
@@ -215,6 +241,7 @@ public final class EdifyDatabase_Impl extends EdifyDatabase {
       _db.execSQL("DELETE FROM `chapters`");
       _db.execSQL("DELETE FROM `notes`");
       _db.execSQL("DELETE FROM `chat_messages`");
+      _db.execSQL("DELETE FROM `user_responses`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
@@ -236,6 +263,7 @@ public final class EdifyDatabase_Impl extends EdifyDatabase {
     _typeConvertersMap.put(ChapterDao.class, ChapterDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(NoteDao.class, NoteDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(ChatDao.class, ChatDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(UserResponseDao.class, UserResponseDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -306,6 +334,20 @@ public final class EdifyDatabase_Impl extends EdifyDatabase {
           _chatDao = new ChatDao_Impl(this);
         }
         return _chatDao;
+      }
+    }
+  }
+
+  @Override
+  public UserResponseDao userResponseDao() {
+    if (_userResponseDao != null) {
+      return _userResponseDao;
+    } else {
+      synchronized(this) {
+        if(_userResponseDao == null) {
+          _userResponseDao = new UserResponseDao_Impl(this);
+        }
+        return _userResponseDao;
       }
     }
   }

@@ -187,7 +187,7 @@ public final class SubjectDao_Impl implements SubjectDao {
   }
 
   @Override
-  public Object insertSubject(final Subject subject, final Continuation<? super Unit> $completion) {
+  public Object insertSubject(final Subject subject, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -201,12 +201,12 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object insertSubjects(final List<Subject> subjects,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -220,11 +220,11 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteSubject(final Subject subject, final Continuation<? super Unit> $completion) {
+  public Object deleteSubject(final Subject subject, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -238,11 +238,11 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object updateSubject(final Subject subject, final Continuation<? super Unit> $completion) {
+  public Object updateSubject(final Subject subject, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -256,11 +256,11 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteAllSubjects(final Continuation<? super Unit> $completion) {
+  public Object deleteAllSubjects(final Continuation<? super Unit> arg0) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -279,12 +279,12 @@ public final class SubjectDao_Impl implements SubjectDao {
           __preparedStmtOfDeleteAllSubjects.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
   public Object updateLastReadChapter(final String subjectId, final String chapterId,
-      final long timestamp, final Continuation<? super Unit> $completion) {
+      final long timestamp, final Continuation<? super Unit> arg3) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -317,12 +317,12 @@ public final class SubjectDao_Impl implements SubjectDao {
           __preparedStmtOfUpdateLastReadChapter.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg3);
   }
 
   @Override
   public Object updateProgress(final String subjectId, final int completedChapters,
-      final long timestamp, final Continuation<? super Unit> $completion) {
+      final long timestamp, final Continuation<? super Unit> arg3) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -351,7 +351,7 @@ public final class SubjectDao_Impl implements SubjectDao {
           __preparedStmtOfUpdateProgress.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg3);
   }
 
   @Override
@@ -438,7 +438,7 @@ public final class SubjectDao_Impl implements SubjectDao {
   }
 
   @Override
-  public Object getSubjectById(final String id, final Continuation<? super Subject> $completion) {
+  public Object getSubjectById(final String id, final Continuation<? super Subject> arg1) {
     final String _sql = "SELECT * FROM subjects WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -520,7 +520,7 @@ public final class SubjectDao_Impl implements SubjectDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override

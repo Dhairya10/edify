@@ -1,12 +1,15 @@
 package com.edify.learning.presentation.chat
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edify.learning.data.model.ChatMessage
 import com.edify.learning.data.model.ChatSession
 import com.edify.learning.data.model.MessageType
 import com.edify.learning.data.repository.LearningRepository
+import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val repository: LearningRepository
 ) : ViewModel() {
     
@@ -31,11 +35,18 @@ class ChatViewModel @Inject constructor(
     
     fun initializeChat(chapterId: String, selectedText: String?) {
         currentChapterId = chapterId
-        contextContent = selectedText
         currentSessionId = UUID.randomUUID().toString()
         
         viewModelScope.launch {
             try {
+                // Load chapter summary context from JSON files
+                val chapterSummary = repository.getChapterSummaryForChat(chapterId)
+                contextContent = if (selectedText != null) {
+                    "$chapterSummary\n\nSelected Text: $selectedText"
+                } else {
+                    chapterSummary
+                }
+                
                 // Load existing messages for this session
                 repository.getChatMessages(currentSessionId).collect { messages ->
                     _uiState.value = _uiState.value.copy(messages = messages)

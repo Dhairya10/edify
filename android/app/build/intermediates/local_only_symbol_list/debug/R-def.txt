@@ -16,6 +16,7 @@ color text_primary
 color text_secondary
 color white
 drawable ic_chat
+drawable ic_marker
 mipmap ic_launcher
 mipmap ic_launcher_round
 string add_note

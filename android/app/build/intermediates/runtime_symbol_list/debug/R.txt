@@ -2970,6 +2970,7 @@ int drawable ic_keyboard_black_24dp 0x7f07008f
 int drawable ic_m3_chip_check 0x7f070090
 int drawable ic_m3_chip_checked_circle 0x7f070091
 int drawable ic_m3_chip_close 0x7f070092
+int drawable ic_marker 0x7f0700e4
 int drawable ic_mtrl_checked_circle 0x7f070093
 int drawable ic_mtrl_chip_checked_black 0x7f070094
 int drawable ic_mtrl_chip_checked_circle 0x7f070095

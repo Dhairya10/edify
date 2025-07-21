@@ -126,17 +126,11 @@ class ChapterViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                val contentItem = ContentItem.TextContent(
-                    blockId = "note_${UUID.randomUUID()}",
-                    text = content,
-                    selectedText = content
-                )
-                
                 val note = Note(
                     id = UUID.randomUUID().toString(),
                     chapterId = chapter.id,
                     title = title,
-                    content = listOf(contentItem).toString(),
+                    content = content, // Store the actual text content directly
                     type = NoteType.USER_NOTE
                 )
                 

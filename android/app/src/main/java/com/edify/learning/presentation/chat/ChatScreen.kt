@@ -19,6 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.platform.LocalDensity
 import com.edify.learning.data.model.ChatMessage
 import com.edify.learning.ui.theme.*
 import kotlinx.coroutines.launch
@@ -54,6 +59,7 @@ fun ChatScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(White)
+            .imePadding() // Add IME padding to handle keyboard
     ) {
         // Top App Bar
         TopAppBar(
@@ -115,7 +121,7 @@ fun ChatScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = ErrorColor.copy(alpha = 0.1f))
             ) {
                 Text(
@@ -127,13 +133,23 @@ fun ChatScreen(
         }
         
         // Message Input
-        MessageInputField(
-            value = messageInput,
-            onValueChange = viewModel::onMessageInputChanged,
-            onSendMessage = viewModel::sendMessage,
-            enabled = !uiState.isGemmaTyping,
-            modifier = Modifier.padding(16.dp)
-        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shadowElevation = 8.dp,
+            color = White
+        ) {
+            MessageInputField(
+                value = messageInput,
+                onValueChange = viewModel::onMessageInputChanged,
+                onSendMessage = {
+                    if (messageInput.isNotBlank()) {
+                        viewModel.sendMessage()
+                    }
+                },
+                enabled = !uiState.isGemmaTyping,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
     }
 }
 
@@ -274,36 +290,54 @@ fun MessageInputField(
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Surface(
+        modifier = modifier,
+        color = White,
+        // Remove elevation to fix ugly box appearance
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text("Type your message...") },
-            modifier = Modifier.weight(1f),
-            enabled = enabled,
-            shape = RoundedCornerShape(24.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = SecondaryBlue,
-                unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
-            ),
-            maxLines = 4
-        )
-        
-        FloatingActionButton(
-            onClick = onSendMessage,
-            modifier = Modifier.size(48.dp),
-            containerColor = SecondaryBlue,
-            contentColor = White
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Send,
-                contentDescription = "Send message",
-                modifier = Modifier.size(20.dp)
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                placeholder = { Text("Type your message...", color = TextSecondary) },
+                modifier = Modifier.weight(1f),
+                enabled = enabled,
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SecondaryBlue,
+                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
+                    focusedContainerColor = White,
+                    unfocusedContainerColor = White,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    disabledTextColor = TextSecondary,
+                    cursorColor = SecondaryBlue,
+                    focusedPlaceholderColor = TextSecondary,
+                    unfocusedPlaceholderColor = TextSecondary
+                ),
+                maxLines = 4
             )
+            
+            FloatingActionButton(
+                onClick = onSendMessage,
+                modifier = Modifier.size(48.dp),
+                containerColor = SecondaryBlue,
+                contentColor = White
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "Send message",
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
