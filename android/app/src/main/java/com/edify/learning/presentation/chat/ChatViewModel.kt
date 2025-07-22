@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.util.UUID
 import javax.inject.Inject
 
@@ -86,8 +87,8 @@ class ChatViewModel @Inject constructor(
                 repository.insertChatMessage(userMessage)
                 _messageInput.value = ""
                 
-                // Show typing indicator
-                _uiState.value = _uiState.value.copy(isGemmaTyping = true)
+                // Start enhanced loading with progress
+                startLoadingWithProgress(isExplanation = false)
                 
                 // Generate Gemma response
                 val response = repository.generateGemmaResponse(
@@ -107,20 +108,14 @@ class ChatViewModel @Inject constructor(
                         )
                         
                         repository.insertChatMessage(gemmaMessage)
-                        _uiState.value = _uiState.value.copy(isGemmaTyping = false)
+                        stopLoading()
                     },
                     onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isGemmaTyping = false,
-                            error = error.message ?: "Failed to generate response"
-                        )
+                        setError(error.message ?: "Failed to generate response")
                     }
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isGemmaTyping = false,
-                    error = e.message ?: "Failed to send message"
-                )
+                setError(e.message ?: "Failed to send message")
             }
         }
     }
@@ -139,8 +134,8 @@ class ChatViewModel @Inject constructor(
                 
                 repository.insertChatMessage(userMessage)
                 
-                // Show typing indicator
-                _uiState.value = _uiState.value.copy(isGemmaTyping = true)
+                // Start enhanced loading with progress for explanation
+                startLoadingWithProgress(isExplanation = true)
                 
                 // Generate explanation
                 val response = repository.generateGemmaResponse(
@@ -160,31 +155,103 @@ class ChatViewModel @Inject constructor(
                         )
                         
                         repository.insertChatMessage(gemmaMessage)
-                        _uiState.value = _uiState.value.copy(isGemmaTyping = false)
+                        stopLoading()
                     },
                     onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isGemmaTyping = false,
-                            error = error.message ?: "Failed to generate explanation"
-                        )
+                        setError(error.message ?: "Failed to generate explanation")
                     }
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isGemmaTyping = false,
-                    error = e.message ?: "Failed to send explanation request"
-                )
+                setError(e.message ?: "Failed to send explanation request")
             }
         }
     }
     
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.value = _uiState.value.copy(error = null, canRetry = false)
+    }
+    
+    private fun startLoadingWithProgress(isExplanation: Boolean = false) {
+        val loadingMessages = if (isExplanation) {
+            listOf(
+                "Analyzing the selected text...",
+                "Understanding the context...",
+                "Generating detailed explanation...",
+                "Finalizing response..."
+            )
+        } else {
+            listOf(
+                "Processing your question...",
+                "Thinking through the answer...",
+                "Generating response...",
+                "Almost ready..."
+            )
+        }
+        
+        _uiState.value = _uiState.value.copy(
+            isGemmaTyping = true,
+            loadingProgress = 0f,
+            loadingMessage = loadingMessages[0],
+            estimatedTimeRemaining = 0,
+            error = null,
+            canRetry = false
+        )
+        
+        // Cycle through loading messages without time constraints
+        viewModelScope.launch {
+            val messageInterval = 8000L // Change message every 8 seconds
+            var currentMessageIndex = 0
+            
+            while (_uiState.value.isGemmaTyping && currentMessageIndex < loadingMessages.size - 1) {
+                delay(messageInterval)
+                
+                // Only update if still loading
+                if (_uiState.value.isGemmaTyping) {
+                    currentMessageIndex++
+                    _uiState.value = _uiState.value.copy(
+                        loadingMessage = loadingMessages[currentMessageIndex]
+                    )
+                }
+            }
+        }
+    }
+    
+    private fun stopLoading() {
+        _uiState.value = _uiState.value.copy(
+            isGemmaTyping = false,
+            loadingProgress = 0f,
+            loadingMessage = "",
+            estimatedTimeRemaining = 0
+        )
+    }
+    
+    private fun setError(message: String) {
+        _uiState.value = _uiState.value.copy(
+            isGemmaTyping = false,
+            loadingProgress = 0f,
+            loadingMessage = "",
+            estimatedTimeRemaining = 0,
+            error = message,
+            canRetry = true
+        )
+    }
+    
+    fun retryLastMessage() {
+        val lastUserMessage = _uiState.value.messages.lastOrNull { it.isFromUser }
+        if (lastUserMessage != null) {
+            clearError()
+            _messageInput.value = lastUserMessage.content
+            sendMessage()
+        }
     }
 }
 
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val isGemmaTyping: Boolean = false,
-    val error: String? = null
+    val loadingProgress: Float = 0f,
+    val loadingMessage: String = "",
+    val estimatedTimeRemaining: Int = 0, // in seconds
+    val error: String? = null,
+    val canRetry: Boolean = false
 )

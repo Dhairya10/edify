@@ -24,7 +24,13 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.ButtonDefaults
 import com.edify.learning.data.model.ChatMessage
+import com.edify.learning.presentation.components.MarkdownText
 import com.edify.learning.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -70,13 +76,7 @@ fun ChatScreen(
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
-                    if (uiState.isGemmaTyping) {
-                        Text(
-                            text = "Gemma is thinking...",
-                            fontSize = 12.sp,
-                            color = White.copy(alpha = 0.7f)
-                        )
-                    }
+                    // Remove status from top bar as requested
                 }
             },
             navigationIcon = {
@@ -94,6 +94,8 @@ fun ChatScreen(
             )
         )
         
+        // Progress indicator removed - response time is variable
+        
         // Messages List
         LazyColumn(
             state = listState,
@@ -108,10 +110,26 @@ fun ChatScreen(
                 MessageBubble(message = message)
             }
             
-            // Typing indicator
+            // Enhanced typing indicator with progress
             if (uiState.isGemmaTyping) {
                 item {
-                    TypingIndicator()
+                    EnhancedTypingIndicator(
+                        loadingMessage = uiState.loadingMessage,
+                        progress = uiState.loadingProgress,
+                        timeRemaining = uiState.estimatedTimeRemaining
+                    )
+                }
+            }
+            
+            // Error message with retry option
+            uiState.error?.let { error ->
+                item {
+                    ErrorMessageCard(
+                        errorMessage = error,
+                        canRetry = uiState.canRetry,
+                        onRetry = { viewModel.retryLastMessage() },
+                        onDismiss = { viewModel.clearError() }
+                    )
                 }
             }
         }
@@ -193,13 +211,25 @@ fun MessageBubble(
                 bottomEnd = if (message.isFromUser) 4.dp else 16.dp
             )
         ) {
-            Text(
-                text = message.content,
-                color = if (message.isFromUser) UserMessageText else GemmaMessageText,
-                modifier = Modifier.padding(12.dp),
-                fontSize = 14.sp,
-                lineHeight = 20.sp
-            )
+            if (message.isFromUser) {
+                // User messages as plain text
+                Text(
+                    text = message.content,
+                    color = UserMessageText,
+                    modifier = Modifier.padding(12.dp),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
+            } else {
+                // AI messages with markdown formatting
+                MarkdownText(
+                    markdown = message.content,
+                    color = GemmaMessageText,
+                    modifier = Modifier.padding(12.dp),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
+            }
         }
         
         if (message.isFromUser) {
@@ -275,6 +305,166 @@ fun TypingIndicator(
                             .clip(RoundedCornerShape(3.dp))
                             .background(TextSecondary.copy(alpha = alpha))
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EnhancedTypingIndicator(
+    loadingMessage: String,
+    progress: Float,
+    timeRemaining: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        // Gemma avatar
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(SecondaryBlue),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "G",
+                color = White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        Card(
+            colors = CardDefaults.cardColors(containerColor = GemmaMessageBackground),
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = 4.dp,
+                bottomEnd = 16.dp
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Loading message only
+                Text(
+                    text = loadingMessage.ifEmpty { "Processing your request..." },
+                    fontSize = 14.sp,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Animated dots
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(3) { index ->
+                        val alpha by animateFloatAsState(
+                            targetValue = if ((System.currentTimeMillis() / 500) % 3 == index.toLong()) 1f else 0.3f,
+                            animationSpec = androidx.compose.animation.core.tween(500),
+                            label = "typing_dot_$index"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(SecondaryBlue.copy(alpha = alpha))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ErrorMessageCard(
+    errorMessage: String,
+    canRetry: Boolean,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Red.copy(alpha = 0.1f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Error",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Red.copy(alpha = 0.8f)
+                )
+                
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack, // Using ArrowBack as close icon
+                        contentDescription = "Dismiss",
+                        tint = Color.Red.copy(alpha = 0.6f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = errorMessage,
+                fontSize = 14.sp,
+                color = TextPrimary,
+                textAlign = TextAlign.Start
+            )
+            
+            if (canRetry) {
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(
+                        onClick = onRetry,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = SecondaryBlue
+                        ),
+                        border = BorderStroke(1.dp, SecondaryBlue)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Retry")
+                    }
                 }
             }
         }

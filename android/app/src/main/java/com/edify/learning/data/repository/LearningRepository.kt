@@ -101,6 +101,20 @@ class LearningRepository @Inject constructor(
         return gemmaService.generateResponse(fullPrompt)
     }
     
+    fun generateGemmaResponseStream(
+        prompt: String,
+        context: String? = null,
+        isExplanation: Boolean = false
+    ): Flow<String> {
+        val fullPrompt = if (context != null) {
+            gemmaService.createEducationalPrompt(context, prompt, isExplanation)
+        } else {
+            prompt
+        }
+        
+        return gemmaService.generateResponseStream(fullPrompt)
+    }
+    
     suspend fun initializeGemma(): Result<Unit> = gemmaService.initializeModel()
     
     suspend fun getChapterSummaryForChat(chapterId: String): String {
