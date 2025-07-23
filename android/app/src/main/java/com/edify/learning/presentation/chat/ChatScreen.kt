@@ -29,10 +29,26 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import com.edify.learning.R
+import android.provider.MediaStore
+import androidx.compose.foundation.border
 import com.edify.learning.data.model.ChatMessage
 import com.edify.learning.presentation.components.MarkdownText
 import com.edify.learning.ui.theme.*
 import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +60,7 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val messageInput by viewModel.messageInput.collectAsState()
+    val selectedImage by viewModel.selectedImage.collectAsState()
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     
@@ -160,11 +177,13 @@ fun ChatScreen(
                 value = messageInput,
                 onValueChange = viewModel::onMessageInputChanged,
                 onSendMessage = {
-                    if (messageInput.isNotBlank()) {
+                    if (messageInput.isNotBlank() || selectedImage != null) {
                         viewModel.sendMessage()
                     }
                 },
                 enabled = !uiState.isGemmaTyping,
+                selectedImage = selectedImage,
+                onImageSelected = viewModel::onImageSelected,
                 modifier = Modifier.padding(16.dp)
             )
         }
@@ -211,24 +230,48 @@ fun MessageBubble(
                 bottomEnd = if (message.isFromUser) 4.dp else 16.dp
             )
         ) {
-            if (message.isFromUser) {
-                // User messages as plain text
-                Text(
-                    text = message.content,
-                    color = UserMessageText,
-                    modifier = Modifier.padding(12.dp),
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp
-                )
-            } else {
-                // AI messages with markdown formatting
-                MarkdownText(
-                    markdown = message.content,
-                    color = GemmaMessageText,
-                    modifier = Modifier.padding(12.dp),
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp
-                )
+            Column(
+                modifier = Modifier.padding(12.dp)
+            ) {
+                // Show image thumbnail if message has an attachment
+                message.attachmentPath?.let { imagePath ->
+                    AsyncImage(
+                        model = File(imagePath),
+                        contentDescription = "Attached image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.image_24px),
+                        placeholder = painterResource(id = R.drawable.image_24px)
+                    )
+                    
+                    if (message.content.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+                
+                // Show text content if present
+                if (message.content.isNotBlank()) {
+                    if (message.isFromUser) {
+                        // User messages as plain text
+                        Text(
+                            text = message.content,
+                            color = UserMessageText,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp
+                        )
+                    } else {
+                        // AI messages with markdown formatting
+                        MarkdownText(
+                            markdown = message.content,
+                            color = GemmaMessageText,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
             }
         }
         
@@ -478,8 +521,29 @@ fun MessageInputField(
     onValueChange: (String) -> Unit,
     onSendMessage: () -> Unit,
     enabled: Boolean,
+    selectedImage: Bitmap?,
+    onImageSelected: (Bitmap?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    onImageSelected(bitmap)
+                } catch (e: Exception) {
+                    // Handle error
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+    
     Surface(
         modifier = modifier,
         color = White,
@@ -487,46 +551,114 @@ fun MessageInputField(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                placeholder = { Text("Type your message...", color = TextSecondary) },
-                modifier = Modifier.weight(1f),
-                enabled = enabled,
-                shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = SecondaryBlue,
-                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
-                    focusedContainerColor = White,
-                    unfocusedContainerColor = White,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary,
-                    disabledTextColor = TextSecondary,
-                    cursorColor = SecondaryBlue,
-                    focusedPlaceholderColor = TextSecondary,
-                    unfocusedPlaceholderColor = TextSecondary
-                ),
-                maxLines = 4
-            )
+        Column {
+            // Selected image display
+            selectedImage?.let { bitmap ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.1f))
+                ) {
+                    Box {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Selected image",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        
+                        // Remove image button
+                        IconButton(
+                            onClick = { onImageSelected(null) },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                                .size(24.dp)
+                                .background(
+                                    Color.Black.copy(alpha = 0.6f),
+                                    RoundedCornerShape(12.dp)
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove image",
+                                tint = White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
             
-            FloatingActionButton(
-                onClick = onSendMessage,
-                modifier = Modifier.size(48.dp),
-                containerColor = SecondaryBlue,
-                contentColor = White
+            // Input row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "Send message",
-                    modifier = Modifier.size(20.dp)
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    placeholder = { Text("Type your message...", color = TextSecondary) },
+                    modifier = Modifier.weight(1f),
+                    enabled = enabled,
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SecondaryBlue,
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
+                        focusedContainerColor = White,
+                        unfocusedContainerColor = White,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        disabledTextColor = TextSecondary,
+                        cursorColor = SecondaryBlue,
+                        focusedPlaceholderColor = TextSecondary,
+                        unfocusedPlaceholderColor = TextSecondary
+                    ),
+                    maxLines = 4
                 )
+                
+                // Image picker button
+                IconButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                        imagePickerLauncher.launch(intent)
+                    },
+                    enabled = enabled,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .border(
+                            1.dp,
+                            if (enabled) SecondaryBlue.copy(alpha = 0.3f) else Color.Gray.copy(alpha = 0.2f),
+                            RoundedCornerShape(24.dp)
+                        )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.image_24px),
+                        contentDescription = "Select image",
+                        tint = if (enabled) SecondaryBlue else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                
+                FloatingActionButton(
+                    onClick = onSendMessage,
+                    modifier = Modifier.size(48.dp),
+                    containerColor = SecondaryBlue,
+                    contentColor = White
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "Send message",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

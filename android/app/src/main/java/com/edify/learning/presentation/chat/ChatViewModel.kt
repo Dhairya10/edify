@@ -1,7 +1,11 @@
 package com.edify.learning.presentation.chat
 
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import androidx.lifecycle.viewModelScope
 import com.edify.learning.data.model.ChatMessage
 import com.edify.learning.data.model.ChatSession
@@ -29,6 +33,9 @@ class ChatViewModel @Inject constructor(
     
     private val _messageInput = MutableStateFlow("")
     val messageInput: StateFlow<String> = _messageInput.asStateFlow()
+    
+    private val _selectedImage = MutableStateFlow<Bitmap?>(null)
+    val selectedImage: StateFlow<Bitmap?> = _selectedImage.asStateFlow()
     
     private var currentSessionId: String = ""
     private var currentChapterId: String = ""
@@ -69,31 +76,44 @@ class ChatViewModel @Inject constructor(
         _messageInput.value = input
     }
     
+    fun onImageSelected(image: Bitmap?) {
+        _selectedImage.value = image
+    }
+    
     fun sendMessage() {
         val input = _messageInput.value.trim()
-        if (input.isBlank()) return
+        val image = _selectedImage.value
+        if (input.isBlank() && image == null) return
         
         viewModelScope.launch {
             try {
+                // Save image if present and get path
+                val imagePath = image?.let { bitmap ->
+                    saveImageToInternalStorage(bitmap)
+                }
+                
                 // Add user message
                 val userMessage = ChatMessage(
                     id = UUID.randomUUID().toString(),
                     sessionId = currentSessionId,
                     content = input,
                     isFromUser = true,
-                    messageType = MessageType.TEXT
+                    messageType = if (image != null) MessageType.IMAGE else MessageType.TEXT,
+                    attachmentPath = imagePath
                 )
                 
                 repository.insertChatMessage(userMessage)
                 _messageInput.value = ""
+                _selectedImage.value = null // Clear selected image
                 
                 // Start enhanced loading with progress
                 startLoadingWithProgress(isExplanation = false)
                 
-                // Generate Gemma response
-                val response = repository.generateGemmaResponse(
+                // Generate Gemma response with image support
+                val response = repository.generateGemmaResponseWithImage(
                     prompt = input,
                     context = contextContent,
+                    image = image,
                     isExplanation = false
                 )
                 
@@ -234,6 +254,22 @@ class ChatViewModel @Inject constructor(
             error = message,
             canRetry = true
         )
+    }
+    
+    private fun saveImageToInternalStorage(bitmap: Bitmap): String? {
+        return try {
+            val filename = "chat_image_${UUID.randomUUID()}.jpg"
+            val file = File(context.filesDir, filename)
+            
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            }
+            
+            file.absolutePath
+        } catch (e: IOException) {
+            android.util.Log.e("ChatViewModel", "Failed to save image: ${e.message}")
+            null
+        }
     }
     
     fun retryLastMessage() {

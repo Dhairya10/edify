@@ -1,6 +1,7 @@
 package com.edify.learning.data.repository
 
 import android.content.Context
+import android.graphics.Bitmap
 import com.edify.learning.data.dao.*
 import com.edify.learning.data.model.*
 import com.edify.learning.data.service.GemmaService
@@ -99,6 +100,25 @@ class LearningRepository @Inject constructor(
         }
         
         return gemmaService.generateResponse(fullPrompt)
+    }
+    
+    suspend fun generateGemmaResponseWithImage(
+        prompt: String,
+        context: String? = null,
+        image: Bitmap? = null,
+        isExplanation: Boolean = false
+    ): Result<String> {
+        val fullPrompt = if (context != null) {
+            gemmaService.createEducationalPrompt(context, prompt, isExplanation)
+        } else {
+            prompt
+        }
+        
+        return if (image != null) {
+            gemmaService.generateResponseWithImage(fullPrompt, image)
+        } else {
+            gemmaService.generateResponse(fullPrompt)
+        }
     }
     
     fun generateGemmaResponseStream(

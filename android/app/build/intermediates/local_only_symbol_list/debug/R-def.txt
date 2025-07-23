@@ -17,6 +17,7 @@ color text_secondary
 color white
 drawable ic_chat
 drawable ic_marker
+drawable image_24px
 mipmap ic_launcher
 mipmap ic_launcher_round
 string add_note

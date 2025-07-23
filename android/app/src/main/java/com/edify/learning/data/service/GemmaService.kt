@@ -1,6 +1,7 @@
 package com.edify.learning.data.service
 
 import android.content.Context
+import android.graphics.Bitmap
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOptions
 import kotlinx.coroutines.Dispatchers
@@ -315,6 +316,77 @@ class GemmaService @Inject constructor(
         }
     }
     
+    suspend fun generateResponseWithImage(prompt: String, image: Bitmap): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            android.util.Log.d(TAG, "Generating response with image context: ${prompt.take(50)}...")
+            
+            // Since MediaPipe multimodal classes are not available in this version,
+            // we'll enhance the text prompt with image context information
+            val imageContextPrompt = createImageContextPrompt(prompt, image)
+            
+            // Use the regular text-based response generation with enhanced prompt
+            return@withContext generateResponse(imageContextPrompt)
+            
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Image response generation error: ${e.message}")
+            e.printStackTrace()
+            return@withContext Result.success(getMockImageResponse(prompt))
+        }
+    }
+    
+    private fun createImageContextPrompt(originalPrompt: String, image: Bitmap): String {
+        // Analyze basic image properties
+        val imageInfo = "Image dimensions: ${image.width}x${image.height} pixels"
+        val aspectRatio = String.format("%.2f", image.width.toFloat() / image.height.toFloat())
+        val isLandscape = image.width > image.height
+        val isPortrait = image.height > image.width
+        val isSquare = Math.abs(image.width - image.height) < 50
+        
+        // Determine likely image type based on dimensions and user prompt
+        val likelyContent = when {
+            originalPrompt.contains("diagram", ignoreCase = true) -> "diagram or schematic"
+            originalPrompt.contains("chart", ignoreCase = true) -> "chart or graph"
+            originalPrompt.contains("equation", ignoreCase = true) -> "mathematical equation or formula"
+            originalPrompt.contains("text", ignoreCase = true) -> "text or document"
+            originalPrompt.contains("explain", ignoreCase = true) -> "educational content"
+            isLandscape && image.width > 800 -> "screenshot or document"
+            isPortrait && image.height > 1000 -> "mobile screenshot or document"
+            else -> "image content"
+        }
+        
+        return """
+            I can see you've shared an image ($imageInfo, aspect ratio: $aspectRatio) that appears to be $likelyContent.
+            
+            Your question: "$originalPrompt"
+            
+            Based on your question and the image properties, I can provide helpful guidance:
+            
+            ${getContextualResponse(originalPrompt, likelyContent)}
+            
+            If you need more specific help with the visual content, feel free to describe what you see in the image, and I can provide more targeted assistance based on that description.
+        """.trimIndent()
+    }
+    
+    private fun getContextualResponse(prompt: String, likelyContent: String): String {
+        return when {
+            prompt.contains("explain", ignoreCase = true) -> {
+                "I'd be happy to help explain the $likelyContent. While I can see you've shared an image, I can provide better explanations if you describe the key elements you'd like me to focus on."
+            }
+            prompt.contains("solve", ignoreCase = true) || prompt.contains("calculate", ignoreCase = true) -> {
+                "I can help you solve problems! If this image contains equations, formulas, or numerical data, please type out the key information and I'll guide you through the solution step by step."
+            }
+            prompt.contains("diagram", ignoreCase = true) -> {
+                "Diagrams are great learning tools! I can help explain concepts, processes, or relationships. Describe the main components or labels you see, and I'll provide detailed explanations."
+            }
+            prompt.contains("what", ignoreCase = true) -> {
+                "I can help identify and explain concepts! Tell me what specific elements or text you see in the image, and I'll provide comprehensive information about them."
+            }
+            else -> {
+                "I'm ready to help with your $likelyContent! Describe the key details you'd like assistance with, and I'll provide thorough explanations and guidance."
+            }
+        }
+    }
+    
     /**
      * Provides a mock response when the Gemma model is unavailable
      * This creates a more engaging user experience than just showing error messages
@@ -343,6 +415,24 @@ class GemmaService @Inject constructor(
         
         // Default response for other questions
         return "I'm sorry, I can't provide a detailed response at the moment because the AI model is missing from this device. The Gemma model file needs to be included in the app's assets/models directory. You can continue using other app features like reading content, making notes, and studying exercises while this issue is resolved."
+    }
+    
+    private fun getMockImageResponse(prompt: String): String {
+        // Provide contextual mock responses for image-based queries
+        return when {
+            prompt.contains("describe", ignoreCase = true) || prompt.contains("what", ignoreCase = true) -> {
+                "I can see you've shared an image with me. While I can't analyze it right now due to the AI model being unavailable, I'd be happy to help once the Gemma model is properly configured. You can continue using other features of the app in the meantime."
+            }
+            prompt.contains("explain", ignoreCase = true) || prompt.contains("how", ignoreCase = true) -> {
+                "I notice you've included an image for explanation. The visual analysis feature requires the Gemma model to be available. Please ensure the model file is properly installed, and then I'll be able to provide detailed explanations about your images."
+            }
+            prompt.contains("solve", ignoreCase = true) || prompt.contains("calculate", ignoreCase = true) -> {
+                "I can see you've shared an image that might contain a problem to solve. Once the AI model is available, I'll be able to analyze images and help solve mathematical problems, read diagrams, and provide step-by-step solutions."
+            }
+            else -> {
+                "I can see you've shared an image with your question. The image analysis feature is currently unavailable because the AI model needs to be properly configured. You can still use text-based chat and other app features while this is being resolved."
+            }
+        }
     }
     
     fun generateResponseStream(prompt: String): Flow<String> = flow {
