@@ -3,10 +3,20 @@ package com.edify.learning.data.dao
 import androidx.room.*
 import com.edify.learning.data.model.Note
 import com.edify.learning.data.model.NoteType
+import com.edify.learning.data.model.NoteWithSubjectInfo
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
+    
+    @Query("SELECT * FROM notes ORDER BY createdAt DESC")
+    fun getAllNotes(): Flow<List<Note>>
+    
+    @Query("SELECT * FROM notes WHERE type = 'USER_NOTE' ORDER BY createdAt DESC")
+    fun getAllUserNotes(): Flow<List<Note>>
+    
+    @Query("SELECT * FROM notes WHERE type = 'USER_NOTE' AND chapterId IN (SELECT id FROM chapters WHERE subjectId = :subjectId) ORDER BY createdAt DESC")
+    fun getUserNotesBySubject(subjectId: String): Flow<List<Note>>
     
     @Query("SELECT * FROM notes WHERE chapterId = :chapterId ORDER BY createdAt DESC")
     fun getNotesByChapter(chapterId: String): Flow<List<Note>>

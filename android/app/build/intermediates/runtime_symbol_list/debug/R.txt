@@ -2970,11 +2970,13 @@ int drawable ic_keyboard_black_24dp 0x7f07008f
 int drawable ic_m3_chip_check 0x7f070090
 int drawable ic_m3_chip_checked_circle 0x7f070091
 int drawable ic_m3_chip_close 0x7f070092
+int drawable ic_marker 0x7f0700e4
 int drawable ic_mtrl_checked_circle 0x7f070093
 int drawable ic_mtrl_chip_checked_black 0x7f070094
 int drawable ic_mtrl_chip_checked_circle 0x7f070095
 int drawable ic_mtrl_chip_close_circle 0x7f070096
 int drawable ic_search_black_24 0x7f070097
+int drawable image_24px 0x7f0700e5
 int drawable m3_avd_hide_password 0x7f070098
 int drawable m3_avd_show_password 0x7f070099
 int drawable m3_bottom_sheet_drag_handle 0x7f07009a

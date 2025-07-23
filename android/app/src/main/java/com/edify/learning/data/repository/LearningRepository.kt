@@ -1,6 +1,7 @@
 package com.edify.learning.data.repository
 
 import android.content.Context
+import android.graphics.Bitmap
 import com.edify.learning.data.dao.*
 import com.edify.learning.data.model.*
 import com.edify.learning.data.service.GemmaService
@@ -18,6 +19,7 @@ class LearningRepository @Inject constructor(
     private val chapterDao: ChapterDao,
     private val noteDao: NoteDao,
     private val chatDao: ChatDao,
+    private val userResponseDao: UserResponseDao,
     private val gemmaService: GemmaService
 ) {
     
@@ -63,6 +65,13 @@ class LearningRepository @Inject constructor(
     }
     
     // Note operations
+    fun getAllNotes(): Flow<List<Note>> = noteDao.getAllNotes()
+    
+    fun getAllUserNotes(): Flow<List<Note>> = noteDao.getAllUserNotes()
+    
+    fun getUserNotesBySubject(subjectId: String): Flow<List<Note>> = 
+        noteDao.getUserNotesBySubject(subjectId)
+    
     fun getNotesByChapter(chapterId: String): Flow<List<Note>> = 
         noteDao.getNotesByChapter(chapterId)
     
@@ -93,8 +102,97 @@ class LearningRepository @Inject constructor(
         return gemmaService.generateResponse(fullPrompt)
     }
     
+    suspend fun generateGemmaResponseWithImage(
+        prompt: String,
+        context: String? = null,
+        image: Bitmap? = null,
+        isExplanation: Boolean = false
+    ): Result<String> {
+        val fullPrompt = if (context != null) {
+            gemmaService.createEducationalPrompt(context, prompt, isExplanation)
+        } else {
+            prompt
+        }
+        
+        return if (image != null) {
+            gemmaService.generateResponseWithImage(fullPrompt, image)
+        } else {
+            gemmaService.generateResponse(fullPrompt)
+        }
+    }
+    
+    fun generateGemmaResponseStream(
+        prompt: String,
+        context: String? = null,
+        isExplanation: Boolean = false
+    ): Flow<String> {
+        val fullPrompt = if (context != null) {
+            gemmaService.createEducationalPrompt(context, prompt, isExplanation)
+        } else {
+            prompt
+        }
+        
+        return gemmaService.generateResponseStream(fullPrompt)
+    }
+    
     suspend fun initializeGemma(): Result<Unit> = gemmaService.initializeModel()
     
+    suspend fun getChapterSummaryForChat(chapterId: String): String {
+        return ContentLoader.loadChapterSummaryForChat(context, chapterId)
+    }
+    
+    // Exercise and User Response operations
+    fun getExercisesForChapter(chapterId: String): List<Exercise> {
+        return ContentLoader.loadExercisesForChapter(context, chapterId)
+    }
+    
+    fun getUserResponsesForChapter(chapterId: String): Flow<List<UserResponse>> {
+        return userResponseDao.getResponsesForChapter(chapterId)
+    }
+    
+    suspend fun getUserResponse(chapterId: String, exerciseIndex: Int): UserResponse? {
+        return userResponseDao.getResponse(chapterId, exerciseIndex)
+    }
+    
+    suspend fun saveUserResponse(response: UserResponse) {
+        userResponseDao.insertOrUpdateResponse(response)
+    }
+    
+    suspend fun deleteUserResponse(response: UserResponse) {
+        userResponseDao.deleteResponse(response)
+    }
+    
+    suspend fun getResponseCountForChapter(chapterId: String): Int {
+        return userResponseDao.getResponseCountForChapter(chapterId)
+    }
+    
+    // Refresh chapter titles from JSON files
+    suspend fun refreshChapterTitles() {
+        try {
+            println("Repository: Refreshing chapter titles from JSON files")
+            val subjects = getAllSubjects().first()
+            
+            subjects.forEach { subject ->
+                println("Repository: Refreshing titles for subject ${subject.name} (${subject.id})")
+                val chaptersFromJson = ContentLoader.loadChaptersForSubject(context, subject.id)
+                val existingChapters = getChaptersBySubject(subject.id).first()
+                
+                chaptersFromJson.forEach { jsonChapter ->
+                    val existingChapter = existingChapters.find { it.id == jsonChapter.id }
+                    if (existingChapter != null && existingChapter.title != jsonChapter.title) {
+                        println("Repository: Updating title for chapter ${jsonChapter.id}: '${existingChapter.title}' -> '${jsonChapter.title}'")
+                        val updatedChapter = existingChapter.copy(title = jsonChapter.title)
+                        chapterDao.updateChapter(updatedChapter)
+                    }
+                }
+            }
+            println("Repository: Chapter title refresh completed")
+        } catch (e: Exception) {
+            println("Repository: Error refreshing chapter titles: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
     // Content data initialization from JSON files
     suspend fun initializeContentData() {
         // Check if data already exists
@@ -110,7 +208,8 @@ class LearningRepository @Inject constructor(
                 subjectDao.deleteAllSubjects()
                 chapterDao.deleteAllChapters()
             } else {
-                println("Repository: Content already exists with $totalChapters chapters, skipping initialization")
+                println("Repository: Content already exists with $totalChapters chapters, refreshing titles from JSON")
+                refreshChapterTitles()
                 return
             }
         }

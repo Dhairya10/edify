@@ -6,6 +6,7 @@ import com.edify.learning.data.dao.ChapterDao;
 import com.edify.learning.data.dao.ChatDao;
 import com.edify.learning.data.dao.NoteDao;
 import com.edify.learning.data.dao.SubjectDao;
+import com.edify.learning.data.dao.UserResponseDao;
 import com.edify.learning.data.service.GemmaService;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
@@ -33,34 +34,40 @@ public final class LearningRepository_Factory implements Factory<LearningReposit
 
   private final Provider<ChatDao> chatDaoProvider;
 
+  private final Provider<UserResponseDao> userResponseDaoProvider;
+
   private final Provider<GemmaService> gemmaServiceProvider;
 
   public LearningRepository_Factory(Provider<Context> contextProvider,
       Provider<SubjectDao> subjectDaoProvider, Provider<ChapterDao> chapterDaoProvider,
       Provider<NoteDao> noteDaoProvider, Provider<ChatDao> chatDaoProvider,
+      Provider<UserResponseDao> userResponseDaoProvider,
       Provider<GemmaService> gemmaServiceProvider) {
     this.contextProvider = contextProvider;
     this.subjectDaoProvider = subjectDaoProvider;
     this.chapterDaoProvider = chapterDaoProvider;
     this.noteDaoProvider = noteDaoProvider;
     this.chatDaoProvider = chatDaoProvider;
+    this.userResponseDaoProvider = userResponseDaoProvider;
     this.gemmaServiceProvider = gemmaServiceProvider;
   }
 
   @Override
   public LearningRepository get() {
-    return newInstance(contextProvider.get(), subjectDaoProvider.get(), chapterDaoProvider.get(), noteDaoProvider.get(), chatDaoProvider.get(), gemmaServiceProvider.get());
+    return newInstance(contextProvider.get(), subjectDaoProvider.get(), chapterDaoProvider.get(), noteDaoProvider.get(), chatDaoProvider.get(), userResponseDaoProvider.get(), gemmaServiceProvider.get());
   }
 
   public static LearningRepository_Factory create(Provider<Context> contextProvider,
       Provider<SubjectDao> subjectDaoProvider, Provider<ChapterDao> chapterDaoProvider,
       Provider<NoteDao> noteDaoProvider, Provider<ChatDao> chatDaoProvider,
+      Provider<UserResponseDao> userResponseDaoProvider,
       Provider<GemmaService> gemmaServiceProvider) {
-    return new LearningRepository_Factory(contextProvider, subjectDaoProvider, chapterDaoProvider, noteDaoProvider, chatDaoProvider, gemmaServiceProvider);
+    return new LearningRepository_Factory(contextProvider, subjectDaoProvider, chapterDaoProvider, noteDaoProvider, chatDaoProvider, userResponseDaoProvider, gemmaServiceProvider);
   }
 
   public static LearningRepository newInstance(Context context, SubjectDao subjectDao,
-      ChapterDao chapterDao, NoteDao noteDao, ChatDao chatDao, GemmaService gemmaService) {
-    return new LearningRepository(context, subjectDao, chapterDao, noteDao, chatDao, gemmaService);
+      ChapterDao chapterDao, NoteDao noteDao, ChatDao chatDao, UserResponseDao userResponseDao,
+      GemmaService gemmaService) {
+    return new LearningRepository(context, subjectDao, chapterDao, noteDao, chatDao, userResponseDao, gemmaService);
   }
 }

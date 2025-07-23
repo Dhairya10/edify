@@ -8,10 +8,6 @@
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/mipmap-xxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.edify.learning.app-merged_res-79:/drawable_ic_chat.png.flat",
-        "source": "com.edify.learning.app-main-81:/drawable/ic_chat.png"
-    },
-    {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/mipmap-hdpi_ic_launcher_round.png.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/mipmap-hdpi/ic_launcher_round.png"
     },
@@ -24,12 +20,24 @@
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/mipmap-xhdpi/ic_launcher_round.png"
     },
     {
+        "merged": "com.edify.learning.app-merged_res-79:/drawable_image_24px.xml.flat",
+        "source": "com.edify.learning.app-main-81:/drawable/image_24px.xml"
+    },
+    {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/mipmap-mdpi_ic_launcher.png.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/mipmap-mdpi/ic_launcher.png"
     },
     {
+        "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_ic_chat.png.flat",
+        "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/ic_chat.png"
+    },
+    {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/mipmap-mdpi_ic_launcher_round.png.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_ic_marker.xml.flat",
+        "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/ic_marker.xml"
     },
     {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/mipmap-hdpi_ic_launcher.png.flat",

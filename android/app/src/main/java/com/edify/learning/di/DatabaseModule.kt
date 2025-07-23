@@ -51,6 +51,11 @@ object DatabaseModule {
     }
     
     @Provides
+    fun provideUserResponseDao(database: EdifyDatabase): UserResponseDao {
+        return database.userResponseDao()
+    }
+    
+    @Provides
     @Singleton
     fun provideGemmaService(
         @ApplicationContext context: Context

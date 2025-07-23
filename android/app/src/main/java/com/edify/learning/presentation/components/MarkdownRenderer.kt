@@ -8,6 +8,9 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.text.selection.DisableSelection
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -92,7 +95,7 @@ fun MarkdownRenderer(
 private fun MarkdownText(
     text: String,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
-    onTextSelected: (String) -> Unit,
+    onTextSelected: (String) -> Unit = {},
     onContentSelected: (String) -> Unit = {},
     isSelected: Boolean = false
 ) {
@@ -156,6 +159,7 @@ private fun MarkdownText(
         }
     }
     
+    // Simple SelectionContainer for native copy functionality
     SelectionContainer {
         Text(
             text = annotatedString,
@@ -163,23 +167,6 @@ private fun MarkdownText(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
-                .background(
-                    color = if (isSelected) SecondaryBlue.copy(alpha = 0.2f) else Color.Transparent,
-                    shape = RoundedCornerShape(4.dp)
-                )
-                .padding(horizontal = if (isSelected) 8.dp else 0.dp, vertical = 4.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            onContentSelected(cleanedText)
-                        },
-                        onTap = {
-                            if (isSelected) {
-                                onContentSelected("")
-                            }
-                        }
-                    )
-                }
         )
     }
 }
@@ -316,27 +303,9 @@ private fun MarkdownMath(expression: String) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .border(
-                    width = if (isSelected) 2.dp else 0.dp,
-                    color = if (isSelected) SecondaryBlue else Color.Transparent,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .clickable { 
-                    if (isSelected) {
-                        onContentSelected("")
-                    } else {
-                        onImageClick(imagePath) 
-                    }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            onContentSelected(imagePath)
-                        }
-                    )
-                },
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                .padding(vertical = 8.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = BackgroundGray)
         ) {
             Text(
                 text = cleanExpression,
