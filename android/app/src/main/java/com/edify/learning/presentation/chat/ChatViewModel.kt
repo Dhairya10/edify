@@ -11,6 +11,8 @@ import com.edify.learning.data.model.ChatMessage
 import com.edify.learning.data.model.ChatSession
 import com.edify.learning.data.model.MessageType
 import com.edify.learning.data.repository.LearningRepository
+import com.edify.learning.data.repository.QuestRepository
+import com.edify.learning.data.repository.UserAction
 import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,8 +26,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val repository: LearningRepository
+    private val repository: LearningRepository,
+    private val questRepository: QuestRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -105,6 +108,13 @@ class ChatViewModel @Inject constructor(
                 repository.insertChatMessage(userMessage)
                 _messageInput.value = ""
                 _selectedImage.value = null // Clear selected image
+                
+                // Track chat interaction for Quest personalization
+                questRepository.updateChapterStats(
+                    chapterId = currentChapterId,
+                    userId = "default_user", // TODO: Get actual user ID
+                    action = UserAction.SendChat(input)
+                )
                 
                 // Start enhanced loading with progress
                 startLoadingWithProgress(isExplanation = false)

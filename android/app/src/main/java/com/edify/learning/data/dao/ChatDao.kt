@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ChatDao {
     
+    @Query("SELECT * FROM chat_messages ORDER BY timestamp DESC")
+    suspend fun getAllMessages(): List<ChatMessage>
+    
     @Query("SELECT * FROM chat_messages WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     fun getMessagesBySession(sessionId: String): Flow<List<ChatMessage>>
     
@@ -24,6 +27,9 @@ interface ChatDao {
     
     @Delete
     suspend fun deleteMessage(message: ChatMessage)
+    
+    @Query("DELETE FROM chat_messages WHERE id = :id")
+    suspend fun deleteById(id: Long)
     
     @Query("DELETE FROM chat_messages WHERE sessionId = :sessionId")
     suspend fun deleteMessagesBySession(sessionId: String)

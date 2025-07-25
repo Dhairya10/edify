@@ -38,6 +38,8 @@ public final class SubjectDao_Impl implements SubjectDao {
 
   private final EntityDeletionOrUpdateAdapter<Subject> __updateAdapterOfSubject;
 
+  private final SharedSQLiteStatement __preparedStmtOfDeleteById;
+
   private final SharedSQLiteStatement __preparedStmtOfDeleteAllSubjects;
 
   private final SharedSQLiteStatement __preparedStmtOfUpdateLastReadChapter;
@@ -160,6 +162,14 @@ public final class SubjectDao_Impl implements SubjectDao {
         }
       }
     };
+    this.__preparedStmtOfDeleteById = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM subjects WHERE id = ?";
+        return _query;
+      }
+    };
     this.__preparedStmtOfDeleteAllSubjects = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
@@ -254,6 +264,35 @@ public final class SubjectDao_Impl implements SubjectDao {
           return Unit.INSTANCE;
         } finally {
           __db.endTransaction();
+        }
+      }
+    }, arg1);
+  }
+
+  @Override
+  public Object deleteById(final String id, final Continuation<? super Unit> arg1) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteById.acquire();
+        int _argIndex = 1;
+        if (id == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, id);
+        }
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteById.release(_stmt);
         }
       }
     }, arg1);

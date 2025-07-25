@@ -7,16 +7,17 @@ import androidx.room.TypeConverters
 import android.content.Context
 import com.edify.learning.data.dao.*
 import com.edify.learning.data.model.*
-
 @Database(
     entities = [
         Subject::class,
         Chapter::class,
         Note::class,
         ChatMessage::class,
-        UserResponse::class
+        UserResponse::class,
+        ChapterStats::class,
+        UserProfile::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -27,6 +28,8 @@ abstract class EdifyDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun chatDao(): ChatDao
     abstract fun userResponseDao(): UserResponseDao
+    abstract fun chapterStatsDao(): ChapterStatsDao
+    abstract fun userProfileDao(): UserProfileDao
     
     companion object {
         const val DATABASE_NAME = "edify_database"

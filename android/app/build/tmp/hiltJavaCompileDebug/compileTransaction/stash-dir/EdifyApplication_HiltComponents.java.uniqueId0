@@ -4,8 +4,11 @@ import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.presentation.MainActivity_GeneratedInjector;
 import com.edify.learning.presentation.chapter.ChapterViewModel_HiltModules;
 import com.edify.learning.presentation.chat.ChatViewModel_HiltModules;
+import com.edify.learning.presentation.developer.DeveloperModeViewModel_HiltModules;
+import com.edify.learning.presentation.developer.QuestScoringViewModel_HiltModules;
 import com.edify.learning.presentation.home.HomeViewModel_HiltModules;
 import com.edify.learning.presentation.notes.NotesViewModel_HiltModules;
+import com.edify.learning.presentation.quest.QuestViewModel_HiltModules;
 import com.edify.learning.presentation.revision.RevisionViewModel_HiltModules;
 import com.edify.learning.presentation.subject.SubjectViewModel_HiltModules;
 import dagger.Binds;
@@ -151,11 +154,14 @@ public final class EdifyApplication_HiltComponents {
       modules = {
           ChapterViewModel_HiltModules.KeyModule.class,
           ChatViewModel_HiltModules.KeyModule.class,
+          DeveloperModeViewModel_HiltModules.KeyModule.class,
           ActivityCBuilderModule.class,
           ViewModelCBuilderModule.class,
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HomeViewModel_HiltModules.KeyModule.class,
           NotesViewModel_HiltModules.KeyModule.class,
+          QuestScoringViewModel_HiltModules.KeyModule.class,
+          QuestViewModel_HiltModules.KeyModule.class,
           RevisionViewModel_HiltModules.KeyModule.class,
           SubjectViewModel_HiltModules.KeyModule.class
       }
@@ -195,9 +201,12 @@ public final class EdifyApplication_HiltComponents {
       modules = {
           ChapterViewModel_HiltModules.BindsModule.class,
           ChatViewModel_HiltModules.BindsModule.class,
+          DeveloperModeViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HomeViewModel_HiltModules.BindsModule.class,
           NotesViewModel_HiltModules.BindsModule.class,
+          QuestScoringViewModel_HiltModules.BindsModule.class,
+          QuestViewModel_HiltModules.BindsModule.class,
           RevisionViewModel_HiltModules.BindsModule.class,
           SubjectViewModel_HiltModules.BindsModule.class
       }

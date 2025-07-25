@@ -42,6 +42,9 @@ interface NoteDao {
     @Delete
     suspend fun deleteNote(note: Note)
     
+    @Query("DELETE FROM notes WHERE id = :id")
+    suspend fun deleteById(id: Long)
+    
     @Query("DELETE FROM notes WHERE chapterId = :chapterId")
     suspend fun deleteNotesByChapter(chapterId: String)
     

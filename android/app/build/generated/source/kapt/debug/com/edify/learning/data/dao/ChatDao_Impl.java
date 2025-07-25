@@ -43,6 +43,8 @@ public final class ChatDao_Impl implements ChatDao {
 
   private final EntityDeletionOrUpdateAdapter<ChatMessage> __updateAdapterOfChatMessage;
 
+  private final SharedSQLiteStatement __preparedStmtOfDeleteById;
+
   private final SharedSQLiteStatement __preparedStmtOfDeleteMessagesBySession;
 
   public ChatDao_Impl(@NonNull final RoomDatabase __db) {
@@ -151,6 +153,14 @@ public final class ChatDao_Impl implements ChatDao {
         }
       }
     };
+    this.__preparedStmtOfDeleteById = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM chat_messages WHERE id = ?";
+        return _query;
+      }
+    };
     this.__preparedStmtOfDeleteMessagesBySession = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
@@ -235,6 +245,31 @@ public final class ChatDao_Impl implements ChatDao {
   }
 
   @Override
+  public Object deleteById(final long id, final Continuation<? super Unit> arg1) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteById.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, id);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteById.release(_stmt);
+        }
+      }
+    }, arg1);
+  }
+
+  @Override
   public Object deleteMessagesBySession(final String sessionId,
       final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
@@ -262,6 +297,77 @@ public final class ChatDao_Impl implements ChatDao {
         }
       }
     }, arg1);
+  }
+
+  @Override
+  public Object getAllMessages(final Continuation<? super List<ChatMessage>> arg0) {
+    final String _sql = "SELECT * FROM chat_messages ORDER BY timestamp DESC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<ChatMessage>>() {
+      @Override
+      @NonNull
+      public List<ChatMessage> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfSessionId = CursorUtil.getColumnIndexOrThrow(_cursor, "sessionId");
+          final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
+          final int _cursorIndexOfIsFromUser = CursorUtil.getColumnIndexOrThrow(_cursor, "isFromUser");
+          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
+          final int _cursorIndexOfMessageType = CursorUtil.getColumnIndexOrThrow(_cursor, "messageType");
+          final int _cursorIndexOfAttachmentPath = CursorUtil.getColumnIndexOrThrow(_cursor, "attachmentPath");
+          final List<ChatMessage> _result = new ArrayList<ChatMessage>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final ChatMessage _item;
+            final String _tmpId;
+            if (_cursor.isNull(_cursorIndexOfId)) {
+              _tmpId = null;
+            } else {
+              _tmpId = _cursor.getString(_cursorIndexOfId);
+            }
+            final String _tmpSessionId;
+            if (_cursor.isNull(_cursorIndexOfSessionId)) {
+              _tmpSessionId = null;
+            } else {
+              _tmpSessionId = _cursor.getString(_cursorIndexOfSessionId);
+            }
+            final String _tmpContent;
+            if (_cursor.isNull(_cursorIndexOfContent)) {
+              _tmpContent = null;
+            } else {
+              _tmpContent = _cursor.getString(_cursorIndexOfContent);
+            }
+            final boolean _tmpIsFromUser;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsFromUser);
+            _tmpIsFromUser = _tmp != 0;
+            final long _tmpTimestamp;
+            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
+            final MessageType _tmpMessageType;
+            final String _tmp_1;
+            if (_cursor.isNull(_cursorIndexOfMessageType)) {
+              _tmp_1 = null;
+            } else {
+              _tmp_1 = _cursor.getString(_cursorIndexOfMessageType);
+            }
+            _tmpMessageType = __converters.toMessageType(_tmp_1);
+            final String _tmpAttachmentPath;
+            if (_cursor.isNull(_cursorIndexOfAttachmentPath)) {
+              _tmpAttachmentPath = null;
+            } else {
+              _tmpAttachmentPath = _cursor.getString(_cursorIndexOfAttachmentPath);
+            }
+            _item = new ChatMessage(_tmpId,_tmpSessionId,_tmpContent,_tmpIsFromUser,_tmpTimestamp,_tmpMessageType,_tmpAttachmentPath);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, arg0);
   }
 
   @Override

@@ -39,6 +39,8 @@ public final class ChapterDao_Impl implements ChapterDao {
 
   private final EntityDeletionOrUpdateAdapter<Chapter> __updateAdapterOfChapter;
 
+  private final SharedSQLiteStatement __preparedStmtOfDeleteById;
+
   private final SharedSQLiteStatement __preparedStmtOfDeleteAllChapters;
 
   private final SharedSQLiteStatement __preparedStmtOfUpdateReadingProgress;
@@ -157,6 +159,14 @@ public final class ChapterDao_Impl implements ChapterDao {
         }
       }
     };
+    this.__preparedStmtOfDeleteById = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM chapters WHERE id = ?";
+        return _query;
+      }
+    };
     this.__preparedStmtOfDeleteAllChapters = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
@@ -257,6 +267,35 @@ public final class ChapterDao_Impl implements ChapterDao {
   }
 
   @Override
+  public Object deleteById(final String id, final Continuation<? super Unit> arg1) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteById.acquire();
+        int _argIndex = 1;
+        if (id == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, id);
+        }
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteById.release(_stmt);
+        }
+      }
+    }, arg1);
+  }
+
+  @Override
   public Object deleteAllChapters(final Continuation<? super Unit> arg0) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
@@ -346,6 +385,87 @@ public final class ChapterDao_Impl implements ChapterDao {
         }
       }
     }, arg3);
+  }
+
+  @Override
+  public Object getAllChapters(final Continuation<? super List<Chapter>> arg0) {
+    final String _sql = "SELECT * FROM chapters ORDER BY subjectId ASC, chapterNumber ASC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<Chapter>>() {
+      @Override
+      @NonNull
+      public List<Chapter> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfSubjectId = CursorUtil.getColumnIndexOrThrow(_cursor, "subjectId");
+          final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
+          final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
+          final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
+          final int _cursorIndexOfChapterNumber = CursorUtil.getColumnIndexOrThrow(_cursor, "chapterNumber");
+          final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfReadingProgress = CursorUtil.getColumnIndexOrThrow(_cursor, "readingProgress");
+          final int _cursorIndexOfEstimatedReadingTime = CursorUtil.getColumnIndexOrThrow(_cursor, "estimatedReadingTime");
+          final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfUpdatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "updatedAt");
+          final List<Chapter> _result = new ArrayList<Chapter>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final Chapter _item;
+            final String _tmpId;
+            if (_cursor.isNull(_cursorIndexOfId)) {
+              _tmpId = null;
+            } else {
+              _tmpId = _cursor.getString(_cursorIndexOfId);
+            }
+            final String _tmpSubjectId;
+            if (_cursor.isNull(_cursorIndexOfSubjectId)) {
+              _tmpSubjectId = null;
+            } else {
+              _tmpSubjectId = _cursor.getString(_cursorIndexOfSubjectId);
+            }
+            final String _tmpTitle;
+            if (_cursor.isNull(_cursorIndexOfTitle)) {
+              _tmpTitle = null;
+            } else {
+              _tmpTitle = _cursor.getString(_cursorIndexOfTitle);
+            }
+            final String _tmpDescription;
+            if (_cursor.isNull(_cursorIndexOfDescription)) {
+              _tmpDescription = null;
+            } else {
+              _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            }
+            final String _tmpContent;
+            if (_cursor.isNull(_cursorIndexOfContent)) {
+              _tmpContent = null;
+            } else {
+              _tmpContent = _cursor.getString(_cursorIndexOfContent);
+            }
+            final int _tmpChapterNumber;
+            _tmpChapterNumber = _cursor.getInt(_cursorIndexOfChapterNumber);
+            final boolean _tmpIsCompleted;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
+            _tmpIsCompleted = _tmp != 0;
+            final float _tmpReadingProgress;
+            _tmpReadingProgress = _cursor.getFloat(_cursorIndexOfReadingProgress);
+            final int _tmpEstimatedReadingTime;
+            _tmpEstimatedReadingTime = _cursor.getInt(_cursorIndexOfEstimatedReadingTime);
+            final long _tmpCreatedAt;
+            _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
+            final long _tmpUpdatedAt;
+            _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
+            _item = new Chapter(_tmpId,_tmpSubjectId,_tmpTitle,_tmpDescription,_tmpContent,_tmpChapterNumber,_tmpIsCompleted,_tmpReadingProgress,_tmpEstimatedReadingTime,_tmpCreatedAt,_tmpUpdatedAt);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, arg0);
   }
 
   @Override

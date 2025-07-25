@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ChapterDao {
     
+    @Query("SELECT * FROM chapters ORDER BY subjectId ASC, chapterNumber ASC")
+    suspend fun getAllChapters(): List<Chapter>
+    
     @Query("SELECT * FROM chapters WHERE subjectId = :subjectId ORDER BY chapterNumber ASC")
     fun getChaptersBySubject(subjectId: String): Flow<List<Chapter>>
     
@@ -30,6 +33,9 @@ interface ChapterDao {
     
     @Delete
     suspend fun deleteChapter(chapter: Chapter)
+    
+    @Query("DELETE FROM chapters WHERE id = :id")
+    suspend fun deleteById(id: String)
     
     @Query("DELETE FROM chapters")
     suspend fun deleteAllChapters()

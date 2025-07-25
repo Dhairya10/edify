@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.edify.learning.data.model.Exercise
 import com.edify.learning.data.model.UserResponse
 import com.edify.learning.data.repository.LearningRepository
+import com.edify.learning.data.repository.QuestRepository
+import com.edify.learning.data.repository.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,7 +22,8 @@ data class RevisionUiState(
 
 @HiltViewModel
 class RevisionViewModel @Inject constructor(
-    private val repository: LearningRepository
+    private val repository: LearningRepository,
+    private val questRepository: QuestRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(RevisionUiState())
@@ -96,6 +99,18 @@ class RevisionViewModel @Inject constructor(
                 )
                 
                 repository.saveUserResponse(updatedResponse)
+                
+                // Track revision submission for quest personalization
+                questRepository.updateChapterStats(
+                    chapterId = chapterId,
+                    userId = "default_user", // TODO: Get actual user ID
+                    action = UserAction.SubmitRevision(
+                        questionId = exerciseIndex.toString(),
+                        answer = updatedResponse.textResponse ?: "",
+                        correctnessScore = null, // Could be analyzed later
+                        originalityScore = null  // Could be analyzed later
+                    )
+                )
                 
                 // Update UI state
                 val currentResponses = _uiState.value.userResponses.toMutableMap()

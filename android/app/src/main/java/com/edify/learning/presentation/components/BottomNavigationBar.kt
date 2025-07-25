@@ -3,15 +3,18 @@ package com.edify.learning.presentation.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.sp
 import com.edify.learning.ui.theme.*
+import com.edify.learning.utils.DeveloperMode
 
 sealed class BottomNavItem(
     val route: String,
@@ -33,11 +36,18 @@ sealed class BottomNavItem(
         unselectedIcon = Icons.Outlined.Edit
     )
     
-    object Profile : BottomNavItem(
-        route = "profile",
-        title = "Profile",
-        selectedIcon = Icons.Filled.Person,
-        unselectedIcon = Icons.Outlined.Person
+    object Quest : BottomNavItem(
+        route = "quest",
+        title = "Quest",
+        selectedIcon = Icons.Filled.Star,
+        unselectedIcon = Icons.Outlined.Star
+    )
+    
+    object Developer : BottomNavItem(
+        route = "developer",
+        title = "Dev",
+        selectedIcon = Icons.Filled.Build,
+        unselectedIcon = Icons.Outlined.Build
     )
 }
 
@@ -46,11 +56,14 @@ fun BottomNavigationBar(
     currentRoute: String?,
     onNavigateToTab: (String) -> Unit
 ) {
-    val items = listOf(
-        BottomNavItem.Library,
-        BottomNavItem.Notes,
-        BottomNavItem.Profile
-    )
+    val items = buildList {
+        add(BottomNavItem.Library)
+        add(BottomNavItem.Notes)
+        add(BottomNavItem.Quest)
+        if (DeveloperMode.ENABLED) {
+            add(BottomNavItem.Developer)
+        }
+    }
     
     NavigationBar(
         containerColor = White,
