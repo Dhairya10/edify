@@ -30,7 +30,7 @@ class QuestGenerationService @Inject constructor(
     
     /**
      * Main trigger method called after every meaningful user action
-     * Checks for high-interest chapters and generates quests if needed
+     * Implements new algorithm: Generate divergent quests first, then convergent quests
      * Uses GlobalScope to survive navigation and lifecycle changes
      */
     fun checkAndGenerateQuests(userId: String = "default_user") {
@@ -57,40 +57,23 @@ class QuestGenerationService @Inject constructor(
     }
     
     /**
-     * Internal quest generation logic with proper cancellation checks
+     * Internal quest generation logic implementing new algorithm:
+     * 1. Generate divergent quests for eligible chapters (one per chapter)
+     * 2. After all divergent quests are created, generate convergent quests
      */
     private suspend fun generateQuestsInternal(userId: String) {
-        // Step 1: Find all high-interest chapters that haven't had quests generated
-        coroutineContext.ensureActive() // Check if coroutine is still active
-        val highInterestChapters = findHighInterestChapters(userId)
-        println("QUEST_GEN: Found ${highInterestChapters.size} high-interest chapters.")
+        coroutineContext.ensureActive()
         
-        if (highInterestChapters.isEmpty()) {
-            println("QUEST_GEN: No new high-interest chapters found. Exiting.")
-            return
+        // Step 1: Generate divergent quests for eligible chapters that don't have them yet
+        val divergentQuestsGenerated = generateDivergentQuests(userId)
+        
+        // Step 2: If no new divergent quests were generated, try convergent quests
+        if (divergentQuestsGenerated == 0) {
+            coroutineContext.ensureActive()
+            generateConvergentQuest(userId)
         }
         
-        // Step 2: Get chapter interaction data for LLM context
-        coroutineContext.ensureActive()
-        val chapterInteractionData = gatherChapterInteractionData(highInterestChapters)
-        
-        // Step 3: Ask LLM to choose strategy
-        coroutineContext.ensureActive()
-        println("QUEST_GEN: Selecting quest strategy...")
-        val strategyResponse = selectQuestStrategy(chapterInteractionData)
-        println("QUEST_GEN: Strategy selected: ${strategyResponse.strategy}. Chapters: ${strategyResponse.chapters?.joinToString()}, Chapter: ${strategyResponse.chapter}")
-        
-        // Step 4: Generate quest based on strategy
-        coroutineContext.ensureActive()
-        println("QUEST_GEN: Generating quest...")
-        val questResponse = generateQuest(strategyResponse, chapterInteractionData)
-        println("QUEST_GEN: Quest generated: '${questResponse.title}'")
-        
-        // Step 5: Save quest and update flags
-        coroutineContext.ensureActive()
-        println("QUEST_GEN: Saving generated quest...")
-        saveGeneratedQuest(strategyResponse, questResponse, userId)
-        println("QUEST_GEN: Quest generation and saving completed successfully.")
+        println("QUEST_GEN: Quest generation completed. Generated $divergentQuestsGenerated divergent quests.")
     }
     
     /**
@@ -109,265 +92,309 @@ class QuestGenerationService @Inject constructor(
     }
     
     /**
-     * Step 1: Find chapters with InterestScore > 3.5 and questGenerated == false
+     * Generate divergent quests for all eligible chapters that don't have them yet
+     * Returns the number of divergent quests generated
      */
-    private suspend fun findHighInterestChapters(userId: String): List<ChapterStats> {
-        val allStats = chapterStatsDao.getAllStats()
-        return allStats.filter { stats ->
-            stats.userId == userId && 
-            stats.calculateInterestScore() > 1.0 && 
-            !stats.questGenerated
+    private suspend fun generateDivergentQuests(userId: String): Int {
+        // Find chapters with InterestScore > 1.0 and no divergent quest generated yet
+        val eligibleChapters = chapterStatsDao.getChapterStatsForUser(userId)
+            .filter { stats ->
+                stats.calculateInterestScore() > 1.0 && !stats.divergentQuestGenerated
+            }
+        
+        println("QUEST_GEN: Found ${eligibleChapters.size} chapters eligible for divergent quests.")
+        
+        var questsGenerated = 0
+        
+        for (chapterStats in eligibleChapters) {
+            try {
+                coroutineContext.ensureActive()
+                
+                // Generate divergent quest for this chapter
+                val chapterInteractionData = gatherChapterInteractionData(listOf(chapterStats))
+                if (chapterInteractionData.isNotEmpty()) {
+                    val questResponse = generateDivergentQuestForChapter(chapterInteractionData.first())
+                    saveDivergentQuest(questResponse, chapterStats, userId)
+                    questsGenerated++
+                    println("QUEST_GEN: Generated divergent quest for chapter ${chapterStats.chapterId}: '${questResponse.title}'")
+                }
+            } catch (e: Exception) {
+                println("QUEST_GEN: Failed to generate divergent quest for chapter ${chapterStats.chapterId}: ${e.message}")
+                // Continue with next chapter instead of failing completely
+            }
         }
+        
+        return questsGenerated
     }
     
     /**
-     * Step 2: Gather interaction data for high-interest chapters
+     * Gather interaction data for chapters
      */
     private suspend fun gatherChapterInteractionData(chapterStatsList: List<ChapterStats>): List<ChapterInteractionData> {
         return chapterStatsList.map { stats ->
             val chapter = chapterDao.getChapterById(stats.chapterId)
+            val subject = chapter?.let { subjectDao.getSubjectById(it.subjectId) }
             val notes = noteDao.getNotesByChapter(stats.chapterId).first()
-            val chatMessages = chatDao.getMessagesBySession(stats.chapterId).first()
-
+            val chatMessages = chatDao.getMessagesByChapter(stats.chapterId)
+            
             ChapterInteractionData(
                 chapterId = stats.chapterId,
                 chapterTitle = chapter?.title ?: "Unknown Chapter",
-                subject = chapter?.let { subjectDao.getSubjectById(it.subjectId)?.name } ?: "Unknown Subject",
+                chapterDescription = chapter?.description ?: "No description available",
+                subject = subject?.name ?: "Unknown Subject",
                 interestScore = stats.calculateInterestScore(),
-                notes = notes.map { note -> note.content },
-                chatQuestions = chatMessages.filter { !it.isFromUser }.map { message -> message.content },
-                revisionAnswers = stats.revisionHistory.map { answer -> answer.userAnswer }
+                notes = notes.map { it.content },
+                chatQuestions = chatMessages.filter { !it.isFromUser }.map { it.content },
+                revisionAnswers = stats.revisionHistory.map { "${it.userAnswer} (Score: ${it.gemmaAnalysis?.correctnessScore ?: 0})" }
             )
         }
     }
     
     /**
-     * Step 3: LLM chooses between Convergent and Divergent strategy
+     * Generate a divergent quest for a specific chapter
      */
-    private suspend fun selectQuestStrategy(chapterData: List<ChapterInteractionData>): LLMStrategyResponse {
-        val chapterSummaries = chapterData.map { 
-            "${it.chapterTitle} (${it.subject}) - Interest Score: ${String.format("%.2f", it.interestScore)}"
-        }.joinToString(", ")
-        
+    private suspend fun generateDivergentQuestForChapter(chapterData: ChapterInteractionData): LLMQuestResponse {
         val prompt = """
-            You are an AI learning coach. The user is showing strong interest in the following topics: $chapterSummaries.
+            You are an expert educator. Your goal is to foster creativity and critical thinking. Generate a single, deep question for the chapter "${chapterData.chapterTitle}" (${chapterData.subject}) that encourages students to think beyond the text.
             
-            Your goal is to foster advanced thinking skills. Choose one of the following strategies:
+            Chapter Summary: ${chapterData.chapterDescription}
+
+            The question should be a DIVERGENT quest that encourages deep exploration of this specific topic. It could relate to a core theme, implications, or a 'what if' scenario.
+
+            IMPORTANT: You MUST respond with ONLY valid JSON in this exact format:
+            {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
             
-            'Convergent': If you see a clear and powerful opportunity to connect ideas between two different subjects.
-            
-            'Divergent': If it's better to generate a very deep and thought-provoking question about a single topic.
-            
-            Respond with only the chosen strategy name in JSON format: {"strategy": "Convergent", "chapters": ["chapterId_1", "chapterId_2"]} or {"strategy": "Divergent", "chapter": "chapterId_1"}.
+            Do not include any other text, explanations, or formatting. Only return the JSON object.
         """.trimIndent()
         
         return try {
-            // Add timeout for LLM call to prevent hanging
-            withTimeout(120000) { // 2 minute timeout for strategy selection
-                coroutineContext.ensureActive() // Check cancellation before LLM call
+            withTimeout(300000) { // 5 minute timeout for quest generation
+                coroutineContext.ensureActive()
                 val response = gemmaService.generateResponse(prompt)
-                gson.fromJson(response.getOrThrow(), LLMStrategyResponse::class.java)
+                val responseText = response.getOrThrow()
+                println("QUEST_GEN: Divergent quest RAW response from Gemma: '$responseText'")
+                
+                // Clean response by removing markdown code blocks if present
+                val cleanedResponse = responseText
+                    .trim()
+                    .removePrefix("```json")
+                    .removePrefix("```")
+                    .removeSuffix("```")
+                    .trim()
+                
+                println("QUEST_GEN: Cleaned response: '$cleanedResponse'")
+                gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
             }
         } catch (e: TimeoutCancellationException) {
-            println("QUEST_GEN: Strategy selection timed out, using fallback")
-            getFallbackStrategy(chapterData)
+            println("QUEST_GEN: Divergent quest generation timed out - no quest will be generated")
+            throw e
         } catch (e: CancellationException) {
-            println("QUEST_GEN: Strategy selection cancelled, using fallback")
-            throw e // Re-throw cancellation to stop the whole process
+            println("QUEST_GEN: Divergent quest generation cancelled")
+            throw e
         } catch (e: Exception) {
-            println("QUEST_GEN: Strategy selection failed: ${e.message}, using fallback")
-            getFallbackStrategy(chapterData)
+            println("QUEST_GEN: Divergent quest generation failed: ${e.message} - no quest will be generated")
+            throw e
         }
     }
+    
+
     
     /**
-     * Get fallback strategy when LLM fails
+     * Save a divergent quest and update chapter stats
      */
-    private fun getFallbackStrategy(chapterData: List<ChapterInteractionData>): LLMStrategyResponse {
-        // Fallback to divergent strategy with highest interest chapter
-        val highestInterestChapter = chapterData.maxByOrNull { it.interestScore }
-        return LLMStrategyResponse(
-            strategy = "Divergent",
-            chapter = highestInterestChapter?.chapterId
-        )
-    }
-    
-    /**
-     * Step 4: Generate quest based on chosen strategy
-     */
-    private suspend fun generateQuest(
-        strategyResponse: LLMStrategyResponse,
-        chapterData: List<ChapterInteractionData>
-    ): LLMQuestResponse {
-        return when (strategyResponse.strategy.lowercase()) {
-            "convergent" -> generateConvergentQuest(strategyResponse, chapterData)
-            "divergent" -> generateDivergentQuest(strategyResponse, chapterData)
-            else -> generateDivergentQuest(strategyResponse, chapterData) // Default fallback
-        }
-    }
-    
-    /**
-     * Generate Convergent (cross-subject) quest
-     */
-    private suspend fun generateConvergentQuest(
-        strategyResponse: LLMStrategyResponse,
-        chapterData: List<ChapterInteractionData>
-    ): LLMQuestResponse {
-        val chapterIds = strategyResponse.chapters ?: emptyList()
-        val relevantChapters = chapterData.filter { it.chapterId in chapterIds }.take(2)
-        
-        if (relevantChapters.size < 2) {
-            // Fallback to divergent if we don't have 2 chapters
-            return generateDivergentQuest(strategyResponse, chapterData)
-        }
-        
-        val chapter1 = relevantChapters[0]
-        val chapter2 = relevantChapters[1]
-        
-        val prompt = """
-            You are a curriculum designer specializing in interdisciplinary studies. Generate a single, thought-provoking question that connects the core themes of ${chapter1.chapterTitle} (${chapter1.subject}) and ${chapter2.chapterTitle} (${chapter2.subject}).
-            
-            Here is the user's specific engagement data to guide you:
-            
-            Chapter 1 Data: 
-            - Notes: ${chapter1.notes.joinToString("; ")}
-            - Chat Questions: ${chapter1.chatQuestions.joinToString("; ")}
-            - Revision Answers: ${chapter1.revisionAnswers.joinToString("; ")}
-
-            Chapter 2 Data:
-            - Notes: ${chapter2.notes.joinToString("; ")}
-            - Chat Questions: ${chapter2.chatQuestions.joinToString("; ")}
-            - Revision Answers: ${chapter2.revisionAnswers.joinToString("; ")}
-
-        Respond in JSON format: {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
-    """.trimIndent()
-    
-    return try {
-        // Add timeout for LLM call to prevent hanging
-        withTimeout(120000) { // 2 minute timeout for quest generation
-            coroutineContext.ensureActive() // Check cancellation before LLM call
-            val response = gemmaService.generateResponse(prompt)
-            gson.fromJson(response.getOrThrow(), LLMQuestResponse::class.java)
-        }
-    } catch (e: TimeoutCancellationException) {
-        println("QUEST_GEN: Convergent quest generation timed out, using fallback")
-        getConvergentFallbackQuest(chapter1, chapter2)
-    } catch (e: CancellationException) {
-        println("QUEST_GEN: Convergent quest generation cancelled")
-        throw e // Re-throw cancellation to stop the whole process
-    } catch (e: Exception) {
-        println("QUEST_GEN: Convergent quest generation failed: ${e.message}, using fallback")
-        getConvergentFallbackQuest(chapter1, chapter2)
-    }
-}
-
-/**
- * Get fallback convergent quest when LLM fails
- */
-private fun getConvergentFallbackQuest(
-    chapter1: ChapterInteractionData,
-    chapter2: ChapterInteractionData
-): LLMQuestResponse {
-    return LLMQuestResponse(
-        title = "Connecting ${chapter1.subject} and ${chapter2.subject}",
-        questionText = "How do the themes from ${chapter1.chapterTitle} relate to the concepts in ${chapter2.chapterTitle}? Explore the connections and share your insights."
-    )
-}
-
-/**
- * Generate Divergent (deep single-topic) quest
- */
-private suspend fun generateDivergentQuest(
-    strategyResponse: LLMStrategyResponse,
-    chapterData: List<ChapterInteractionData>
-): LLMQuestResponse {
-    val chapterId = strategyResponse.chapter ?: chapterData.maxByOrNull { it.interestScore }?.chapterId
-    val chapter = chapterData.find { it.chapterId == chapterId } 
-        ?: chapterData.firstOrNull()
-        ?: return LLMQuestResponse("Default Quest", "Reflect on your learning journey so far.")
-    
-    val prompt = """
-        You are an expert educator. Your goal is to foster creativity and critical thinking. Based on the user's interactions with the chapter ${chapter.chapterTitle} (${chapter.subject}), generate a single, deep question that encourages them to think beyond the text.
-
-        Here is the user's specific engagement data:
-        - Notes: ${chapter.notes.joinToString("; ")}
-        - Chat Questions: ${chapter.chatQuestions.joinToString("; ")}
-        - Revision Answers: ${chapter.revisionAnswers.joinToString("; ")}
-
-        The question could relate to a core theme, a character's motivation, or a 'what if' scenario.
-
-        Respond in JSON format: {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
-    """.trimIndent()
-    
-    return try {
-        // Add timeout for LLM call to prevent hanging
-        withTimeout(120000) { // 2 minute timeout for quest generation
-            coroutineContext.ensureActive() // Check cancellation before LLM call
-            val response = gemmaService.generateResponse(prompt)
-            gson.fromJson(response.getOrThrow(), LLMQuestResponse::class.java)
-        }
-    } catch (e: TimeoutCancellationException) {
-        println("QUEST_GEN: Divergent quest generation timed out, using fallback")
-        getDivergentFallbackQuest(chapter)
-    } catch (e: CancellationException) {
-        println("QUEST_GEN: Divergent quest generation cancelled")
-        throw e // Re-throw cancellation to stop the whole process
-    } catch (e: Exception) {
-        println("QUEST_GEN: Divergent quest generation failed: ${e.message}, using fallback")
-        getDivergentFallbackQuest(chapter)
-    }
-}
-
-/**
- * Get fallback divergent quest when LLM fails
- */
-private fun getDivergentFallbackQuest(chapter: ChapterInteractionData): LLMQuestResponse {
-    return LLMQuestResponse(
-        title = "Deep Dive: ${chapter.chapterTitle}",
-        questionText = "What deeper insights can you draw from ${chapter.chapterTitle}? Consider the broader implications and share your thoughtful analysis."
-    )
-}
-
-/**
- * Step 5: Save generated quest and update questGenerated flags
- */
-private suspend fun saveGeneratedQuest(
-        strategyResponse: LLMStrategyResponse,
+    private suspend fun saveDivergentQuest(
         questResponse: LLMQuestResponse,
+        chapterStats: ChapterStats,
         userId: String
     ) {
-        // Determine involved chapters
-        val involvedChapters = when (strategyResponse.strategy.lowercase()) {
-            "convergent" -> strategyResponse.chapters ?: emptyList()
-            "divergent" -> listOfNotNull(strategyResponse.chapter)
-            else -> listOfNotNull(strategyResponse.chapter)
-        }
-        
-        // Get primary chapter details for the quest
-        val primaryChapterId = involvedChapters.firstOrNull() ?: return
-        val chapter = chapterDao.getChapterById(primaryChapterId)
+        // Get chapter and subject details
+        val chapter = chapterDao.getChapterById(chapterStats.chapterId)
         val subject = chapter?.let { subjectDao.getSubjectById(it.subjectId) }
-
-        // Create and save quest
+        
+        // Create and save the divergent quest
         val quest = GeneratedQuest(
-            chapterId = primaryChapterId,
+            chapterId = chapterStats.chapterId,
             subjectName = subject?.name ?: "Unknown Subject",
             title = questResponse.title,
-            question = questResponse.questionText
+            question = questResponse.questionText,
+            questType = "divergent",
+            involvedChapterIds = chapterStats.chapterId, // Single chapter for divergent
+            userId = userId
         )
         
         generatedQuestDao.insertQuest(quest)
         
-        // Update questGenerated flags for involved chapters
-        involvedChapters.forEach { chapterId ->
-            val stats = chapterStatsDao.getChapterStats(chapterId, userId)
-            stats?.let { currentStats ->
-                val updatedStats = currentStats.copy(
-                    questGenerated = true,
-                    updatedAt = System.currentTimeMillis()
-                )
-                chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
+        // Update chapter stats to mark divergent quest as generated
+        val updatedStats = chapterStats.copy(
+            divergentQuestGenerated = true,
+            questGenerated = true,
+            updatedAt = System.currentTimeMillis()
+        )
+        chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
+    }
+    
+    /**
+     * Generate convergent quest when all eligible divergent quests are created
+     * Uses past quest data to create new, different questions
+     */
+    private suspend fun generateConvergentQuest(userId: String) {
+        // Find chapters with high interest scores (eligible for convergent quests)
+        val eligibleChapters = chapterStatsDao.getChapterStatsForUser(userId)
+            .filter { stats -> stats.calculateInterestScore() > 1.0 }
+            .sortedByDescending { it.calculateInterestScore() }
+        
+        if (eligibleChapters.size < 2) {
+            println("QUEST_GEN: Not enough eligible chapters for convergent quest (${eligibleChapters.size})")
+            return
+        }
+        
+        // Select up to 10 chapters for LLM to choose from (randomly sample if more than 10)
+        val chaptersForSelection = if (eligibleChapters.size <= 10) {
+            eligibleChapters
+        } else {
+            eligibleChapters.shuffled().take(10)
+        }
+        
+        // Generate chapter interaction data for all candidate chapters
+        val chapterInteractionData = gatherChapterInteractionData(chaptersForSelection)
+        
+        if (chapterInteractionData.size >= 2) {
+            try {
+                coroutineContext.ensureActive()
+                
+                // Get all chapter IDs for past quest lookup
+                val allChapterIds = chaptersForSelection.map { it.chapterId }
+                val pastQuests = generatedQuestDao.getPastQuestsForChapters(allChapterIds, allChapterIds.first(), userId)
+                
+                val questResponse = generateConvergentQuestWithLLMSelection(chapterInteractionData, pastQuests, userId)
+                
+                // Find the selected chapters based on LLM response
+                val selectedChapterIds = questResponse.selectedChapterIds ?: emptyList()
+                val selectedChapters = chaptersForSelection.filter { it.chapterId in selectedChapterIds }
+                
+                if (selectedChapters.size >= 2) {
+                    saveConvergentQuest(questResponse, selectedChapters, userId)
+                    println("QUEST_GEN: Generated convergent quest: '${questResponse.title}' with chapters: ${selectedChapterIds.joinToString()}")
+                } else {
+                    println("QUEST_GEN: LLM did not select valid chapters for convergent quest")
+                }
+            } catch (e: Exception) {
+                println("QUEST_GEN: Failed to generate convergent quest: ${e.message}")
             }
+        }
+    }
+    
+    /**
+     * Generate convergent quest with LLM selecting 2 chapters from provided options
+     */
+    private suspend fun generateConvergentQuestWithLLMSelection(
+        chapterData: List<ChapterInteractionData>,
+        pastQuests: List<GeneratedQuest>,
+        userId: String
+    ): LLMQuestResponse {
+        // Create context about past quests to avoid repetition
+        val pastQuestContext = if (pastQuests.isNotEmpty()) {
+            "\n\nPrevious questions asked about these topics (avoid similar themes):\n" +
+            pastQuests.take(5).joinToString("\n") { "- ${it.title}: ${it.question}" }
+        } else {
+            ""
+        }
+        
+        // Create chapter options for LLM to choose from
+        val chapterOptions = chapterData.mapIndexed { index, data ->
+            "${index + 1}. Chapter ID: ${data.chapterId} | Title: ${data.chapterTitle} | Subject: ${data.subject} | Interest Score: ${String.format("%.2f", data.interestScore)}\n   Summary: ${data.chapterDescription}"
+        }.joinToString("\n\n")
+        
+        val prompt = """
+            You are a curriculum designer specializing in interdisciplinary studies. Your task is to:
+            1. Choose exactly 2 chapters from the list below that would create the most meaningful cross-subject connection
+            2. Generate a single, thought-provoking CONVERGENT question that connects the core themes across these 2 chapters
+            
+            Available chapters to choose from:
+            $chapterOptions
+            $pastQuestContext
+            
+            Instructions:
+            - Select exactly 2 chapters that offer the best opportunity for interdisciplinary synthesis
+            - Create a question that connects ideas across the selected subjects
+            - Ensure the question is different from any previous questions listed above
+            
+            IMPORTANT: You MUST respond with ONLY valid JSON in this exact format:
+            {
+                "selectedChapterIds": ["chapter_id_1", "chapter_id_2"],
+                "title": "A Creative Title for the Quest",
+                "questionText": "Your generated convergent question connecting the two selected chapters."
+            }
+            
+            Use the exact Chapter IDs from the list above. Do not include any other text, explanations, or formatting. Only return the JSON object.
+        """.trimIndent()
+        
+        return try {
+            withTimeout(300000) { // 5 minute timeout for quest generation
+                coroutineContext.ensureActive()
+                val response = gemmaService.generateResponse(prompt)
+                val responseText = response.getOrThrow()
+                println("QUEST_GEN: Convergent quest with LLM selection RAW response from Gemma: '$responseText'")
+                
+                // Clean response by removing markdown code blocks if present
+                val cleanedResponse = responseText
+                    .trim()
+                    .removePrefix("```json")
+                    .removePrefix("```")
+                    .removeSuffix("```")
+                    .trim()
+                
+                println("QUEST_GEN: Cleaned response: '$cleanedResponse'")
+                gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
+            }
+        } catch (e: TimeoutCancellationException) {
+            println("QUEST_GEN: Convergent quest generation with LLM selection timed out - no quest will be generated")
+            throw e
+        } catch (e: CancellationException) {
+            println("QUEST_GEN: Convergent quest generation with LLM selection cancelled")
+            throw e
+        } catch (e: Exception) {
+            println("QUEST_GEN: Convergent quest generation with LLM selection failed: ${e.message} - no quest will be generated")
+            throw e
+        }
+    }
+    
+    /**
+     * Save a convergent quest and update chapter stats
+     */
+    private suspend fun saveConvergentQuest(
+        questResponse: LLMQuestResponse,
+        chapterStatsList: List<ChapterStats>,
+        userId: String
+    ) {
+        // Use the first chapter as the primary chapter for the quest
+        val primaryChapter = chapterStatsList.first()
+        val chapter = chapterDao.getChapterById(primaryChapter.chapterId)
+        val subject = chapter?.let { subjectDao.getSubjectById(it.subjectId) }
+        
+        // Get all involved chapter IDs
+        val involvedChapterIds = chapterStatsList.map { it.chapterId }.joinToString(",")
+        
+        // Create and save the convergent quest
+        val quest = GeneratedQuest(
+            chapterId = primaryChapter.chapterId,
+            subjectName = "Cross-Subject", // Convergent quests span multiple subjects
+            title = questResponse.title,
+            question = questResponse.questionText,
+            questType = "convergent",
+            involvedChapterIds = involvedChapterIds,
+            userId = userId
+        )
+        
+        generatedQuestDao.insertQuest(quest)
+        
+        // Update chapter stats for all involved chapters
+        chapterStatsList.forEach { chapterStats ->
+            val updatedStats = chapterStats.copy(
+                questGenerated = true,
+                updatedAt = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
         }
     }
 }

@@ -36,7 +36,8 @@ data class LLMStrategyResponse(
  */
 data class LLMQuestResponse(
     val title: String,
-    val questionText: String
+    val questionText: String,
+    val selectedChapterIds: List<String>? = null // For convergent quests where LLM selects chapters
 )
 
 /**
@@ -45,6 +46,7 @@ data class LLMQuestResponse(
 data class ChapterInteractionData(
     val chapterId: String,
     val chapterTitle: String,
+    val chapterDescription: String,
     val subject: String,
     val interestScore: Double,
     val notes: List<String> = emptyList(),

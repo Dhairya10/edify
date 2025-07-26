@@ -13,6 +13,9 @@ interface ChatDao {
     @Query("SELECT * FROM chat_messages WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     fun getMessagesBySession(sessionId: String): Flow<List<ChatMessage>>
     
+    @Query("SELECT * FROM chat_messages WHERE chapterId = :chapterId ORDER BY timestamp ASC")
+    suspend fun getMessagesByChapter(chapterId: String): List<ChatMessage>
+    
     @Query("SELECT * FROM chat_messages WHERE id = :id")
     suspend fun getMessageById(id: String): ChatMessage?
     

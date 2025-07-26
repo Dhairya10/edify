@@ -56,7 +56,7 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `chapter_stats` (`id`,`chapterId`,`userId`,`visitCount`,`noteCount`,`questGenerated`,`revisionHistory`,`chatHistory`,`lastVisited`,`createdAt`,`updatedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `chapter_stats` (`id`,`chapterId`,`userId`,`visitCount`,`noteCount`,`questGenerated`,`divergentQuestGenerated`,`revisionHistory`,`chatHistory`,`lastVisited`,`createdAt`,`updatedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -77,21 +77,23 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
         statement.bindLong(5, entity.getNoteCount());
         final int _tmp = entity.getQuestGenerated() ? 1 : 0;
         statement.bindLong(6, _tmp);
-        final String _tmp_1 = __chapterStatsConverters.fromRevisionEntryList(entity.getRevisionHistory());
-        if (_tmp_1 == null) {
-          statement.bindNull(7);
-        } else {
-          statement.bindString(7, _tmp_1);
-        }
-        final String _tmp_2 = __chapterStatsConverters.fromChatEntryList(entity.getChatHistory());
+        final int _tmp_1 = entity.getDivergentQuestGenerated() ? 1 : 0;
+        statement.bindLong(7, _tmp_1);
+        final String _tmp_2 = __chapterStatsConverters.fromRevisionEntryList(entity.getRevisionHistory());
         if (_tmp_2 == null) {
           statement.bindNull(8);
         } else {
           statement.bindString(8, _tmp_2);
         }
-        statement.bindLong(9, entity.getLastVisited());
-        statement.bindLong(10, entity.getCreatedAt());
-        statement.bindLong(11, entity.getUpdatedAt());
+        final String _tmp_3 = __chapterStatsConverters.fromChatEntryList(entity.getChatHistory());
+        if (_tmp_3 == null) {
+          statement.bindNull(9);
+        } else {
+          statement.bindString(9, _tmp_3);
+        }
+        statement.bindLong(10, entity.getLastVisited());
+        statement.bindLong(11, entity.getCreatedAt());
+        statement.bindLong(12, entity.getUpdatedAt());
       }
     };
     this.__deletionAdapterOfChapterStats = new EntityDeletionOrUpdateAdapter<ChapterStats>(__db) {
@@ -341,6 +343,7 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           final int _cursorIndexOfVisitCount = CursorUtil.getColumnIndexOrThrow(_cursor, "visitCount");
           final int _cursorIndexOfNoteCount = CursorUtil.getColumnIndexOrThrow(_cursor, "noteCount");
           final int _cursorIndexOfQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "questGenerated");
+          final int _cursorIndexOfDivergentQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "divergentQuestGenerated");
           final int _cursorIndexOfRevisionHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "revisionHistory");
           final int _cursorIndexOfChatHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "chatHistory");
           final int _cursorIndexOfLastVisited = CursorUtil.getColumnIndexOrThrow(_cursor, "lastVisited");
@@ -371,29 +374,33 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfQuestGenerated);
             _tmpQuestGenerated = _tmp != 0;
+            final boolean _tmpDivergentQuestGenerated;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfDivergentQuestGenerated);
+            _tmpDivergentQuestGenerated = _tmp_1 != 0;
             final List<RevisionEntry> _tmpRevisionHistory;
-            final String _tmp_1;
-            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
-              _tmp_1 = null;
-            } else {
-              _tmp_1 = _cursor.getString(_cursorIndexOfRevisionHistory);
-            }
-            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_1);
-            final List<ChatEntry> _tmpChatHistory;
             final String _tmp_2;
-            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
               _tmp_2 = null;
             } else {
-              _tmp_2 = _cursor.getString(_cursorIndexOfChatHistory);
+              _tmp_2 = _cursor.getString(_cursorIndexOfRevisionHistory);
             }
-            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_2);
+            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_2);
+            final List<ChatEntry> _tmpChatHistory;
+            final String _tmp_3;
+            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+              _tmp_3 = null;
+            } else {
+              _tmp_3 = _cursor.getString(_cursorIndexOfChatHistory);
+            }
+            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_3);
             final long _tmpLastVisited;
             _tmpLastVisited = _cursor.getLong(_cursorIndexOfLastVisited);
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpDivergentQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -429,6 +436,7 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           final int _cursorIndexOfVisitCount = CursorUtil.getColumnIndexOrThrow(_cursor, "visitCount");
           final int _cursorIndexOfNoteCount = CursorUtil.getColumnIndexOrThrow(_cursor, "noteCount");
           final int _cursorIndexOfQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "questGenerated");
+          final int _cursorIndexOfDivergentQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "divergentQuestGenerated");
           final int _cursorIndexOfRevisionHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "revisionHistory");
           final int _cursorIndexOfChatHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "chatHistory");
           final int _cursorIndexOfLastVisited = CursorUtil.getColumnIndexOrThrow(_cursor, "lastVisited");
@@ -459,29 +467,33 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfQuestGenerated);
             _tmpQuestGenerated = _tmp != 0;
+            final boolean _tmpDivergentQuestGenerated;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfDivergentQuestGenerated);
+            _tmpDivergentQuestGenerated = _tmp_1 != 0;
             final List<RevisionEntry> _tmpRevisionHistory;
-            final String _tmp_1;
-            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
-              _tmp_1 = null;
-            } else {
-              _tmp_1 = _cursor.getString(_cursorIndexOfRevisionHistory);
-            }
-            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_1);
-            final List<ChatEntry> _tmpChatHistory;
             final String _tmp_2;
-            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
               _tmp_2 = null;
             } else {
-              _tmp_2 = _cursor.getString(_cursorIndexOfChatHistory);
+              _tmp_2 = _cursor.getString(_cursorIndexOfRevisionHistory);
             }
-            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_2);
+            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_2);
+            final List<ChatEntry> _tmpChatHistory;
+            final String _tmp_3;
+            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+              _tmp_3 = null;
+            } else {
+              _tmp_3 = _cursor.getString(_cursorIndexOfChatHistory);
+            }
+            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_3);
             final long _tmpLastVisited;
             _tmpLastVisited = _cursor.getLong(_cursorIndexOfLastVisited);
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpDivergentQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -523,6 +535,7 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           final int _cursorIndexOfVisitCount = CursorUtil.getColumnIndexOrThrow(_cursor, "visitCount");
           final int _cursorIndexOfNoteCount = CursorUtil.getColumnIndexOrThrow(_cursor, "noteCount");
           final int _cursorIndexOfQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "questGenerated");
+          final int _cursorIndexOfDivergentQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "divergentQuestGenerated");
           final int _cursorIndexOfRevisionHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "revisionHistory");
           final int _cursorIndexOfChatHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "chatHistory");
           final int _cursorIndexOfLastVisited = CursorUtil.getColumnIndexOrThrow(_cursor, "lastVisited");
@@ -552,29 +565,33 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfQuestGenerated);
             _tmpQuestGenerated = _tmp != 0;
+            final boolean _tmpDivergentQuestGenerated;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfDivergentQuestGenerated);
+            _tmpDivergentQuestGenerated = _tmp_1 != 0;
             final List<RevisionEntry> _tmpRevisionHistory;
-            final String _tmp_1;
-            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
-              _tmp_1 = null;
-            } else {
-              _tmp_1 = _cursor.getString(_cursorIndexOfRevisionHistory);
-            }
-            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_1);
-            final List<ChatEntry> _tmpChatHistory;
             final String _tmp_2;
-            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
               _tmp_2 = null;
             } else {
-              _tmp_2 = _cursor.getString(_cursorIndexOfChatHistory);
+              _tmp_2 = _cursor.getString(_cursorIndexOfRevisionHistory);
             }
-            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_2);
+            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_2);
+            final List<ChatEntry> _tmpChatHistory;
+            final String _tmp_3;
+            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+              _tmp_3 = null;
+            } else {
+              _tmp_3 = _cursor.getString(_cursorIndexOfChatHistory);
+            }
+            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_3);
             final long _tmpLastVisited;
             _tmpLastVisited = _cursor.getLong(_cursorIndexOfLastVisited);
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpDivergentQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }
@@ -611,6 +628,7 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           final int _cursorIndexOfVisitCount = CursorUtil.getColumnIndexOrThrow(_cursor, "visitCount");
           final int _cursorIndexOfNoteCount = CursorUtil.getColumnIndexOrThrow(_cursor, "noteCount");
           final int _cursorIndexOfQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "questGenerated");
+          final int _cursorIndexOfDivergentQuestGenerated = CursorUtil.getColumnIndexOrThrow(_cursor, "divergentQuestGenerated");
           final int _cursorIndexOfRevisionHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "revisionHistory");
           final int _cursorIndexOfChatHistory = CursorUtil.getColumnIndexOrThrow(_cursor, "chatHistory");
           final int _cursorIndexOfLastVisited = CursorUtil.getColumnIndexOrThrow(_cursor, "lastVisited");
@@ -640,29 +658,33 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfQuestGenerated);
             _tmpQuestGenerated = _tmp != 0;
+            final boolean _tmpDivergentQuestGenerated;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfDivergentQuestGenerated);
+            _tmpDivergentQuestGenerated = _tmp_1 != 0;
             final List<RevisionEntry> _tmpRevisionHistory;
-            final String _tmp_1;
-            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
-              _tmp_1 = null;
-            } else {
-              _tmp_1 = _cursor.getString(_cursorIndexOfRevisionHistory);
-            }
-            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_1);
-            final List<ChatEntry> _tmpChatHistory;
             final String _tmp_2;
-            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+            if (_cursor.isNull(_cursorIndexOfRevisionHistory)) {
               _tmp_2 = null;
             } else {
-              _tmp_2 = _cursor.getString(_cursorIndexOfChatHistory);
+              _tmp_2 = _cursor.getString(_cursorIndexOfRevisionHistory);
             }
-            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_2);
+            _tmpRevisionHistory = __chapterStatsConverters.toRevisionEntryList(_tmp_2);
+            final List<ChatEntry> _tmpChatHistory;
+            final String _tmp_3;
+            if (_cursor.isNull(_cursorIndexOfChatHistory)) {
+              _tmp_3 = null;
+            } else {
+              _tmp_3 = _cursor.getString(_cursorIndexOfChatHistory);
+            }
+            _tmpChatHistory = __chapterStatsConverters.toChatEntryList(_tmp_3);
             final long _tmpLastVisited;
             _tmpLastVisited = _cursor.getLong(_cursorIndexOfLastVisited);
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new ChapterStats(_tmpId,_tmpChapterId,_tmpUserId,_tmpVisitCount,_tmpNoteCount,_tmpQuestGenerated,_tmpDivergentQuestGenerated,_tmpRevisionHistory,_tmpChatHistory,_tmpLastVisited,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }

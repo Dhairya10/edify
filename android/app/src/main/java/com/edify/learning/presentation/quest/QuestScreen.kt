@@ -110,7 +110,9 @@ fun QuestCard(
     }
     
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp), // Added top padding to fix cropping issue
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (quest.isCompleted) Color(0xFFF0F8F0) else White

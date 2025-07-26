@@ -11,6 +11,7 @@ data class ChatMessage(
     @PrimaryKey
     val id: String,
     val sessionId: String,
+    val chapterId: String, // Added to properly track chapter for quest generation
     val content: String,
     val isFromUser: Boolean,
     val timestamp: Long = System.currentTimeMillis(),

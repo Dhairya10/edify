@@ -101,10 +101,9 @@ class RevisionViewModel @Inject constructor(
                 )
                 
                 repository.saveUserResponse(updatedResponse)
-                
-                // Track revision submission for quest personalization
-                // Trigger quest generation check after meaningful user action
-                questGenerationService.checkAndGenerateQuests("default_user")
+            
+            // Quest generation is already triggered in repository.saveUserResponse()
+            // No need to call it again here to avoid race conditions
                 
                 // Update UI state
                 val currentResponses = _uiState.value.userResponses.toMutableMap()

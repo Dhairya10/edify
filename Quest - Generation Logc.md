@@ -1,77 +1,111 @@
 # Quest Generation Logic
-This document outlines the background process for automatically generating personalized quests. This system replaces the previous "unlock" mechanic with a continuous, threshold-based generation flow.
+This document outlines the background process for automatically generating personalized quests using a **divergent-first approach** with intelligent LLM-based chapter selection.
 
 ## The Trigger
 The entire process is initiated whenever a user performs a "meaningful action" (adds a note, chats, or answers a revision question).
 
-After the action, the InterestScore for the relevant chapter is recalculated.
+After the action, the InterestScore for the relevant chapter is recalculated using the formula:
+**InterestScore = (0.15 × RevisionScore) + (0.4 × ChatScore) + (0.25 × NoteScore) + (0.2 × VisitScore)**
 
-The system then checks if InterestScore > 3.5 AND questGenerated == false.
-
-If both conditions are true, the Quest Generation Flow begins.
+The system then checks if **InterestScore > 1.0** for quest generation eligibility.
 
 ## The Quest Generation Flow
-This is a multi-step process that leverages the LLM (Gemma 3n) to make intelligent decisions.
+This is a **two-phase process** that prioritizes individual chapter exploration before cross-subject synthesis:
 
-### Step 1: Identify All High-Interest Chapters
+### Phase 1: Divergent Quest Generation (Priority)
 
-The system scans the user's ChapterStats to find all chapters that meet the InterestScore > 3.5 condition and have not yet had a quest generated.
+#### Step 1: Identify Eligible Chapters for Divergent Quests
+The system scans ChapterStats to find all chapters that meet:
+- **InterestScore > 1.0** 
+- **divergentQuestGenerated == false**
 
-### Step 2: LLM Decides the Strategy
+#### Step 2: Generate Divergent Quests
+For each eligible chapter, the system:
+1. Gathers user interaction data (notes, chat questions, revision answers)
+2. Generates a **single, deep exploration quest** for that specific chapter
+3. Marks the chapter as having a divergent quest generated
 
-The system provides the LLM with a summary of the high-interest chapters.
+**Divergent Quest Generation Prompt:**
 
-The LLM is then asked to choose the best strategy for the user at this moment.
+```
+"You are an expert educator. Your goal is to foster creativity and critical thinking. Based on the user's interactions with the chapter \"{Chapter Title}\" ({Subject}), generate a single, deep question that encourages them to think beyond the text.
 
-Chooser Prompt (System Instruction):
+Here is the user's specific engagement data:
+- Notes: {User notes}
+- Chat Questions: {User chat questions}
+- Revision Answers: {User revision answers}
 
-"You are an AI learning coach. The user is showing strong interest in the following topics: {List of chapter titles and their subjects}.
+The question should be a DIVERGENT quest that encourages deep exploration of this specific topic. It could relate to a core theme, implications, or a 'what if' scenario.
 
-Your goal is to foster advanced thinking skills. Choose one of the following strategies:
+IMPORTANT: You MUST respond with ONLY valid JSON in this exact format:
+{\"title\": \"A Creative Title for the Quest\", \"questionText\": \"Your generated question.\"}
 
-'Convergent': If you see a clear and powerful opportunity to connect ideas between two different subjects.
+Do not include any other text, explanations, or formatting. Only return the JSON object."
+```
 
-'Divergent': If it's better to generate a very deep and thought-provoking question about a single topic.
+### Phase 2: Convergent Quest Generation (Secondary)
 
-Respond with only the chosen strategy name in JSON format: {\"strategy\": \"Convergent\", \"chapters\": [\"chapterId_1\", \"chapterId_2\"]} or {\"strategy\": \"Divergent\", \"chapter\": \"chapterId_1\"}."
+#### Step 3: Check for Convergent Quest Opportunity
+If **no new divergent quests were generated** in Phase 1, the system proceeds to convergent quest generation.
 
-### Step 3: Generate the Quest
+#### Step 4: LLM-Based Chapter Selection for Convergent Quests
+The system:
+1. Identifies all chapters with **InterestScore > 1.0**
+2. If ≤10 chapters: passes all to LLM
+3. If >10 chapters: randomly samples 10 chapters
+4. Presents chapter options to LLM with metadata (title, subject, interest score, user engagement data)
 
-Based on the LLM's chosen strategy, the system proceeds with one of the following paths.
+#### Step 5: Generate Convergent Quest
+The LLM intelligently selects **exactly 2 chapters** for optimal cross-subject synthesis and generates a convergent question.
 
-#### Path A: Convergent Thinking Quest
-Goal: Generate a single quest that connects two chapters, often from different subjects.
+**Convergent Quest Generation Prompt:**
 
-The system gathers all user interaction data (notes, chats, revision answers) for the two chapters chosen by the LLM.
+```
+"You are a curriculum designer specializing in interdisciplinary studies. Your task is to:
 
-Convergent Generation Prompt:
+1. SELECT exactly 2 chapters from the provided options that offer the best opportunity for meaningful cross-subject synthesis
+2. GENERATE a thought-provoking convergent question that connects these chapters
 
-"You are a curriculum designer specializing in interdisciplinary studies. Generate a single, thought-provoking question that connects the core themes of {Chapter 1 Summary} ({Subject 1}) and {Chapter 2 Summary} ({Subject 2}).
+Available chapters:
+{List of up to 10 eligible chapters with metadata: ID, title, subject, interest score, user engagement data}
 
-Here is the user's specific engagement data to guide you:
+Past quest questions for context (to avoid repetition):
+{Past quest questions for involved chapters}
 
-Chapter 1 Data: {User interaction data for Chapter 1}
+IMPORTANT: You MUST respond with ONLY valid JSON in this exact format:
+{
+  \"selectedChapterIds\": [\"chapterId_1\", \"chapterId_2\"],
+  \"title\": \"A Creative Title for the Quest\",
+  \"questionText\": \"Your generated convergent question connecting the two selected chapters.\"
+}
 
-Chapter 2 Data: {User interaction data for Chapter 2}
+Do not include any other text, explanations, or formatting. Only return the JSON object."
+```
 
-Respond in JSON format: {\"title\": \"A Creative Title for the Quest\", \"questionText\": \"Your generated question.\"}"
+## Finalization Process
 
-#### Path B: Divergent Thinking Quest
-Goal: Generate a single, deep quest about one chapter.
+### For Divergent Quests:
+1. Save quest to database with `questType = "divergent"` and single chapter ID
+2. Update `ChapterStats.divergentQuestGenerated = true` for the chapter
+3. Quest appears on user's Quest Board
 
-The system gathers all user interaction data for the single chapter chosen by the LLM.
+### For Convergent Quests:
+1. Save quest to database with `questType = "convergent"` and selected chapter IDs
+2. Update `ChapterStats.questGenerated = true` for both involved chapters
+3. Quest appears on user's Quest Board
 
-Divergent Generation Prompt:
+## Algorithm Flow Summary
 
-"You are an expert educator. Your goal is to foster creativity and critical thinking. Based on the user's interactions with the chapter {Chapter Summary} ({Subject}), generate a single, deep question that encourages them to think beyond the text. The question could relate to a core theme, a character's motivation, or a 'what if' scenario.
+```
+User Action → Interest Score Recalculation → Quest Generation Check
+    ↓
+Phase 1: Generate Divergent Quests (for eligible chapters without divergent quests)
+    ↓
+If no divergent quests generated:
+    ↓
+Phase 2: Generate Convergent Quest (LLM selects 2 chapters from up to 10 options)
+    ↓
+Save quest and update chapter tracking
+```
 
-Here is the user's specific engagement data: {User interaction data for the chapter}
-
-Respond in JSON format: {\"title\": \"A Creative Title for the Quest\", \"questionText\": \"Your generated question.\"}"
-
-## Finalization
-Save the Quest: The newly generated quest (title and question text) is saved to the user's Quest Board.
-
-Update Flags: The questGenerated flag is set to true for the chapter(s) used in the generation. This is critical to prevent generating duplicate quests from the same high-interest signals.
-
-This new system creates a sophisticated and autonomous learning companion that intelligently adapts to the user's journey, perfectly aligning with your vision.
+This system creates an intelligent, adaptive learning companion that prioritizes deep individual exploration while fostering meaningful cross-subject connections through LLM-driven chapter selection.

@@ -297,6 +297,7 @@ class DeveloperModeViewModel @Inject constructor(
                 data = mapOf(
                     "id" to message.id,
                     "sessionId" to message.sessionId,
+                    "chapterId" to message.chapterId,
                     "content" to message.content,
                     "isFromUser" to message.isFromUser,
                     "timestamp" to message.timestamp,
@@ -408,6 +409,7 @@ class DeveloperModeViewModel @Inject constructor(
         val message = ChatMessage(
             id = data["id"]?.toString() ?: "",
             sessionId = data["sessionId"]?.toString() ?: "default_session",
+            chapterId = data["chapterId"]?.toString() ?: "default_chapter",
             content = data["content"]?.toString() ?: "",
             isFromUser = data["isFromUser"]?.toString()?.toBoolean() ?: false,
             timestamp = data["timestamp"]?.toString()?.toLongOrNull() ?: System.currentTimeMillis(),
@@ -502,6 +504,7 @@ class DeveloperModeViewModel @Inject constructor(
         val message = ChatMessage(
             id = data["id"]?.toString() ?: "",
             sessionId = data["sessionId"]?.toString() ?: "default_session",
+            chapterId = data["chapterId"]?.toString() ?: "default_chapter",
             content = data["content"]?.toString() ?: "",
             isFromUser = data["isFromUser"]?.toString()?.toBoolean() ?: false,
             timestamp = data["timestamp"]?.toString()?.toLongOrNull() ?: System.currentTimeMillis(),

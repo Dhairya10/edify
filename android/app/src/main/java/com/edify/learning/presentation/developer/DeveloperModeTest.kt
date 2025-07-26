@@ -28,7 +28,7 @@ object DeveloperModeTest {
             "Subject" to listOf("id", "name", "description", "iconName"),
             "Chapter" to listOf("id", "subjectId", "title", "description", "order", "jsonFileName"),
             "Note" to listOf("id", "subjectId", "chapterId", "title", "content", "createdAt", "updatedAt"),
-            "ChatMessage" to listOf("id", "message", "isFromUser", "timestamp", "messageType", "attachmentPath"),
+            "ChatMessage" to listOf("id", "sessionId", "chapterId", "content", "isFromUser", "timestamp", "messageType", "attachmentPath"),
             "UserResponse" to listOf("id", "chapterId", "questionId", "userAnswer", "isCorrect", "timestamp"),
             "ChapterStats" to listOf("id", "chapterId", "visitCount", "noteCount", "lastVisited", "totalTimeSpent"),
             "UserProfile" to listOf("userId", "hasUnlockedPersonalizedQuests", "createdAt", "updatedAt")

@@ -12,6 +12,8 @@ data class GeneratedQuest(
     val subjectName: String,
     val title: String,
     val question: String,
+    val questType: String = "divergent", // "divergent" or "convergent"
+    val involvedChapterIds: String = "", // Comma-separated list of chapter IDs for convergent quests
     val userId: String = "default_user",
     val isCompleted: Boolean = false,
     val userAnswer: String? = null,

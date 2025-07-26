@@ -98,6 +98,7 @@ class ChatViewModel @Inject constructor(
                 val userMessage = ChatMessage(
                     id = UUID.randomUUID().toString(),
                     sessionId = currentSessionId,
+                    chapterId = currentChapterId,
                     content = input,
                     isFromUser = true,
                     messageType = if (image != null) MessageType.IMAGE else MessageType.TEXT,
@@ -127,6 +128,7 @@ class ChatViewModel @Inject constructor(
                         val gemmaMessage = ChatMessage(
                             id = UUID.randomUUID().toString(),
                             sessionId = currentSessionId,
+                            chapterId = currentChapterId,
                             content = gemmaResponse,
                             isFromUser = false,
                             messageType = MessageType.TEXT
@@ -152,7 +154,8 @@ class ChatViewModel @Inject constructor(
                 val userMessage = ChatMessage(
                     id = UUID.randomUUID().toString(),
                     sessionId = currentSessionId,
-                    content = "Explain: \"$selectedText\"",
+                    chapterId = currentChapterId, // Include chapterId for quest generation
+                    content = "Please explain: $selectedText",
                     isFromUser = true,
                     messageType = MessageType.TEXT
                 )
@@ -174,6 +177,7 @@ class ChatViewModel @Inject constructor(
                         val gemmaMessage = ChatMessage(
                             id = UUID.randomUUID().toString(),
                             sessionId = currentSessionId,
+                            chapterId = currentChapterId, // Include chapterId for consistency
                             content = explanation,
                             isFromUser = false,
                             messageType = MessageType.TEXT

@@ -136,15 +136,6 @@ fun QuestDetailContent(
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        // Subject header
-        Text(
-            text = quest.subjectName,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextSecondary,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-        
         // Question display
         Text(
             text = quest.question,
@@ -170,7 +161,9 @@ fun QuestDetailContent(
             },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f)
+                unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f),
+                focusedTextColor = TextPrimary,  // Ensure text is visible (dark color)
+                unfocusedTextColor = TextPrimary  // Ensure text is visible (dark color)
             ),
             shape = RoundedCornerShape(12.dp),
             maxLines = 10,

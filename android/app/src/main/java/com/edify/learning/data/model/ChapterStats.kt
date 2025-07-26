@@ -17,6 +17,7 @@ data class ChapterStats(
     val visitCount: Int = 0,
     val noteCount: Int = 0,
     val questGenerated: Boolean = false, // Flag to track if quest has been generated for this chapter
+    val divergentQuestGenerated: Boolean = false, // Flag to track if divergent quest has been generated for this chapter
     val revisionHistory: List<RevisionEntry> = emptyList(),
     val chatHistory: List<ChatEntry> = emptyList(),
     val lastVisited: Long = System.currentTimeMillis(),

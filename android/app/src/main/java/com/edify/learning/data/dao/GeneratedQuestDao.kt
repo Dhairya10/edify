@@ -39,4 +39,13 @@ interface GeneratedQuestDao {
     
     @Query("DELETE FROM generated_quests")
     suspend fun deleteAllQuests()
+    
+    @Query("SELECT * FROM generated_quests WHERE chapterId = :chapterId AND userId = :userId ORDER BY createdAt DESC")
+    suspend fun getQuestsByChapterId(chapterId: String, userId: String = "default_user"): List<GeneratedQuest>
+    
+    @Query("SELECT * FROM generated_quests WHERE questType = :questType AND userId = :userId ORDER BY createdAt DESC")
+    suspend fun getQuestsByType(questType: String, userId: String = "default_user"): List<GeneratedQuest>
+    
+    @Query("SELECT * FROM generated_quests WHERE (chapterId IN (:chapterIds) OR involvedChapterIds LIKE '%' || :chapterId || '%') AND userId = :userId ORDER BY createdAt DESC")
+    suspend fun getPastQuestsForChapters(chapterIds: List<String>, chapterId: String, userId: String = "default_user"): List<GeneratedQuest>
 }

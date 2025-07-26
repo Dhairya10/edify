@@ -104,13 +104,11 @@ class LearningRepository @Inject constructor(
         // Trigger quest generation after chat interaction
         if (message.isFromUser) {
             // Only trigger on user questions, not AI responses
-            val chapter = getChapterById(message.sessionId)
-            if (chapter != null) {
-                updateChapterStatsForChat(chapter.id, message.content)
-                // Call in a coroutine-friendly way
-                withContext(Dispatchers.IO) {
-                    questGenerationService.checkAndGenerateQuests()
-                }
+            // Use message.chapterId directly instead of looking up by sessionId
+            updateChapterStatsForChat(message.chapterId, message.content)
+            // Call in a coroutine-friendly way
+            withContext(Dispatchers.IO) {
+                questGenerationService.checkAndGenerateQuests()
             }
         }
     }
