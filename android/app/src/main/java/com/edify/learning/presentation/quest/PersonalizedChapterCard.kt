@@ -63,21 +63,30 @@ fun PersonalizedChapterCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    // Subject name
-                    Text(
-                        text = chapter.subject,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = subjectColor,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    
                     // Chapter title
                     Text(
                         text = chapter.chapterTitle,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = textColor
+                        color = textColor,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    // Generated question with character limit
+                    val questionText = chapter.generatedQuestion ?: "Explore this chapter through personalized questions."
+                    val truncatedQuestion = if (questionText.length > 120) {
+                        questionText.take(120) + "..."
+                    } else {
+                        questionText
+                    }
+                    
+                    Text(
+                        text = truncatedQuestion,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = subjectColor,
+                        lineHeight = 20.sp,
+                        modifier = Modifier.height(60.dp) // Fixed height for consistent card height
                     )
                 }
                 

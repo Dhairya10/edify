@@ -10,6 +10,8 @@ import com.edify.learning.data.model.*
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.coroutineContext
 import java.util.*
 import javax.inject.Inject
@@ -28,30 +30,48 @@ class QuestGenerationService @Inject constructor(
     
     private val gson = Gson()
     
+    // Synchronization to prevent concurrent quest generation
+    private val questGenerationMutex = kotlinx.coroutines.sync.Mutex()
+    private var isGenerating = false
+    
     /**
      * Main trigger method called after every meaningful user action
      * Implements new algorithm: Generate divergent quests first, then convergent quests
      * Uses GlobalScope to survive navigation and lifecycle changes
+     * Synchronized to prevent concurrent quest generation causing duplicates
      */
     fun checkAndGenerateQuests(userId: String = "default_user") {
         // Use GlobalScope to ensure quest generation survives navigation/lifecycle changes
         GlobalScope.launch(Dispatchers.IO) {
-            println("QUEST_GEN: Starting quest generation check...")
-            try {
-                // Add timeout to prevent indefinite hanging
-                withTimeout(300000) { // 5 minute timeout
-                    generateQuestsInternal(userId)
+            // Check if quest generation is already in progress
+            if (isGenerating) {
+                println("QUEST_GEN: Quest generation already in progress, skipping...")
+                return@launch
+            }
+            
+            // Use mutex to ensure only one quest generation process runs at a time
+            questGenerationMutex.withLock {
+                isGenerating = true
+                println("QUEST_GEN: Starting quest generation check...")
+                try {
+                    // Add timeout to prevent indefinite hanging
+                    withTimeout(300000) { // 5 minute timeout
+                        generateQuestsInternal(userId)
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    println("QUEST_GEN: Quest generation timed out after 5 minutes")
+                    handleQuestGenerationFailure(userId, "Timeout")
+                } catch (e: CancellationException) {
+                    println("QUEST_GEN: Quest generation was cancelled: ${e.message}")
+                    // Don't treat cancellation as an error - it's intentional
+                } catch (e: Exception) {
+                    println("QUEST_GEN: Error in quest generation: ${e.message}")
+                    e.printStackTrace()
+                    handleQuestGenerationFailure(userId, e.message ?: "Unknown error")
+                } finally {
+                    isGenerating = false
+                    println("QUEST_GEN: Quest generation process completed.")
                 }
-            } catch (e: TimeoutCancellationException) {
-                println("QUEST_GEN: Quest generation timed out after 5 minutes")
-                handleQuestGenerationFailure(userId, "Timeout")
-            } catch (e: CancellationException) {
-                println("QUEST_GEN: Quest generation was cancelled: ${e.message}")
-                // Don't treat cancellation as an error - it's intentional
-            } catch (e: Exception) {
-                println("QUEST_GEN: Error in quest generation: ${e.message}")
-                e.printStackTrace()
-                handleQuestGenerationFailure(userId, e.message ?: "Unknown error")
             }
         }
     }
@@ -326,7 +346,8 @@ class QuestGenerationService @Inject constructor(
                 "questionText": "Your generated convergent question connecting the two selected chapters."
             }
             
-            Use the exact Chapter IDs from the list above. Do not include any other text, explanations, or formatting. Only return the JSON object.
+            Use the exact Chapter IDs from the list above. Do not include any other text, explanations, or formatting. Only return the JSON object. 
+            Do not mention chapter IDs anywhere in the text. Try to come up with an innovative title that can combine the topics creatively.
         """.trimIndent()
         
         return try {

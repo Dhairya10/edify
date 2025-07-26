@@ -139,11 +139,19 @@ fun QuestCard(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     
+                    // Apply character limit to question text
+                    val truncatedQuestion = if (quest.question.length > 120) {
+                        quest.question.take(120) + "..."
+                    } else {
+                        quest.question
+                    }
+                    
                     Text(
-                        text = quest.question,
+                        text = truncatedQuestion,
                         fontSize = 14.sp,
                         color = TextSecondary,
-                        lineHeight = 20.sp
+                        lineHeight = 20.sp,
+                        modifier = Modifier.height(60.dp) // Fixed height for consistent card height
                     )
                 }
                 

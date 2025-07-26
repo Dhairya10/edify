@@ -21,19 +21,17 @@ The system scans ChapterStats to find all chapters that meet:
 
 #### Step 2: Generate Divergent Quests
 For each eligible chapter, the system:
-1. Gathers user interaction data (notes, chat questions, revision answers)
+1. Gathers chapter information (title, subject, and description)
 2. Generates a **single, deep exploration quest** for that specific chapter
 3. Marks the chapter as having a divergent quest generated
 
 **Divergent Quest Generation Prompt:**
 
 ```
-"You are an expert educator. Your goal is to foster creativity and critical thinking. Based on the user's interactions with the chapter \"{Chapter Title}\" ({Subject}), generate a single, deep question that encourages them to think beyond the text.
+"You are an expert educator. Your goal is to foster creativity and critical thinking. Generate a single, deep question for the chapter "{Chapter Title}" ({Subject}) that encourages students to think beyond the text.
 
-Here is the user's specific engagement data:
-- Notes: {User notes}
-- Chat Questions: {User chat questions}
-- Revision Answers: {User revision answers}
+Chapter Summary: {Chapter Description}
+
 
 The question should be a DIVERGENT quest that encourages deep exploration of this specific topic. It could relate to a core theme, implications, or a 'what if' scenario.
 
@@ -53,7 +51,7 @@ The system:
 1. Identifies all chapters with **InterestScore > 1.0**
 2. If ≤10 chapters: passes all to LLM
 3. If >10 chapters: randomly samples 10 chapters
-4. Presents chapter options to LLM with metadata (title, subject, interest score, user engagement data)
+4. Presents chapter options to LLM with metadata (title, subject, interest score)
 
 #### Step 5: Generate Convergent Quest
 The LLM intelligently selects **exactly 2 chapters** for optimal cross-subject synthesis and generates a convergent question.
@@ -67,7 +65,7 @@ The LLM intelligently selects **exactly 2 chapters** for optimal cross-subject s
 2. GENERATE a thought-provoking convergent question that connects these chapters
 
 Available chapters:
-{List of up to 10 eligible chapters with metadata: ID, title, subject, interest score, user engagement data}
+{List of up to 10 eligible chapters with metadata: ID, title, subject, interest score}
 
 Past quest questions for context (to avoid repetition):
 {Past quest questions for involved chapters}

@@ -93,6 +93,10 @@ class QuestRepository @Inject constructor(
             val completedQuests = generatedQuestDao.getCompletedQuests(userId)
             val completedChapterIds = completedQuests.first().map { quest -> quest.chapterId }.toSet()
             
+            // Get all generated quests to display questions on cards
+            val allGeneratedQuests = generatedQuestDao.getAllQuests(userId).first()
+            val questsByChapter = allGeneratedQuests.groupBy { it.chapterId }
+            
             // Convert to PersonalizedChapterQuest objects
             val personalizedQuests = mutableListOf<PersonalizedChapterQuest>()
             
@@ -116,13 +120,17 @@ class QuestRepository @Inject constructor(
                             else -> QuestState.LOCKED
                         }
                         
+                        // Get the most recent generated question for this chapter
+                        val chapterQuests = questsByChapter[chapter.id] ?: emptyList()
+                        val latestQuest = chapterQuests.maxByOrNull { it.createdAt }
+                        
                         personalizedQuests.add(
                             PersonalizedChapterQuest(
                                 chapterId = chapter.id,
                                 chapterTitle = chapter.title,
                                 subject = subject.name,
                                 subjectIconRes = subjectIconRes,
-                                generatedQuestion = null,
+                                generatedQuestion = latestQuest?.question,
                                 interestScore = stats.calculateInterestScore(),
                                 lastVisited = stats.lastVisited,
                                 state = questState

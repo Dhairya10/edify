@@ -35,7 +35,10 @@ data class ChapterStats(
         } else 0.0
         
         val chatScore = if (chatHistory.isNotEmpty()) {
-            chatHistory.map { it.gemmaAnalysis?.curiosityScore?.toDouble() ?: 0.0 }.average()
+            chatHistory.map { 
+                // Use Gemma analysis if available, otherwise give base score for engagement
+                it.gemmaAnalysis?.curiosityScore?.toDouble() ?: 2.5 // Base score when analysis disabled
+            }.average()
         } else 0.0
         
         val noteScore = kotlin.math.min(noteCount.toDouble(), 5.0)
