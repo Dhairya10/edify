@@ -8,7 +8,6 @@ import com.edify.learning.data.model.NoteType
 import com.edify.learning.data.model.ContentItem
 import com.edify.learning.data.repository.LearningRepository
 import com.edify.learning.data.repository.QuestRepository
-import com.edify.learning.data.repository.UserAction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,11 +50,7 @@ class ChapterViewModel @Inject constructor(
                     repository.updateLastReadChapter(chapter.subjectId, chapterId)
                     
                     // Track chapter visit for quest personalization
-                    questRepository.updateChapterStats(
-                        chapterId = chapterId,
-                        userId = "default_user", // TODO: Get actual user ID
-                        action = UserAction.Visit
-                    )
+                    repository.updateChapterVisit(chapterId, "default_user")
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -146,12 +141,8 @@ class ChapterViewModel @Inject constructor(
                 
                 repository.insertNote(note)
                 
-                // Track note creation for quest personalization
-                questRepository.updateChapterStats(
-                    chapterId = chapter.id,
-                    userId = "default_user", // TODO: Get actual user ID
-                    action = UserAction.SaveNote
-                )
+                // Note creation is already tracked in repository.insertNote()
+                // which calls updateChapterStatsForNote internally
                 
                 _uiState.value = _uiState.value.copy(
                     message = "Note added successfully"

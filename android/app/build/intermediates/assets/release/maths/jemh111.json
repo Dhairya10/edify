@@ -1,0 +1,183 @@
+{
+    "id": "0810463d-9017-4ba1-99a2-b93d9203a685",
+    "title": "Areas Related to Circles",
+    "source_file": "/home/content/books/maths/jemh111.pdf",
+    "filename": "jemh111.pdf",
+    "subject": "maths",
+    "conversion_timestamp": "2025-07-18T12:05:37.445906",
+    "processing_time_seconds": 6.99,
+    "metadata": "md",
+    "content": {
+        "markdown_text": "![](_page_0_Picture_0.jpeg)\n\n# **AREAS RELATED TO CIRCLES**\n\n## **11.1 Areas of Sector and Segment of a Circle**\n\nYou have already come across the terms *sector* and *segment* of a circle in your earlier classes. Recall that the portion (or part) of the circular region enclosed by two radii and the corresponding arc is called a *sector* of the circle and the portion (or part) of the circular region enclosed between a chord and the corresponding arc is called a *segment* of the circle. Thus, in Fig. 11.1, shaded region OAPB is a *sector* of the circle with centre O. \u2220 AOB is called the\n\n*angle* of the sector. Note that in this figure, unshaded region OAQB is also a sector of the circle. For obvious reasons, OAPB is called the *minor sector* and OAQB is called the *major sector*. You can also see that angle of the major sector is 360\u00b0 \u2013 \u2220 AOB.\n\nNow, look at Fig. 11.2 in which AB is a chord of the circle with centre O. So, shaded region APB is a segment of the circle. You can also note that unshaded region AQB is another segment of the circle formed by the chord AB. For obvious reasons, APB is called the *minor segment* and AQB is called the *major segment*.\n\n**Remark :** When we write 'segment' and 'sector' we will mean the 'minor segment' and the 'minor sector' respectively, unless stated otherwise.\n\n![](_page_0_Figure_7.jpeg)\n\n**11**\n\n![](_page_0_Figure_8.jpeg)\n\n![](_page_0_Picture_9.jpeg)\n\n#### AREAS RELATED TO CIRCLES 155\n\nNow with this knowledge, let us try to find some relations (or formulae) to calculate their areas.\n\nLet OAPB be a sector of a circle with centre O and radius *r* (see Fig. 11.3). Let the degree measure of \u00d0 AOB be q.\n\nYou know that area of a circle (in fact of a circular region or disc) is p*r* 2 .\n\nIn a way, we can consider this circular region to be a sector forming an angle of 360\u00b0 (i.e., of degree measure 360) at the centre O. Now by applying the Unitary Method, we can arrive at the area of the sector OAPB as follows:\n\n![](_page_1_Figure_5.jpeg)\n\nWhen degree measure of the angle at the centre is 360, area of the sector = p*r* 2\n\nSo, when the degree measure of the angle at the centre is 1, area of the sector = 2 *r*\n\nTherefore, when the degree measure of the angle at the centre is q, area of the\n\n$$\nsector = \\frac{\\pi r^2}{360} \\times \\theta = \\frac{\\theta}{360} \\times \\pi r^2.\n$$\n\n360\n\nThus, we obtain the following relation (or formula) for area of a sector of a circle:\n\nArea of the sector of angle \n$$\n\\theta = \\frac{\\theta}{360} \\times \\pi r^2\n$$\n,\n\nwhere *r* is the radius of the circle and q the angle of the sector in degrees.\n\nNow, a natural question arises : Can we find the length of the arc APB corresponding to this sector? Yes. Again, by applying the Unitary Method and taking the whole length of the circle (of angle 360\u00b0) as 2p*r*, we can obtain the required\n\nlength of the arc APB as \n$$\n\\frac{\\theta}{360} \\times 2\\pi r\n$$\n.\n\nSo, **length of an arc of a sector of angle** q **= 2 360** *r* .\n\n![](_page_1_Figure_16.jpeg)\n\nNow let us take the case of the area of the segment APB of a circle with centre O and radius *r* (see Fig. 11.4). You can see that :\n\nArea of the segment APB = Area of the sector OAPB \u2013 Area of OAB\n\n$$\n= \\frac{\\theta}{360} \\times \\pi r^2 - \\text{area of } \\Delta \\text{OAB}\n$$\n\n**Note :** From Fig. 11.3 and Fig. 11.4 respectively, you can observe that:\n\nArea of the major sector OAQB = *r*<sup>2</sup> \u2013 Area of the minor sector OAPB and Area of major segment AQB = *r*<sup>2</sup> \u2013 Area of the minor segment APB Let us now take some examples to understand these concepts (or results).\n\n![](_page_2_Figure_6.jpeg)\n\nArea of the corresponding major sector\n\n$$\n= \\pi r^2 - \\text{area of sector OAPB}\n$$\n  \n= (3.14 \u00d7 16 \u2013 4.19) cm<sup>2</sup>  \n= 46.05 cm<sup>2</sup> = 46.1 cm<sup>2</sup>(approx.)\n\n**Alternatively,** area of the major sector = <sup>2</sup> (360 \u2013 ) 360 *r*\n\n$$\n= \\left(\\frac{360 - 30}{360}\\right) \\times 3.14 \\times 16 \\text{ cm}^2\n$$\n$$\n= \\frac{330}{360} \\times 3.14 \\times 16 \\text{ cm}^2 = 46.05 \\text{ cm}^2\n$$\n$$\n= 46.1 \\text{ cm}^2 \\text{ (approx.)}\n$$\n\n**Example 2 :** Find the area of the segment AYB shown in Fig. 11.6, if radius of the circle is 21 cm and\n\n$$\n\\angle\n$$\nAOB = 120\u00b0. (Use  $\\pi = \\frac{22}{7}$ )\n\n![](_page_3_Figure_3.jpeg)\n\n**Solution :** Area of the segment AYB\n\n= Area of sector OAYB \u2013 Area of OAB (1)\n\nNow, area of the sector OAYB = \n$$\n\\frac{120}{360} \\times \\frac{22}{7} \\times 21 \\times 21 \\text{ cm}^2 = 462 \\text{ cm}^2\n$$\n (2)\n\nFor finding the area of OAB, draw OM AB as shown in Fig. 11.7. Note that OA = OB. Therefore, by RHS congruence, AMO BMO.\n\nSo, M is the mid-point of AB and AOM = BOM = <sup>1</sup> 120 60 2 .\n\n| Let             | OM =<br>x cm                                                                      |               |\n|-----------------|-----------------------------------------------------------------------------------|---------------|\n| So, from \uf044 OMA, | OM<br>=<br>cos 60\u00b0<br>OA                                                          |               |\n| or,             | 1<br>1<br>x<br>\uf0e6<br>\uf0f6<br>cos<br>60\u00b0<br>=<br>=<br>\uf0e7<br>\uf0f7<br>2<br>2<br>21<br>\uf0e8<br>\uf0f8 | Fig. 11.7     |\n| or,             | 21<br>x =<br>2                                                                    |               |\n| So,             | 21<br>OM =<br>cm<br>2                                                             |               |\n| Also,           | AM<br>3<br>=<br>sin 60\u00b0 =<br>OA<br>2                                              |               |\n| So,             | 21<br>3<br>AM =<br>cm<br>2                                                        |               |\n| Therefore,      | 2<br>21<br>3<br>\uf0b4<br>cm<br>=<br>AB =<br>2 AM =<br>2                               | 21<br>3<br>cm |\n\nSo, area of \n$$\n\\triangle OAB = \\frac{1}{2} AB \\times OM = \\frac{1}{2} \\times 21\\sqrt{3} \\times \\frac{21}{2}\n$$\n cm<sup>2</sup>  \n$$\n= \\frac{441}{4} \\sqrt{3}\n$$\n cm<sup>2</sup> (3)\n\nTherefore, area of the segment AYB = <sup>441</sup> <sup>2</sup> 462 3 cm 4 [From (1), (2) and (3)]\n\n$$\n= \\frac{21}{4} (88 - 21\\sqrt{3}) \\text{cm}^2\n$$\n\n### **EXERCISE 11.1**\n\nUnless stated otherwise, use = <sup>22</sup> 7 .\n\n- **1.** Find the area of a sector of a circle with radius 6 cm if angle of the sector is 60\u00b0.\n- **2.** Find the area of a quadrant of a circle whose circumference is 22 cm.\n- **3.** The length of the minute hand of a clock is 14 cm. Find the area swept by the minute hand in 5 minutes.\n- **4.** A chord of a circle of radius 10 cm subtends a right angle at the centre. Find the area of the corresponding : (i) minor segment (ii) major sector. (Use = 3.14)\n- **5.** In a circle of radius 21 cm, an arc subtends an angle of 60\u00b0 at the centre. Find:\n\n(i) the length of the arc (ii) area of the sector formed by the arc\n\n- (iii) area of the segment formed by the corresponding chord\n- **6.** A chord of a circle of radius 15 cm subtends an angle of 60\u00b0 at the centre. Find the areas of the corresponding minor and major segments of the circle.\n\n(Use = 3.14 and 3 = 1.73)\n\n**7.** A chord of a circle of radius 12 cm subtends an angle of 120\u00b0 at the centre. Find the area of the corresponding segment of the circle.\n\n(Use = 3.14 and 3 = 1.73)\n\n**8.** A horse is tied to a peg at one corner of a square shaped grass field of side 15 m by means of a 5 m long rope (see Fig. 11.8). Find **Fig. 11.8**\n\n![](_page_4_Figure_19.jpeg)\n\n(i) the area of that part of the field in which the horse can graze.\n\n(ii) the increase in the grazing area if the rope were 10 m long instead of 5 m. (Use = 3.14)\n\n- **9.** A brooch is made with silver wire in the form of a circle with diameter 35 mm. The wire is also used in making 5 diameters which divide the circle into 10 equal sectors as shown in Fig. 11.9. Find :\n  - (i) the total length of the silver wire required.\n  - (ii) the area of each sector of the brooch.\n- **10.** An umbrella has 8 ribs which are equally spaced (see Fig. 11.10). Assuming umbrella to be a flat circle of radius 45 cm, find the area between the two consecutive ribs of the umbrella.\n- **11.** A car has two wipers which do not overlap. Each wiper has a blade of length 25 cm sweeping through an angle of 115\u00b0. Find the total area cleaned at each sweep of the blades.\n- **12.** To warn ships for underwater rocks, a lighthouse spreads a red coloured light over a sector of angle 80\u00b0 to a distance of 16.5 km. Find the area of the sea over which the ships are warned. (Use = 3.14)\n- **13.** A round table cover has six equal designs as shown in Fig. 11.11. If the radius of the cover is 28 cm, find the cost of making the designs at the rate of ` 0.35 per cm2 . (Use 3 = 1.7)\n- **14.** Tick the correct answer in the following : Area of a sector of angle *p* (in degrees) of a circle with radius R is\n\n![](_page_5_Figure_11.jpeg)\n\n$$\n\\Delta\n$$\n\n**Fig. 11.9**\n\n**Fig. 11.10**\n\n![](_page_5_Picture_14.jpeg)\n\n**Fig. 11.11**\n\n## **11.2 Summary**\n\nIn this chapter, you have studied the following points :\n\n**1.** Length of an arc of a sector of a circle with radius *r* and angle with degree measure is\n\n$$\n\\frac{\\theta}{360} \\times 2\\pi r.\n$$\n\n- **2.** Area of a sector of a circle with radius *r* and angle with degree measure is <sup>2</sup> <sup>360</sup> *<sup>r</sup>*\n- **3.** Area of segment of a circle\n  - = Area of the corresponding sector Area of the corresponding triangle.",
+        "structured_data": {
+            "error": "No structured data available"
+        },
+        "images": [
+            {
+                "name": "_page_0_Picture_0.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_0_Picture_0.jpeg",
+                "size_bytes": 11868,
+                "description": "This image shows a QR code with the identifier \"1062CH12\" below it. The QR code likely provides digital access to additional resources, practice problems, or supplementary materials related to the chapter on \"Areas Related to Circles\" in this mathematics textbook.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_0_Figure_7.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_0_Figure_7.jpeg",
+                "size_bytes": 17660,
+                "description": "This image shows two geometric diagrams labeled as Fig. 11.1 and Fig. 11.2, illustrating the concepts of sectors and segments in circles. The diagrams demonstrate the difference between a sector (pie-slice shaped region bounded by two radii and an arc) and a segment (region bounded by a chord and an arc), with labels indicating major and minor parts of each.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_0_Figure_8.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_0_Figure_8.jpeg",
+                "size_bytes": 9170,
+                "description": "This diagram shows a circle with center O and a chord AP that divides the circle into two segments. The smaller shaded region is labeled \"Minor Segment\" and the larger unshaded region is labeled \"Major Segment,\" illustrating how a chord creates these two distinct parts of a circle.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_0_Picture_9.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_0_Picture_9.jpeg",
+                "size_bytes": 1731,
+                "description": "This image shows Fig. 11.2, which illustrates a circle with center O and a chord AB that divides the circle into two segments. The diagram demonstrates the concept of minor and major segments, where the shaded region APB represents the minor segment and the unshaded region AQB represents the major segment formed by the chord AB.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_1_Figure_5.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_1_Figure_5.jpeg",
+                "size_bytes": 11347,
+                "description": "This diagram shows a circle with center O and a shaded sector OAPB, where the central angle \u03b8 (theta) is marked between radii OA and OB, and r indicates the radius length. The figure illustrates the geometric setup used to derive the formula for calculating the area of a sector in terms of the central angle and radius.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_1_Figure_16.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_1_Figure_16.jpeg",
+                "size_bytes": 9917,
+                "description": "This diagram shows a circle with center O and two radii OA and OB forming a sector, with a chord AB creating a segment (the shaded region between the chord and arc). The diagram illustrates the geometric components needed to calculate the area of a circular segment, which equals the sector area minus the triangular area OAB.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_2_Figure_6.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_2_Figure_6.jpeg",
+                "size_bytes": 52114,
+                "description": "This image shows a worked example demonstrating how to calculate the area of a circle sector with radius 4 cm and central angle 30\u00b0. The diagram (Fig. 11.5) illustrates the sector OAPB with the 30\u00b0 angle clearly marked at the center O, and the solution uses the standard sector area formula to find the result as approximately 4.19 cm\u00b2.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_3_Figure_3.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_3_Figure_3.jpeg",
+                "size_bytes": 11385,
+                "description": "This diagram shows a circle with center O and radius 21 cm, where a chord AB creates a segment AYB (the shaded blue region) with a central angle AOB of 120\u00b0. The figure is used to demonstrate how to calculate the area of a circular segment by finding the difference between the sector area and the triangle area.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_4_Figure_19.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_4_Figure_19.jpeg",
+                "size_bytes": 27570,
+                "description": "This diagram shows a horse tied to a rope at one corner of a square grass field, illustrating the circular area (quarter circle) where the horse can graze within the constraint of the rope length. The image is used to help students visualize and solve problems involving the area of circular sectors and segments formed when movement is restricted by a tether.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_5_Figure_11.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_5_Figure_11.jpeg",
+                "size_bytes": 9426,
+                "description": "This image shows a multiple choice question with four formula options (A, B, C, D) for calculating the area of a sector of a circle with radius R and angle p degrees. The options present different combinations of the angle p, radius R, and constants like \u03c0, with various denominators (180, 360, 720), testing students' knowledge of the correct sector area formula.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            },
+            {
+                "name": "_page_5_Picture_14.jpeg",
+                "path": "/home/content/converted_books/images/jemh111/_page_5_Picture_14.jpeg",
+                "size_bytes": 11713,
+                "description": "This image shows a circular table cover with a regular hexagon inscribed inside it, where the area between the circle and hexagon is divided into six identical decorative triangular designs with patterned borders. This diagram illustrates the geometry for problem 13, helping students visualize how to calculate the area of the decorative sections to determine the cost of making the designs.",
+                "description_generated_at": "2025-07-19 11:51:30"
+            }
+        ],
+        "exercises": [
+            {
+                "question": "Find the area of a sector of a circle with radius 6 cm if angle of the sector is 60\u00b0.",
+                "answer": "Using the formula for area of a sector: Area = (\u03b8/360) \u00d7 \u03c0r\u00b2. Given: r = 6 cm, \u03b8 = 60\u00b0, \u03c0 = 22/7. Area = (60/360) \u00d7 (22/7) \u00d7 6\u00b2 = (1/6) \u00d7 (22/7) \u00d7 36 = (22 \u00d7 36)/(7 \u00d7 6) = 792/42 = 132/7 \u2248 18.86 cm\u00b2"
+            },
+            {
+                "question": "Find the area of a quadrant of a circle whose circumference is 22 cm.",
+                "answer": "First find the radius: Circumference = 2\u03c0r, so 22 = 2 \u00d7 (22/7) \u00d7 r, which gives r = 3.5 cm. A quadrant has angle 90\u00b0. Area of quadrant = (90/360) \u00d7 \u03c0r\u00b2 = (1/4) \u00d7 (22/7) \u00d7 (3.5)\u00b2 = (1/4) \u00d7 (22/7) \u00d7 12.25 = 9.625 cm\u00b2"
+            },
+            {
+                "question": "The length of the minute hand of a clock is 14 cm. Find the area swept by the minute hand in 5 minutes.",
+                "answer": "In 5 minutes, the minute hand moves through (5/60) \u00d7 360\u00b0 = 30\u00b0. Using the sector area formula: Area = (\u03b8/360) \u00d7 \u03c0r\u00b2 = (30/360) \u00d7 (22/7) \u00d7 14\u00b2 = (1/12) \u00d7 (22/7) \u00d7 196 = (22 \u00d7 196)/(7 \u00d7 12) = 4312/84 \u2248 51.33 cm\u00b2"
+            },
+            {
+                "question": "A chord of a circle of radius 10 cm subtends a right angle at the centre. Find the area of the corresponding: (i) minor segment (ii) major sector. (Use \u03c0 = 3.14)",
+                "answer": "(i) Minor segment area = Area of sector - Area of triangle. Sector area = (90/360) \u00d7 3.14 \u00d7 10\u00b2 = 78.5 cm\u00b2. Triangle area = (1/2) \u00d7 10 \u00d7 10 \u00d7 sin(90\u00b0) = 50 cm\u00b2. Minor segment = 78.5 - 50 = 28.5 cm\u00b2. (ii) Major sector = Total circle area - Minor sector = 3.14 \u00d7 100 - 78.5 = 314 - 78.5 = 235.5 cm\u00b2"
+            },
+            {
+                "question": "In a circle of radius 21 cm, an arc subtends an angle of 60\u00b0 at the centre. Find: (i) the length of the arc (ii) area of the sector formed by the arc (iii) area of the segment formed by the corresponding chord",
+                "answer": "(i) Arc length = (\u03b8/360) \u00d7 2\u03c0r = (60/360) \u00d7 2 \u00d7 (22/7) \u00d7 21 = 22 cm. (ii) Sector area = (60/360) \u00d7 (22/7) \u00d7 21\u00b2 = 231 cm\u00b2. (iii) Triangle area = (1/2) \u00d7 21\u00b2 \u00d7 sin(60\u00b0) = (1/2) \u00d7 441 \u00d7 (\u221a3/2) = (441\u221a3)/4 cm\u00b2. Segment area = 231 - (441\u221a3)/4 cm\u00b2"
+            },
+            {
+                "question": "A chord of a circle of radius 15 cm subtends an angle of 60\u00b0 at the centre. Find the areas of the corresponding minor and major segments of the circle. (Use \u03c0 = 3.14 and \u221a3 = 1.73)",
+                "answer": "Sector area = (60/360) \u00d7 3.14 \u00d7 15\u00b2 = 117.75 cm\u00b2. Triangle area = (1/2) \u00d7 15\u00b2 \u00d7 sin(60\u00b0) = (1/2) \u00d7 225 \u00d7 1.73/2 = 97.31 cm\u00b2. Minor segment = 117.75 - 97.31 = 20.44 cm\u00b2. Major segment = Total circle area - Minor segment = 3.14 \u00d7 225 - 20.44 = 706.5 - 20.44 = 686.06 cm\u00b2"
+            },
+            {
+                "question": "A chord of a circle of radius 12 cm subtends an angle of 120\u00b0 at the centre. Find the area of the corresponding segment of the circle. (Use \u03c0 = 3.14 and \u221a3 = 1.73)",
+                "answer": "Sector area = (120/360) \u00d7 3.14 \u00d7 12\u00b2 = 150.72 cm\u00b2. Triangle area = (1/2) \u00d7 12\u00b2 \u00d7 sin(120\u00b0) = (1/2) \u00d7 144 \u00d7 (\u221a3/2) = 36\u221a3 = 36 \u00d7 1.73 = 62.28 cm\u00b2. Segment area = 150.72 - 62.28 = 88.44 cm\u00b2"
+            },
+            {
+                "question": "A horse is tied to a peg at one corner of a square shaped grass field of side 15 m by means of a 5 m long rope. Find (i) the area of that part of the field in which the horse can graze. (ii) the increase in the grazing area if the rope were 10 m long instead of 5 m. (Use \u03c0 = 3.14)",
+                "answer": "(i) The horse can graze in a quarter circle of radius 5 m. Area = (1/4) \u00d7 3.14 \u00d7 5\u00b2 = 19.625 m\u00b2. (ii) With 10 m rope, area = (1/4) \u00d7 3.14 \u00d7 10\u00b2 = 78.5 m\u00b2. Increase = 78.5 - 19.625 = 58.875 m\u00b2"
+            },
+            {
+                "question": "A brooch is made with silver wire in the form of a circle with diameter 35 mm. The wire is also used in making 5 diameters which divide the circle into 10 equal sectors. Find: (i) the total length of the silver wire required. (ii) the area of each sector of the brooch.",
+                "answer": "(i) Total wire = Circumference + 5 diameters = \u03c0 \u00d7 35 + 5 \u00d7 35 = (22/7) \u00d7 35 + 175 = 110 + 175 = 285 mm. (ii) Each sector has angle 36\u00b0. Area = (36/360) \u00d7 (22/7) \u00d7 (17.5)\u00b2 = (1/10) \u00d7 (22/7) \u00d7 306.25 = 96.25 mm\u00b2"
+            },
+            {
+                "question": "An umbrella has 8 ribs which are equally spaced. Assuming umbrella to be a flat circle of radius 45 cm, find the area between the two consecutive ribs of the umbrella.",
+                "answer": "Each sector between consecutive ribs has angle 360\u00b0/8 = 45\u00b0. Area of each sector = (45/360) \u00d7 (22/7) \u00d7 45\u00b2 = (1/8) \u00d7 (22/7) \u00d7 2025 = 795.54 cm\u00b2"
+            },
+            {
+                "question": "A car has two wipers which do not overlap. Each wiper has a blade of length 25 cm sweeping through an angle of 115\u00b0. Find the total area cleaned at each sweep of the blades.",
+                "answer": "Area cleaned by one wiper = (115/360) \u00d7 (22/7) \u00d7 25\u00b2 = (115/360) \u00d7 (22/7) \u00d7 625. Area = 625.87 cm\u00b2. Total area by both wipers = 2 \u00d7 625.87 = 1251.74 cm\u00b2"
+            },
+            {
+                "question": "To warn ships for underwater rocks, a lighthouse spreads a red coloured light over a sector of angle 80\u00b0 to a distance of 16.5 km. Find the area of the sea over which the ships are warned. (Use \u03c0 = 3.14)",
+                "answer": "Area of sector = (80/360) \u00d7 3.14 \u00d7 (16.5)\u00b2 = (2/9) \u00d7 3.14 \u00d7 272.25 = 189.97 km\u00b2"
+            },
+            {
+                "question": "A round table cover has six equal designs as shown in Fig. 11.11. If the radius of the cover is 28 cm, find the cost of making the designs at the rate of \u20b9 0.35 per cm\u00b2. (Use \u221a3 = 1.7)",
+                "answer": "Each design is a sector with angle 60\u00b0. Area of one design = (60/360) \u00d7 (22/7) \u00d7 28\u00b2 = (1/6) \u00d7 (22/7) \u00d7 784 = 410.67 cm\u00b2. Total area of 6 designs = 6 \u00d7 410.67 = 2464 cm\u00b2. Cost = 2464 \u00d7 0.35 = \u20b9 862.40"
+            },
+            {
+                "question": "Tick the correct answer: Area of a sector of angle p (in degrees) of a circle with radius R is",
+                "answer": "The correct formula for the area of a sector is (p/360) \u00d7 \u03c0R\u00b2, where p is the angle in degrees and R is the radius. This follows from the proportion that the sector area bears to the total circle area, which is the same as the proportion of the sector angle to 360\u00b0."
+            }
+        ],
+        "summary": {
+            "title": "Areas Related to Circles",
+            "key_concepts": [
+                "Area of a sector = (\u03b8/360) \u00d7 \u03c0r\u00b2, where \u03b8 is in degrees",
+                "Length of an arc = (\u03b8/360) \u00d7 2\u03c0r",
+                "Area of a segment = Area of sector - Area of triangle",
+                "Minor and major sectors/segments based on angle being less than or greater than 180\u00b0",
+                "Applications of sector and segment formulas in real-world problems"
+            ],
+            "summary": "This chapter focuses on calculating areas and arc lengths related to circles, specifically sectors and segments. A sector is the region between two radii and an arc, while a segment is the region between a chord and an arc. The chapter provides formulas for calculating the area of sectors using the proportion method, where the sector area relates to the total circle area as the sector angle relates to 360\u00b0. It also covers finding arc lengths and segment areas by subtracting the triangular portion from the sector area. The concepts are applied to various practical problems involving clocks, grazing areas, wipers, and other real-world scenarios."
+        }
+    },
+    "statistics": {
+        "total_images": 11,
+        "text_length": 9355,
+        "processing_time": 7.0
+    },
+    "claude_processing": {
+        "processed_at": "2025-07-19 11:16:17",
+        "model_used": "claude-sonnet-4-20250514",
+        "tasks_completed": [
+            "exercises",
+            "summary",
+            "answers",
+            "image_descriptions"
+        ],
+        "exercises_count": 14,
+        "images_processed": 11,
+        "last_updated": "2025-07-19 11:51:30",
+        "images_reprocessed": 11
+    }
+}

@@ -12,7 +12,6 @@ import com.edify.learning.data.model.ChatSession
 import com.edify.learning.data.model.MessageType
 import com.edify.learning.data.repository.LearningRepository
 import com.edify.learning.data.repository.QuestRepository
-import com.edify.learning.data.repository.UserAction
 import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -109,12 +108,8 @@ class ChatViewModel @Inject constructor(
                 _messageInput.value = ""
                 _selectedImage.value = null // Clear selected image
                 
-                // Track chat interaction for Quest personalization
-                questRepository.updateChapterStats(
-                    chapterId = currentChapterId,
-                    userId = "default_user", // TODO: Get actual user ID
-                    action = UserAction.SendChat(input)
-                )
+                // Chat interaction tracking is handled automatically in 
+                // repository.insertChatMessage() via updateChapterStatsForChat
                 
                 // Start enhanced loading with progress
                 startLoadingWithProgress(isExplanation = false)

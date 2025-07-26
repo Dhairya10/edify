@@ -12,16 +12,12 @@ The data model is updated to use a single `correctnessScore` for revision analys
   "userId": "user_alex",
   "visitCount": 4,
   "noteCount": 2,
+  "questGenerated": false,
   "revisionHistory": [
     {
       "questionId": "rev_q1",
       "userAnswer": "He said the obligations were to his family and to his people.",
       "gemmaAnalysis": { "correctnessScore": 4, "originalityScore": 3 }
-    },
-    {
-      "questionId": "rev_q2",
-      "userAnswer": "He thought freedom was just for him, but then saw it was for everyone.",
-      "gemmaAnalysis": { "correctnessScore": 3, "originalityScore": 4 }
     }
   ],
   "chatHistory": [
@@ -29,29 +25,26 @@ The data model is updated to use a single `correctnessScore` for revision analys
       "chatId": "chat_001",
       "question": "What does apartheid mean?",
       "gemmaAnalysis": { "curiosityScore": 1 }
-    },
-    {
-      "chatId": "chat_002",
-      "question": "How did his idea of freedom change over time?",
-      "gemmaAnalysis": { "curiosityScore": 5 }
     }
   ]
 }
-```
-    
+```    
 
 ### 2. The Interest Scoring Algorithm
 
-The algorithm now uses the simplified two-part evaluation for revision answers.
+The purpose of this score is to identify when a user's engagement with a chapter is high enough to warrant generating a personalized quest.
 
-Formula:
+**Formula:**
 `InterestScore = (w_revision * RevisionScore) + (w_chat * ChatScore) + (w_notes * NoteScore) + (w_visits * VisitScore)
 
 - **Suggested Weights:**
-    - `w_revision`: **0.4**
-    - `w_chat`: **0.3**
-    - `w_notes`: **0.2**
-    - `w_visits`: **0.1**
+    - `w_revision`: **0.15**
+    - `w_chat`: **0.4**
+    - `w_notes`: **0.25**
+    - `w_visits`: **0.2**
+
+**Generation Threshold**: A quest generation process is triggered when a chapter's InterestScore surpasses 3.5. This value provides a good balance, requiring significant interaction without being impossibly high.
+
         
 #### A. Calculating Component Scores
 

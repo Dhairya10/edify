@@ -28,6 +28,36 @@ class DeveloperModeViewModel @Inject constructor(
         loadDatabaseTables()
     }
     
+    fun clearAllQuestData() {
+        viewModelScope.launch {
+            try {
+                // Clear ChapterStats (contains interest scores and engagement data)
+                database.chapterStatsDao().deleteAll()
+                
+                // Clear generated quests
+                database.generatedQuestDao().deleteAllQuests()
+                
+                // Reset user profile quest unlock status
+                val userProfiles = database.userProfileDao().getAllProfiles()
+                userProfiles.forEach { profile: UserProfile ->
+                    val updatedProfile = profile.copy(
+                        hasUnlockedPersonalizedQuests = false,
+                        updatedAt = System.currentTimeMillis()
+                    )
+                    database.userProfileDao().insertOrUpdate(updatedProfile)
+                }
+                
+                // Refresh the data to show updated counts
+                loadDatabaseTables()
+                
+                println("Quest data cleared successfully")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Failed to clear Quest data: ${e.message}")
+                println("Error clearing Quest data: ${e.message}")
+            }
+        }
+    }
+    
     private fun loadDatabaseTables() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)

@@ -15,9 +15,10 @@ import com.edify.learning.data.model.*
         ChatMessage::class,
         UserResponse::class,
         ChapterStats::class,
-        UserProfile::class
+        UserProfile::class,
+        GeneratedQuest::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -30,6 +31,7 @@ abstract class EdifyDatabase : RoomDatabase() {
     abstract fun userResponseDao(): UserResponseDao
     abstract fun chapterStatsDao(): ChapterStatsDao
     abstract fun userProfileDao(): UserProfileDao
+    abstract fun generatedQuestDao(): GeneratedQuestDao
     
     companion object {
         const val DATABASE_NAME = "edify_database"

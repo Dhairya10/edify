@@ -35,6 +35,9 @@ interface ChapterStatsDao {
     
     @Query("DELETE FROM chapter_stats WHERE id = :id")
     suspend fun deleteById(id: Long)
+    
+    @Query("DELETE FROM chapter_stats")
+    suspend fun deleteAll()
 }
 
 

@@ -41,4 +41,16 @@ class Converters {
         val listType = object : TypeToken<List<ContentItem>>() {}.type
         return gson.fromJson(contentItemsString, listType) ?: emptyList()
     }
+
+    @TypeConverter
+    fun fromStringList(stringList: List<String>?): String? {
+        return gson.toJson(stringList)
+    }
+
+    @TypeConverter
+    fun toStringList(stringListString: String?): List<String>? {
+        if (stringListString == null) return null
+        val listType = object : TypeToken<List<String>>() {}.type
+        return gson.fromJson(stringListString, listType)
+    }
 }

@@ -16,6 +16,7 @@ data class ChapterStats(
     val userId: String = "default_user", // Default user for now
     val visitCount: Int = 0,
     val noteCount: Int = 0,
+    val questGenerated: Boolean = false, // Flag to track if quest has been generated for this chapter
     val revisionHistory: List<RevisionEntry> = emptyList(),
     val chatHistory: List<ChatEntry> = emptyList(),
     val lastVisited: Long = System.currentTimeMillis(),
@@ -25,15 +26,21 @@ data class ChapterStats(
     /**
      * Calculate Interest Score based on Quest scoring algorithm
      * Formula: InterestScore = (w_revision * RevisionScore) + (w_chat * ChatScore) + (w_notes * NoteScore) + (w_visits * VisitScore)
-     * Weights: w_revision=0.4, w_chat=0.3, w_notes=0.2, w_visits=0.1
+     * Weights: w_chat=0.4, w_notes=0.25, w_visits=0.2, w_revision=0.15
      */
     fun calculateInterestScore(): Double {
-        val revisionScore = calculateRevisionScore()
-        val chatScore = calculateChatScore()
-        val noteScore = kotlin.math.min(noteCount, 5).toDouble()
-        val visitScore = kotlin.math.min(visitCount, 5).toDouble()
+        val revisionScore = if (revisionHistory.isNotEmpty()) {
+            revisionHistory.map { ((it.gemmaAnalysis?.correctnessScore ?: 0) + (it.gemmaAnalysis?.originalityScore ?: 0)) / 2.0 }.average()
+        } else 0.0
         
-        return (0.4 * revisionScore) + (0.3 * chatScore) + (0.2 * noteScore) + (0.1 * visitScore)
+        val chatScore = if (chatHistory.isNotEmpty()) {
+            chatHistory.map { it.gemmaAnalysis?.curiosityScore?.toDouble() ?: 0.0 }.average()
+        } else 0.0
+        
+        val noteScore = kotlin.math.min(noteCount.toDouble(), 5.0)
+        val visitScore = kotlin.math.min(visitCount.toDouble(), 5.0)
+        
+        return (0.15 * revisionScore) + (0.4 * chatScore) + (0.25 * noteScore) + (0.2 * visitScore)
     }
     
     /**

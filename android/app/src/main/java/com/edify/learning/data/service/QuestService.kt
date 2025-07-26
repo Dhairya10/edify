@@ -7,8 +7,7 @@ import javax.inject.Singleton
 
 @Singleton
 class QuestService @Inject constructor(
-    private val chapterDao: ChapterDao,
-    private val gemmaService: GemmaService
+    private val chapterDao: ChapterDao
 ) {
     
     /**
@@ -90,11 +89,8 @@ class QuestService @Inject constructor(
                     val quest = Quest(
                         id = "personalized_quest_${userId}_${chapter.id}",
                         title = "${chapter.title} Deep Dive",
-                        description = "Explore your curiosity about ${chapter.title} with this personalized challenge",
-                        subject = getSubjectNameFromChapter(chapter),
-                        difficulty = getDifficultyFromInterestScore(interestScore),
-                        estimatedTime = 15 + (index * 5), // 15-35 minutes based on complexity
-                        isCompleted = false
+                        question = questQuestion,
+                        subject = getSubjectNameFromChapter(chapter)
                     )
                     
                     personalizedQuests.add(quest)
@@ -129,11 +125,11 @@ class QuestService @Inject constructor(
      * Calculate InterestScore using the weighted formula from documentation
      */
     private fun calculateInterestScore(chapterStats: ChapterStats): Double {
-        // Weights from documentation
-        val wRevision = 0.4
-        val wChat = 0.3
-        val wNotes = 0.2
-        val wVisits = 0.1
+        // Weights from documentation (updated to match Quest - Scoring Algo.md)
+        val wRevision = 0.15
+        val wChat = 0.4
+        val wNotes = 0.25
+        val wVisits = 0.2
         
         val revisionScore = calculateRevisionScoreInternal(chapterStats.revisionHistory)
         val chatScore = calculateChatScoreInternal(chapterStats.chatHistory)
@@ -175,39 +171,17 @@ class QuestService @Inject constructor(
     }
     
     /**
-     * Generate deep exploration question for a specific chapter using Gemma
+     * Generate deep exploration question for a specific chapter
+     * Note: LLM integration temporarily disabled to prevent MediaPipe crashes
      * This creates thoughtful, open-ended questions that encourage deep thinking
      */
     suspend fun generateDeepExplorationQuestion(
         chapter: Chapter,
         subject: String
     ): String {
-        return try {
-            // Initialize Gemma if not already done
-            gemmaService.initializeModel()
-            
-            // Create a sophisticated prompt for deep exploration
-            val prompt = buildDeepExplorationPrompt(chapter, subject)
-            
-            // Generate response using Gemma
-            val result = gemmaService.generateResponse(prompt)
-            
-            // Extract the question from the response (remove any extra text)
-            val question = if (result.isSuccess) {
-                extractQuestionFromResponse(result.getOrNull() ?: "")
-            } else {
-                ""
-            }
-            
-            if (question.isNotBlank()) {
-                question
-            } else {
-                getDefaultDeepExplorationQuestion(chapter, subject)
-            }
-        } catch (e: Exception) {
-            // Fallback to default question if Gemma fails
-            getDefaultDeepExplorationQuestion(chapter, subject)
-        }
+        // TODO: Re-enable Gemma integration after fixing MediaPipe JNI issues
+        // For now, return default deep exploration questions
+        return getDefaultDeepExplorationQuestion(chapter, subject)
     }
     
     /**
@@ -371,16 +345,6 @@ class QuestService @Inject constructor(
         }
     }
     
-    /**
-     * Determine quest difficulty based on InterestScore
-     */
-    private fun getDifficultyFromInterestScore(interestScore: Double): QuestDifficulty {
-        return when {
-            interestScore >= 4.0 -> QuestDifficulty.HARD
-            interestScore >= 2.5 -> QuestDifficulty.MEDIUM
-            else -> QuestDifficulty.EASY
-        }
-    }
     
     /**
      * Create or update chapter stats entry
@@ -399,17 +363,13 @@ class QuestService @Inject constructor(
                     id = "science_quest_1",
                     questId = "science_exploration",
                     question = "What would happen if gravity was half as strong on Earth?",
-                    subject = "Science",
-                    curiosityLevel = 5,
-                    hints = listOf("Think about how objects fall", "Consider how we walk and jump", "What about the atmosphere?")
+                    subject = "Science"
                 ),
                 QuestQuestion(
                     id = "science_quest_2",
                     questId = "science_exploration",
                     question = "Why do some materials conduct electricity while others don't?",
-                    subject = "Science",
-                    curiosityLevel = 4,
-                    hints = listOf("Think about atomic structure", "Consider electron movement", "What makes metals special?")
+                    subject = "Science"
                 )
             )
             "english" -> listOf(
@@ -417,17 +377,13 @@ class QuestService @Inject constructor(
                     id = "english_quest_1",
                     questId = "english_exploration",
                     question = "How do different cultures express the same emotion through language?",
-                    subject = "English",
-                    curiosityLevel = 5,
-                    hints = listOf("Think about idioms", "Consider cultural context", "What about body language?")
+                    subject = "English"
                 ),
                 QuestQuestion(
                     id = "english_quest_2",
                     questId = "english_exploration",
                     question = "What makes a story memorable across generations?",
-                    subject = "English",
-                    curiosityLevel = 4,
-                    hints = listOf("Think about universal themes", "Consider character development", "What about moral lessons?")
+                    subject = "English"
                 )
             )
             "maths" -> listOf(
@@ -435,17 +391,13 @@ class QuestService @Inject constructor(
                     id = "maths_quest_1",
                     questId = "maths_exploration",
                     question = "How do mathematicians discover new mathematical truths?",
-                    subject = "Maths",
-                    curiosityLevel = 5,
-                    hints = listOf("Think about patterns", "Consider proof methods", "What about intuition vs logic?")
+                    subject = "Maths"
                 ),
                 QuestQuestion(
                     id = "maths_quest_2",
                     questId = "maths_exploration",
                     question = "Why does mathematics work so well to describe the physical world?",
-                    subject = "Maths",
-                    curiosityLevel = 5,
-                    hints = listOf("Think about natural patterns", "Consider measurement", "What about prediction?")
+                    subject = "Maths"
                 )
             )
             else -> emptyList()
