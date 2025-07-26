@@ -8,9 +8,9 @@ import com.edify.learning.data.dao.ChatDao
 import com.edify.learning.data.dao.SubjectDao
 import com.edify.learning.data.model.*
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlin.coroutines.coroutineContext
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,33 +31,80 @@ class QuestGenerationService @Inject constructor(
     /**
      * Main trigger method called after every meaningful user action
      * Checks for high-interest chapters and generates quests if needed
+     * Uses GlobalScope to survive navigation and lifecycle changes
      */
-    suspend fun checkAndGenerateQuests(userId: String = "default_user") {
-        withContext(Dispatchers.IO) {
+    fun checkAndGenerateQuests(userId: String = "default_user") {
+        // Use GlobalScope to ensure quest generation survives navigation/lifecycle changes
+        GlobalScope.launch(Dispatchers.IO) {
+            println("QUEST_GEN: Starting quest generation check...")
             try {
-                // Step 1: Find all high-interest chapters that haven't had quests generated
-                val highInterestChapters = findHighInterestChapters(userId)
-                
-                if (highInterestChapters.isEmpty()) {
-                    return@withContext
+                // Add timeout to prevent indefinite hanging
+                withTimeout(300000) { // 5 minute timeout
+                    generateQuestsInternal(userId)
                 }
-                
-                // Step 2: Get chapter interaction data for LLM context
-                val chapterInteractionData = gatherChapterInteractionData(highInterestChapters)
-                
-                // Step 3: Ask LLM to choose strategy
-                val strategyResponse = selectQuestStrategy(chapterInteractionData)
-                
-                // Step 4: Generate quest based on strategy
-                val questResponse = generateQuest(strategyResponse, chapterInteractionData)
-                
-                // Step 5: Save quest and update flags
-                saveGeneratedQuest(strategyResponse, questResponse, userId)
-                
+            } catch (e: TimeoutCancellationException) {
+                println("QUEST_GEN: Quest generation timed out after 5 minutes")
+                handleQuestGenerationFailure(userId, "Timeout")
+            } catch (e: CancellationException) {
+                println("QUEST_GEN: Quest generation was cancelled: ${e.message}")
+                // Don't treat cancellation as an error - it's intentional
             } catch (e: Exception) {
-                println("Error in quest generation: ${e.message}")
+                println("QUEST_GEN: Error in quest generation: ${e.message}")
                 e.printStackTrace()
+                handleQuestGenerationFailure(userId, e.message ?: "Unknown error")
             }
+        }
+    }
+    
+    /**
+     * Internal quest generation logic with proper cancellation checks
+     */
+    private suspend fun generateQuestsInternal(userId: String) {
+        // Step 1: Find all high-interest chapters that haven't had quests generated
+        coroutineContext.ensureActive() // Check if coroutine is still active
+        val highInterestChapters = findHighInterestChapters(userId)
+        println("QUEST_GEN: Found ${highInterestChapters.size} high-interest chapters.")
+        
+        if (highInterestChapters.isEmpty()) {
+            println("QUEST_GEN: No new high-interest chapters found. Exiting.")
+            return
+        }
+        
+        // Step 2: Get chapter interaction data for LLM context
+        coroutineContext.ensureActive()
+        val chapterInteractionData = gatherChapterInteractionData(highInterestChapters)
+        
+        // Step 3: Ask LLM to choose strategy
+        coroutineContext.ensureActive()
+        println("QUEST_GEN: Selecting quest strategy...")
+        val strategyResponse = selectQuestStrategy(chapterInteractionData)
+        println("QUEST_GEN: Strategy selected: ${strategyResponse.strategy}. Chapters: ${strategyResponse.chapters?.joinToString()}, Chapter: ${strategyResponse.chapter}")
+        
+        // Step 4: Generate quest based on strategy
+        coroutineContext.ensureActive()
+        println("QUEST_GEN: Generating quest...")
+        val questResponse = generateQuest(strategyResponse, chapterInteractionData)
+        println("QUEST_GEN: Quest generated: '${questResponse.title}'")
+        
+        // Step 5: Save quest and update flags
+        coroutineContext.ensureActive()
+        println("QUEST_GEN: Saving generated quest...")
+        saveGeneratedQuest(strategyResponse, questResponse, userId)
+        println("QUEST_GEN: Quest generation and saving completed successfully.")
+    }
+    
+    /**
+     * Handle quest generation failures gracefully
+     */
+    private suspend fun handleQuestGenerationFailure(userId: String, reason: String) {
+        try {
+            println("QUEST_GEN: Handling failure - $reason")
+            // Could implement fallback logic here, such as:
+            // - Creating a simple default quest
+            // - Scheduling retry for later
+            // - Logging for analytics
+        } catch (e: Exception) {
+            println("QUEST_GEN: Error in failure handling: ${e.message}")
         }
     }
     
@@ -68,7 +115,7 @@ class QuestGenerationService @Inject constructor(
         val allStats = chapterStatsDao.getAllStats()
         return allStats.filter { stats ->
             stats.userId == userId && 
-            stats.calculateInterestScore() > 3.5 && 
+            stats.calculateInterestScore() > 1.0 && 
             !stats.questGenerated
         }
     }
@@ -115,16 +162,34 @@ class QuestGenerationService @Inject constructor(
         """.trimIndent()
         
         return try {
-            val response = gemmaService.generateResponse(prompt)
-            gson.fromJson(response.getOrThrow(), LLMStrategyResponse::class.java)
+            // Add timeout for LLM call to prevent hanging
+            withTimeout(120000) { // 2 minute timeout for strategy selection
+                coroutineContext.ensureActive() // Check cancellation before LLM call
+                val response = gemmaService.generateResponse(prompt)
+                gson.fromJson(response.getOrThrow(), LLMStrategyResponse::class.java)
+            }
+        } catch (e: TimeoutCancellationException) {
+            println("QUEST_GEN: Strategy selection timed out, using fallback")
+            getFallbackStrategy(chapterData)
+        } catch (e: CancellationException) {
+            println("QUEST_GEN: Strategy selection cancelled, using fallback")
+            throw e // Re-throw cancellation to stop the whole process
         } catch (e: Exception) {
-            // Fallback to divergent strategy with highest interest chapter
-            val highestInterestChapter = chapterData.maxByOrNull { it.interestScore }
-            LLMStrategyResponse(
-                strategy = "Divergent",
-                chapter = highestInterestChapter?.chapterId
-            )
+            println("QUEST_GEN: Strategy selection failed: ${e.message}, using fallback")
+            getFallbackStrategy(chapterData)
         }
+    }
+    
+    /**
+     * Get fallback strategy when LLM fails
+     */
+    private fun getFallbackStrategy(chapterData: List<ChapterInteractionData>): LLMStrategyResponse {
+        // Fallback to divergent strategy with highest interest chapter
+        val highestInterestChapter = chapterData.maxByOrNull { it.interestScore }
+        return LLMStrategyResponse(
+            strategy = "Divergent",
+            chapter = highestInterestChapter?.chapterId
+        )
     }
     
     /**
@@ -174,62 +239,99 @@ class QuestGenerationService @Inject constructor(
             - Chat Questions: ${chapter2.chatQuestions.joinToString("; ")}
             - Revision Answers: ${chapter2.revisionAnswers.joinToString("; ")}
 
-            Respond in JSON format: {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
-        """.trimIndent()
-        
-        return try {
+        Respond in JSON format: {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
+    """.trimIndent()
+    
+    return try {
+        // Add timeout for LLM call to prevent hanging
+        withTimeout(120000) { // 2 minute timeout for quest generation
+            coroutineContext.ensureActive() // Check cancellation before LLM call
             val response = gemmaService.generateResponse(prompt)
             gson.fromJson(response.getOrThrow(), LLMQuestResponse::class.java)
-        } catch (e: Exception) {
-            // Fallback quest
-            LLMQuestResponse(
-                title = "Connecting ${chapter1.subject} and ${chapter2.subject}",
-                questionText = "How do the themes from ${chapter1.chapterTitle} relate to the concepts in ${chapter2.chapterTitle}? Explore the connections and share your insights."
-            )
         }
+    } catch (e: TimeoutCancellationException) {
+        println("QUEST_GEN: Convergent quest generation timed out, using fallback")
+        getConvergentFallbackQuest(chapter1, chapter2)
+    } catch (e: CancellationException) {
+        println("QUEST_GEN: Convergent quest generation cancelled")
+        throw e // Re-throw cancellation to stop the whole process
+    } catch (e: Exception) {
+        println("QUEST_GEN: Convergent quest generation failed: ${e.message}, using fallback")
+        getConvergentFallbackQuest(chapter1, chapter2)
     }
+}
+
+/**
+ * Get fallback convergent quest when LLM fails
+ */
+private fun getConvergentFallbackQuest(
+    chapter1: ChapterInteractionData,
+    chapter2: ChapterInteractionData
+): LLMQuestResponse {
+    return LLMQuestResponse(
+        title = "Connecting ${chapter1.subject} and ${chapter2.subject}",
+        questionText = "How do the themes from ${chapter1.chapterTitle} relate to the concepts in ${chapter2.chapterTitle}? Explore the connections and share your insights."
+    )
+}
+
+/**
+ * Generate Divergent (deep single-topic) quest
+ */
+private suspend fun generateDivergentQuest(
+    strategyResponse: LLMStrategyResponse,
+    chapterData: List<ChapterInteractionData>
+): LLMQuestResponse {
+    val chapterId = strategyResponse.chapter ?: chapterData.maxByOrNull { it.interestScore }?.chapterId
+    val chapter = chapterData.find { it.chapterId == chapterId } 
+        ?: chapterData.firstOrNull()
+        ?: return LLMQuestResponse("Default Quest", "Reflect on your learning journey so far.")
     
-    /**
-     * Generate Divergent (deep single-topic) quest
-     */
-    private suspend fun generateDivergentQuest(
-        strategyResponse: LLMStrategyResponse,
-        chapterData: List<ChapterInteractionData>
-    ): LLMQuestResponse {
-        val chapterId = strategyResponse.chapter ?: chapterData.maxByOrNull { it.interestScore }?.chapterId
-        val chapter = chapterData.find { it.chapterId == chapterId } 
-            ?: chapterData.firstOrNull()
-            ?: return LLMQuestResponse("Default Quest", "Reflect on your learning journey so far.")
-        
-        val prompt = """
-            You are an expert educator. Your goal is to foster creativity and critical thinking. Based on the user's interactions with the chapter ${chapter.chapterTitle} (${chapter.subject}), generate a single, deep question that encourages them to think beyond the text.
+    val prompt = """
+        You are an expert educator. Your goal is to foster creativity and critical thinking. Based on the user's interactions with the chapter ${chapter.chapterTitle} (${chapter.subject}), generate a single, deep question that encourages them to think beyond the text.
 
-            Here is the user's specific engagement data:
-            - Notes: ${chapter.notes.joinToString("; ")}
-            - Chat Questions: ${chapter.chatQuestions.joinToString("; ")}
-            - Revision Answers: ${chapter.revisionAnswers.joinToString("; ")}
+        Here is the user's specific engagement data:
+        - Notes: ${chapter.notes.joinToString("; ")}
+        - Chat Questions: ${chapter.chatQuestions.joinToString("; ")}
+        - Revision Answers: ${chapter.revisionAnswers.joinToString("; ")}
 
-            The question could relate to a core theme, a character's motivation, or a 'what if' scenario.
+        The question could relate to a core theme, a character's motivation, or a 'what if' scenario.
 
-            Respond in JSON format: {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
-        """.trimIndent()
-        
-        return try {
+        Respond in JSON format: {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
+    """.trimIndent()
+    
+    return try {
+        // Add timeout for LLM call to prevent hanging
+        withTimeout(120000) { // 2 minute timeout for quest generation
+            coroutineContext.ensureActive() // Check cancellation before LLM call
             val response = gemmaService.generateResponse(prompt)
             gson.fromJson(response.getOrThrow(), LLMQuestResponse::class.java)
-        } catch (e: Exception) {
-            // Fallback quest
-            LLMQuestResponse(
-                title = "Deep Dive: ${chapter.chapterTitle}",
-                questionText = "What deeper insights can you draw from ${chapter.chapterTitle}? Consider the broader implications and share your thoughtful analysis."
-            )
         }
+    } catch (e: TimeoutCancellationException) {
+        println("QUEST_GEN: Divergent quest generation timed out, using fallback")
+        getDivergentFallbackQuest(chapter)
+    } catch (e: CancellationException) {
+        println("QUEST_GEN: Divergent quest generation cancelled")
+        throw e // Re-throw cancellation to stop the whole process
+    } catch (e: Exception) {
+        println("QUEST_GEN: Divergent quest generation failed: ${e.message}, using fallback")
+        getDivergentFallbackQuest(chapter)
     }
-    
-    /**
-     * Step 5: Save generated quest and update questGenerated flags
-     */
-    private suspend fun saveGeneratedQuest(
+}
+
+/**
+ * Get fallback divergent quest when LLM fails
+ */
+private fun getDivergentFallbackQuest(chapter: ChapterInteractionData): LLMQuestResponse {
+    return LLMQuestResponse(
+        title = "Deep Dive: ${chapter.chapterTitle}",
+        questionText = "What deeper insights can you draw from ${chapter.chapterTitle}? Consider the broader implications and share your thoughtful analysis."
+    )
+}
+
+/**
+ * Step 5: Save generated quest and update questGenerated flags
+ */
+private suspend fun saveGeneratedQuest(
         strategyResponse: LLMStrategyResponse,
         questResponse: LLMQuestResponse,
         userId: String

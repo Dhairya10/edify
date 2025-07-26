@@ -28,6 +28,11 @@ class DeveloperModeViewModel @Inject constructor(
         loadDatabaseTables()
     }
     
+    fun clearAllData() {
+        // For now, just call clearAllQuestData() since that's the only data we're clearing
+        clearAllQuestData()
+    }
+    
     fun clearAllQuestData() {
         viewModelScope.launch {
             try {

@@ -46,12 +46,14 @@ public final class QuestViewModel extends androidx.lifecycle.ViewModel {
     /**
      * Called after meaningful user actions (notes, chats, revision answers)
      * Triggers quest generation based on updated interest scores
+     * Quest generation runs in background and survives navigation
      */
     public final void onMeaningfulUserAction() {
     }
     
     /**
      * Trigger quest generation manually
+     * This is a more immediate trigger for testing/debugging
      */
     public final void triggerQuestGeneration() {
     }

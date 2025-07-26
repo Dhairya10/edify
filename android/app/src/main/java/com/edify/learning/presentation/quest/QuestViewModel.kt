@@ -90,31 +90,51 @@ class QuestViewModel @Inject constructor(
     /**
      * Called after meaningful user actions (notes, chats, revision answers)
      * Triggers quest generation based on updated interest scores
+     * Quest generation runs in background and survives navigation
      */
     fun onMeaningfulUserAction() {
-        viewModelScope.launch {
-            try {
-                questGenerationService.checkAndGenerateQuests()
+        try {
+            // Quest generation now runs in GlobalScope, so no need for viewModelScope
+            questGenerationService.checkAndGenerateQuests()
+            
+            // Refresh quests after a short delay to catch any quick completions
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(1000) // Wait 1 second
                 loadQuests() // Refresh to show any newly generated quests
-            } catch (e: Exception) {
-                println("Error triggering quest generation: ${e.message}")
             }
+        } catch (e: Exception) {
+            println("Error triggering quest generation: ${e.message}")
+            _uiState.value = _uiState.value.copy(
+                error = "Failed to trigger quest generation: ${e.message}"
+            )
         }
     }
     
     /**
      * Trigger quest generation manually
+     * This is a more immediate trigger for testing/debugging
      */
     fun triggerQuestGeneration() {
-        viewModelScope.launch {
-            try {
-                questRepository.triggerQuestGeneration()
+        try {
+            // Use the quest generation service directly for manual triggers
+            questGenerationService.checkAndGenerateQuests()
+            
+            // Show loading state briefly
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                error = null
+            )
+            
+            // Refresh quests after a delay to catch completions
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(2000) // Wait 2 seconds for manual trigger
                 loadQuests() // Refresh to show newly generated quests
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    error = e.message
-                )
             }
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = "Failed to trigger quest generation: ${e.message}"
+            )
         }
     }
     

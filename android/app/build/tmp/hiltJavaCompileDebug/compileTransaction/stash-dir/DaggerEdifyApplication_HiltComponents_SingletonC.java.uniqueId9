@@ -18,7 +18,6 @@ import com.edify.learning.data.repository.LearningRepository;
 import com.edify.learning.data.repository.QuestRepository;
 import com.edify.learning.data.service.GemmaService;
 import com.edify.learning.data.service.QuestGenerationService;
-import com.edify.learning.data.service.QuestService;
 import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.di.DatabaseModule_ProvideChapterDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideChapterStatsDaoFactory;
@@ -28,7 +27,6 @@ import com.edify.learning.di.DatabaseModule_ProvideGemmaServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideGeneratedQuestDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideNoteDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideQuestGenerationServiceFactory;
-import com.edify.learning.di.DatabaseModule_ProvideQuestServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideSubjectDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideUserResponseDaoFactory;
 import com.edify.learning.domain.service.QuestScoringService;
@@ -529,7 +527,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
           return (T) new QuestScoringViewModel(singletonCImpl.questScoringServiceProvider.get());
 
           case 6: // com.edify.learning.presentation.quest.QuestViewModel 
-          return (T) new QuestViewModel(singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestServiceProvider.get());
+          return (T) new QuestViewModel(singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
           case 7: // com.edify.learning.presentation.revision.RevisionViewModel 
           return (T) new RevisionViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
@@ -628,8 +626,6 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private Provider<QuestScoringService> questScoringServiceProvider;
 
-    private Provider<QuestService> provideQuestServiceProvider;
-
     private SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
       this.applicationContextModule = applicationContextModuleParam;
       initialize(applicationContextModuleParam);
@@ -672,7 +668,6 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       this.learningRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<LearningRepository>(singletonCImpl, 0));
       this.questRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<QuestRepository>(singletonCImpl, 4));
       this.questScoringServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestScoringService>(singletonCImpl, 5));
-      this.provideQuestServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestService>(singletonCImpl, 6));
     }
 
     @Override
@@ -725,9 +720,6 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
           case 5: // com.edify.learning.domain.service.QuestScoringService 
           return (T) new QuestScoringService(singletonCImpl.chapterStatsDao());
-
-          case 6: // com.edify.learning.data.service.QuestService 
-          return (T) DatabaseModule_ProvideQuestServiceFactory.provideQuestService(singletonCImpl.chapterDao());
 
           default: throw new AssertionError(id);
         }
