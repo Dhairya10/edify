@@ -155,7 +155,7 @@ class QuestGenerationService @Inject constructor(
             val chapter = chapterDao.getChapterById(stats.chapterId)
             val subject = chapter?.let { subjectDao.getSubjectById(it.subjectId) }
             val notes = noteDao.getNotesByChapter(stats.chapterId).first()
-            val chatMessages = chatDao.getMessagesByChapter(stats.chapterId)
+            val chatMessages = chatDao.getMessagesByChapter(stats.chapterId).first()
             
             ChapterInteractionData(
                 chapterId = stats.chapterId,

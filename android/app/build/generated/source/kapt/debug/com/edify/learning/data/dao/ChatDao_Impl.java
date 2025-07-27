@@ -184,7 +184,8 @@ public final class ChatDao_Impl implements ChatDao {
   }
 
   @Override
-  public Object insertMessage(final ChatMessage message, final Continuation<? super Unit> arg1) {
+  public Object insertMessage(final ChatMessage message,
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -198,12 +199,12 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object insertMessages(final List<ChatMessage> messages,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -217,11 +218,12 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object deleteMessage(final ChatMessage message, final Continuation<? super Unit> arg1) {
+  public Object deleteMessage(final ChatMessage message,
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -235,11 +237,12 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object updateMessage(final ChatMessage message, final Continuation<? super Unit> arg1) {
+  public Object updateMessage(final ChatMessage message,
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -253,11 +256,11 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object deleteById(final long id, final Continuation<? super Unit> arg1) {
+  public Object deleteById(final long id, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -278,12 +281,12 @@ public final class ChatDao_Impl implements ChatDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object deleteMessagesBySession(final String sessionId,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -308,11 +311,11 @@ public final class ChatDao_Impl implements ChatDao {
           __preparedStmtOfDeleteMessagesBySession.release(_stmt);
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object getAllMessages(final Continuation<? super List<ChatMessage>> arg0) {
+  public Object getAllMessages(final Continuation<? super List<ChatMessage>> $completion) {
     final String _sql = "SELECT * FROM chat_messages ORDER BY timestamp DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -386,7 +389,7 @@ public final class ChatDao_Impl implements ChatDao {
           _statement.release();
         }
       }
-    }, arg0);
+    }, $completion);
   }
 
   @Override
@@ -477,8 +480,7 @@ public final class ChatDao_Impl implements ChatDao {
   }
 
   @Override
-  public Object getMessagesByChapter(final String chapterId,
-      final Continuation<? super List<ChatMessage>> arg1) {
+  public Flow<List<ChatMessage>> getMessagesByChapter(final String chapterId) {
     final String _sql = "SELECT * FROM chat_messages WHERE chapterId = ? ORDER BY timestamp ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -487,8 +489,7 @@ public final class ChatDao_Impl implements ChatDao {
     } else {
       _statement.bindString(_argIndex, chapterId);
     }
-    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
-    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<ChatMessage>>() {
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"chat_messages"}, new Callable<List<ChatMessage>>() {
       @Override
       @NonNull
       public List<ChatMessage> call() throws Exception {
@@ -555,14 +556,19 @@ public final class ChatDao_Impl implements ChatDao {
           return _result;
         } finally {
           _cursor.close();
-          _statement.release();
         }
       }
-    }, arg1);
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
   }
 
   @Override
-  public Object getMessageById(final String id, final Continuation<? super ChatMessage> arg1) {
+  public Object getMessageById(final String id,
+      final Continuation<? super ChatMessage> $completion) {
     final String _sql = "SELECT * FROM chat_messages WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -642,11 +648,12 @@ public final class ChatDao_Impl implements ChatDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object getMessageCount(final String sessionId, final Continuation<? super Integer> arg1) {
+  public Object getMessageCount(final String sessionId,
+      final Continuation<? super Integer> $completion) {
     final String _sql = "SELECT COUNT(*) FROM chat_messages WHERE sessionId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -680,7 +687,7 @@ public final class ChatDao_Impl implements ChatDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @NonNull
