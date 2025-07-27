@@ -35,6 +35,8 @@ import com.edify.learning.presentation.chapter.ChapterViewModel;
 import com.edify.learning.presentation.chapter.ChapterViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.edify.learning.presentation.chat.ChatViewModel;
 import com.edify.learning.presentation.chat.ChatViewModel_HiltModules_KeyModule_ProvideFactory;
+import com.edify.learning.presentation.components.TranslationViewModel;
+import com.edify.learning.presentation.components.TranslationViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.edify.learning.presentation.developer.DeveloperModeViewModel;
 import com.edify.learning.presentation.developer.DeveloperModeViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.edify.learning.presentation.developer.QuestScoringViewModel;
@@ -414,7 +416,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     @Override
     public Set<String> getViewModelKeys() {
-      return ImmutableSet.<String>of(ChapterViewModel_HiltModules_KeyModule_ProvideFactory.provide(), ChatViewModel_HiltModules_KeyModule_ProvideFactory.provide(), DeveloperModeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), NotesViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestScoringViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestViewModel_HiltModules_KeyModule_ProvideFactory.provide(), RevisionViewModel_HiltModules_KeyModule_ProvideFactory.provide(), SubjectViewModel_HiltModules_KeyModule_ProvideFactory.provide());
+      return ImmutableSet.<String>of(ChapterViewModel_HiltModules_KeyModule_ProvideFactory.provide(), ChatViewModel_HiltModules_KeyModule_ProvideFactory.provide(), DeveloperModeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), NotesViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestScoringViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestViewModel_HiltModules_KeyModule_ProvideFactory.provide(), RevisionViewModel_HiltModules_KeyModule_ProvideFactory.provide(), SubjectViewModel_HiltModules_KeyModule_ProvideFactory.provide(), TranslationViewModel_HiltModules_KeyModule_ProvideFactory.provide());
     }
 
     @Override
@@ -458,6 +460,8 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private Provider<SubjectViewModel> subjectViewModelProvider;
 
+    private Provider<TranslationViewModel> translationViewModelProvider;
+
     private ViewModelCImpl(SingletonCImpl singletonCImpl,
         ActivityRetainedCImpl activityRetainedCImpl, SavedStateHandle savedStateHandleParam,
         ViewModelLifecycle viewModelLifecycleParam) {
@@ -480,11 +484,12 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       this.questViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 6);
       this.revisionViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 7);
       this.subjectViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 8);
+      this.translationViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 9);
     }
 
     @Override
     public Map<String, Provider<ViewModel>> getHiltViewModelMap() {
-      return ImmutableMap.<String, Provider<ViewModel>>builderWithExpectedSize(9).put("com.edify.learning.presentation.chapter.ChapterViewModel", ((Provider) chapterViewModelProvider)).put("com.edify.learning.presentation.chat.ChatViewModel", ((Provider) chatViewModelProvider)).put("com.edify.learning.presentation.developer.DeveloperModeViewModel", ((Provider) developerModeViewModelProvider)).put("com.edify.learning.presentation.home.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.edify.learning.presentation.notes.NotesViewModel", ((Provider) notesViewModelProvider)).put("com.edify.learning.presentation.developer.QuestScoringViewModel", ((Provider) questScoringViewModelProvider)).put("com.edify.learning.presentation.quest.QuestViewModel", ((Provider) questViewModelProvider)).put("com.edify.learning.presentation.revision.RevisionViewModel", ((Provider) revisionViewModelProvider)).put("com.edify.learning.presentation.subject.SubjectViewModel", ((Provider) subjectViewModelProvider)).build();
+      return ImmutableMap.<String, Provider<ViewModel>>builderWithExpectedSize(10).put("com.edify.learning.presentation.chapter.ChapterViewModel", ((Provider) chapterViewModelProvider)).put("com.edify.learning.presentation.chat.ChatViewModel", ((Provider) chatViewModelProvider)).put("com.edify.learning.presentation.developer.DeveloperModeViewModel", ((Provider) developerModeViewModelProvider)).put("com.edify.learning.presentation.home.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.edify.learning.presentation.notes.NotesViewModel", ((Provider) notesViewModelProvider)).put("com.edify.learning.presentation.developer.QuestScoringViewModel", ((Provider) questScoringViewModelProvider)).put("com.edify.learning.presentation.quest.QuestViewModel", ((Provider) questViewModelProvider)).put("com.edify.learning.presentation.revision.RevisionViewModel", ((Provider) revisionViewModelProvider)).put("com.edify.learning.presentation.subject.SubjectViewModel", ((Provider) subjectViewModelProvider)).put("com.edify.learning.presentation.components.TranslationViewModel", ((Provider) translationViewModelProvider)).build();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -534,6 +539,9 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
           case 8: // com.edify.learning.presentation.subject.SubjectViewModel 
           return (T) new SubjectViewModel(singletonCImpl.learningRepositoryProvider.get());
+
+          case 9: // com.edify.learning.presentation.components.TranslationViewModel 
+          return (T) new TranslationViewModel(singletonCImpl.provideGemmaServiceProvider.get());
 
           default: throw new AssertionError(id);
         }

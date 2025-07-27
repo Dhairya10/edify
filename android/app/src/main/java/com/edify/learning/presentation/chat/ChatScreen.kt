@@ -605,7 +605,12 @@ fun MessageInputField(
                 OutlinedTextField(
                     value = value,
                     onValueChange = onValueChange,
-                    placeholder = { Text("Type your message...", color = TextSecondary) },
+                    placeholder = { 
+                        Text(
+                            if (value.startsWith("❝")) "Add your question or comment..." else "Type your message...", 
+                            color = TextSecondary
+                        ) 
+                    },
                     modifier = Modifier.weight(1f),
                     enabled = enabled,
                     shape = RoundedCornerShape(24.dp),
@@ -621,7 +626,8 @@ fun MessageInputField(
                         focusedPlaceholderColor = TextSecondary,
                         unfocusedPlaceholderColor = TextSecondary
                     ),
-                    maxLines = 4
+                    maxLines = 6,
+                    minLines = if (value.contains("\n")) 3 else 1
                 )
                 
                 // Image picker button

@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -26,6 +27,7 @@ import com.edify.learning.presentation.chapter.ChapterViewModel
 import com.edify.learning.presentation.notes.NotesScreen
 import com.edify.learning.presentation.chat.ChatScreen
 import com.edify.learning.presentation.chat.ChatViewModel
+import com.edify.learning.presentation.components.TranslationViewModel
 import com.edify.learning.presentation.revision.RevisionScreen
 import com.edify.learning.presentation.quest.QuestScreen
 import com.edify.learning.presentation.quest.QuestDetailScreen
@@ -145,6 +147,8 @@ fun EdifyApp() {
             composable("chapter/{chapterId}") { backStackEntry ->
                 val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
                 val viewModel: ChapterViewModel = hiltViewModel()
+                val translationViewModel: TranslationViewModel = hiltViewModel()
+                val gemmaService = translationViewModel.gemmaService
                 
                 LaunchedEffect(chapterId) {
                     viewModel.loadChapter(chapterId)
@@ -158,7 +162,8 @@ fun EdifyApp() {
                     },
                     onNavigateToChat = { chapterId, selectedText ->
                         navController.navigate("chat/$chapterId?selectedText=$selectedText")
-                    }
+                    },
+                    gemmaService = gemmaService
                 )
             }
             

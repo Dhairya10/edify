@@ -5,12 +5,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,10 +23,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.edify.learning.data.model.ChapterContent
@@ -46,7 +53,9 @@ fun MarkdownRenderer(
     onTextSelected: (String) -> Unit = {},
     onImageClick: (String) -> Unit = {},
     onContentSelected: (String, Boolean) -> Unit = { _, _ -> }, // content, isImage
-    selectedContent: String = ""
+    selectedContent: String = "",
+    isSelectionMode: Boolean = false,
+    onParagraphSelected: (String) -> Unit = {}
 ) {
     Column(
         modifier = modifier,
@@ -63,7 +72,9 @@ fun MarkdownRenderer(
                         style = element.style,
                         onTextSelected = onTextSelected,
                         onContentSelected = { text -> onContentSelected(text, false) },
-                        isSelected = selectedContent == element.content
+                        isSelected = selectedContent == element.content,
+                        isSelectionMode = isSelectionMode,
+                        onParagraphSelected = onParagraphSelected
                     )
                 }
                 is MarkdownElement.Image -> {
@@ -97,7 +108,9 @@ private fun MarkdownText(
     style: TextStyle = MaterialTheme.typography.bodyMedium,
     onTextSelected: (String) -> Unit = {},
     onContentSelected: (String) -> Unit = {},
-    isSelected: Boolean = false
+    isSelected: Boolean = false,
+    isSelectionMode: Boolean = false,
+    onParagraphSelected: (String) -> Unit = {}
 ) {
     // Clean HTML tags and process markdown formatting
     val cleanedText = text
@@ -159,15 +172,35 @@ private fun MarkdownText(
         }
     }
     
-    // Simple SelectionContainer for native copy functionality
-    SelectionContainer {
-        Text(
-            text = annotatedString,
-            style = style.copy(color = TextPrimary),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-        )
+    val context = LocalContext.current
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isSelectionMode) {
+                    Modifier
+                        .background(Color.Black.copy(alpha = 0.1f))
+                        .clickable {
+                            onParagraphSelected(text)
+                        }
+                } else {
+                    Modifier
+                }
+            )
+    ) {
+        SelectionContainer(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = annotatedString,
+                style = style.copy(color = TextPrimary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+        }
+
     }
 }
 

@@ -4,6 +4,7 @@ import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.presentation.MainActivity_GeneratedInjector;
 import com.edify.learning.presentation.chapter.ChapterViewModel_HiltModules;
 import com.edify.learning.presentation.chat.ChatViewModel_HiltModules;
+import com.edify.learning.presentation.components.TranslationViewModel_HiltModules;
 import com.edify.learning.presentation.developer.DeveloperModeViewModel_HiltModules;
 import com.edify.learning.presentation.developer.QuestScoringViewModel_HiltModules;
 import com.edify.learning.presentation.home.HomeViewModel_HiltModules;
@@ -172,7 +173,8 @@ public final class EdifyApplication_HiltComponents {
           QuestScoringViewModel_HiltModules.KeyModule.class,
           QuestViewModel_HiltModules.KeyModule.class,
           RevisionViewModel_HiltModules.KeyModule.class,
-          SubjectViewModel_HiltModules.KeyModule.class
+          SubjectViewModel_HiltModules.KeyModule.class,
+          TranslationViewModel_HiltModules.KeyModule.class
       }
   )
   @ActivityRetainedScoped
@@ -217,7 +219,8 @@ public final class EdifyApplication_HiltComponents {
           QuestScoringViewModel_HiltModules.BindsModule.class,
           QuestViewModel_HiltModules.BindsModule.class,
           RevisionViewModel_HiltModules.BindsModule.class,
-          SubjectViewModel_HiltModules.BindsModule.class
+          SubjectViewModel_HiltModules.BindsModule.class,
+          TranslationViewModel_HiltModules.BindsModule.class
       }
   )
   @ViewModelScoped
