@@ -28,6 +28,9 @@ interface GeneratedQuestDao {
     @Query("UPDATE generated_quests SET isCompleted = 1, userAnswer = :answer, completedAt = :completedAt WHERE id = :questId")
     suspend fun completeQuest(questId: String, answer: String, completedAt: Long = System.currentTimeMillis())
     
+    @Query("UPDATE generated_quests SET isUnlocked = 1 WHERE chapterId = :chapterId AND userId = :userId")
+    suspend fun unlockQuestByChapterId(chapterId: String, userId: String = "default_user")
+    
     @Delete
     suspend fun deleteQuest(quest: GeneratedQuest)
     

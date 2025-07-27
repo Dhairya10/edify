@@ -49,6 +49,14 @@ class QuestRepository @Inject constructor(
     }
     
     /**
+     * Get quest by chapter ID (for navigation from PersonalizedChapterQuest)
+     */
+    suspend fun getQuestByChapterId(chapterId: String): GeneratedQuest? {
+        val allQuests = generatedQuestDao.getAllQuests().first()
+        return allQuests.find { it.chapterId == chapterId }
+    }
+    
+    /**
      * Complete a quest with user's answer
      */
     suspend fun completeQuest(questId: String, answer: String, userId: String = "default_user") {
@@ -79,73 +87,66 @@ class QuestRepository @Inject constructor(
     }
     
     /**
-     * Get top interested chapters for personalized quests
+     * Unlock a quest by chapter ID
+     */
+    suspend fun unlockQuest(chapterId: String, userId: String = "default_user") {
+        generatedQuestDao.unlockQuestByChapterId(chapterId, userId)
+    }
+    
+    /**
+     * Get personalized quests based on actual generated quests in the database
+     * No longer duplicates filtering logic - displays only quests that were actually generated
      */
     suspend fun getTopInterestedChapters(userId: String = "default_user"): List<PersonalizedChapterQuest> {
         return try {
-            // Get all chapter stats with interest scores above threshold
-            val allStats = chapterStatsDao.getAllStats()
-            val highInterestChapters = allStats.filter { stats: ChapterStats ->
-                stats.calculateInterestScore() > 3.5 // Threshold from documentation
-            }.sortedByDescending { stats -> stats.calculateInterestScore() }
-            
-            // Get all completed quests to determine quest states
-            val completedQuests = generatedQuestDao.getCompletedQuests(userId)
-            val completedChapterIds = completedQuests.first().map { quest -> quest.chapterId }.toSet()
-            
-            // Get all generated quests to display questions on cards
+            // Get all generated quests (these were created by QuestGenerationService)
             val allGeneratedQuests = generatedQuestDao.getAllQuests(userId).first()
-            val questsByChapter = allGeneratedQuests.groupBy { it.chapterId }
+                .filter { !it.question.isNullOrBlank() } // Filter out quests without generated questions
             
-            // Convert to PersonalizedChapterQuest objects
+            // Get chapter stats for interest scores and state determination
+            val allStats = chapterStatsDao.getAllStats()
+            val statsByChapter = allStats.associateBy { it.chapterId }
+            
+            // Convert generated quests to PersonalizedChapterQuest objects
             val personalizedQuests = mutableListOf<PersonalizedChapterQuest>()
             
-            for (stats in highInterestChapters.take(5)) { // Limit to top 5
+            for (generatedQuest in allGeneratedQuests.take(5)) { // Limit to top 5
                 try {
-                    val chapter = chapterDao.getChapterById(stats.chapterId)
+                    val chapter = chapterDao.getChapterById(generatedQuest.chapterId)
                     val subject = chapter?.let { subjectDao.getSubjectById(it.subjectId) }
+
                     
                     if (chapter != null && subject != null) {
-                        val subjectIconRes = when (subject.name.lowercase()) {
-                            "science" -> android.R.drawable.ic_dialog_info
-                            "english" -> android.R.drawable.ic_menu_edit
-                            "maths", "math" -> android.R.drawable.ic_input_add
-                            else -> android.R.drawable.ic_dialog_info
-                        }
-                        
-                        // Determine quest state based on completion and interest score
+                        // Determine quest state based on database fields
                         val questState = when {
-                            completedChapterIds.contains(chapter.id) -> QuestState.COMPLETED
-                            stats.calculateInterestScore() >= 4.0 -> QuestState.UNLOCKED
+                            generatedQuest.isCompleted -> QuestState.COMPLETED
+                            generatedQuest.isUnlocked -> QuestState.UNLOCKED
                             else -> QuestState.LOCKED
                         }
-                        
-                        // Get the most recent generated question for this chapter
-                        val chapterQuests = questsByChapter[chapter.id] ?: emptyList()
-                        val latestQuest = chapterQuests.maxByOrNull { it.createdAt }
                         
                         personalizedQuests.add(
                             PersonalizedChapterQuest(
                                 chapterId = chapter.id,
-                                chapterTitle = chapter.title,
+                                chapterTitle = generatedQuest.title, // Use generated quest title instead of chapter title
                                 subject = subject.name,
-                                subjectIconRes = subjectIconRes,
-                                generatedQuestion = latestQuest?.question,
-                                interestScore = stats.calculateInterestScore(),
-                                lastVisited = stats.lastVisited,
+                                subjectIconRes = 0, // No subject icons needed
+                                generatedQuestion = generatedQuest.question,
+                                interestScore = 0.0, // Not displayed on UI
+                                lastVisited = 0L, // Not needed
                                 state = questState
                             )
                         )
                     }
                 } catch (e: Exception) {
-                    // Skip this chapter if there's an error loading details
-                    println("Error loading chapter details for ${stats.chapterId}: ${e.message}")
+                    // Skip this quest if there's an error loading details
+                    println("Error loading quest details for ${generatedQuest.id}: ${e.message}")
                 }
             }
             
+            // Return quests in order they were generated
             personalizedQuests
         } catch (e: Exception) {
-            println("Error loading top interested chapters: ${e.message}")
+            println("Error loading personalized quests: ${e.message}")
             emptyList()
         }
     }

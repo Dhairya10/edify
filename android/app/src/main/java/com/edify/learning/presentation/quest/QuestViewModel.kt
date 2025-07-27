@@ -3,6 +3,7 @@ package com.edify.learning.presentation.quest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edify.learning.data.model.GeneratedQuest
+import com.edify.learning.data.model.PersonalizedChapterQuest
 import com.edify.learning.data.model.QuestState
 import com.edify.learning.data.repository.QuestRepository
 import com.edify.learning.data.service.QuestGenerationService
@@ -16,7 +17,7 @@ import javax.inject.Inject
 
 data class QuestUiState(
     val isLoading: Boolean = false,
-    val quests: List<GeneratedQuest> = emptyList(),
+    val quests: List<PersonalizedChapterQuest> = emptyList(),
     val selectedQuest: GeneratedQuest? = null,
     val isSubmittingAnswer: Boolean = false,
     val error: String? = null,
@@ -47,21 +48,23 @@ class QuestViewModel @Inject constructor(
     
     /**
      * Load all quests for the user
+     * Displays only actual generated quests from the database
      */
     private fun loadQuests() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
-                questRepository.getAllQuests().collectLatest { quests ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        quests = quests,
-                        hasQuests = quests.isNotEmpty(),
-                        questCount = quests.size,
-                        error = null
-                    )
-                }
+                // Get personalized quests (based on actual generated quests)
+                val personalizedQuests = questRepository.getTopInterestedChapters()
+                
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    quests = personalizedQuests,
+                    hasQuests = personalizedQuests.isNotEmpty(),
+                    questCount = personalizedQuests.size,
+                    error = null
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -74,8 +77,15 @@ class QuestViewModel @Inject constructor(
     /**
      * Select a quest to view details
      */
-    fun selectQuest(quest: GeneratedQuest) {
-        _uiState.value = _uiState.value.copy(selectedQuest = quest)
+    fun selectQuest(questId: String) {
+        viewModelScope.launch {
+            try {
+                val quest = questRepository.getQuestById(questId)
+                _uiState.value = _uiState.value.copy(selectedQuest = quest)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message)
+            }
+        }
     }
     
     /**
@@ -150,6 +160,26 @@ class QuestViewModel @Inject constructor(
             }
         }
     }
+    
+    /**
+     * Unlock a quest by updating its state in the database
+     */
+    fun unlockQuest(chapterId: String) {
+        viewModelScope.launch {
+            try {
+                // Update the quest state in the database
+                questRepository.unlockQuest(chapterId)
+                
+                // Reload quests to reflect the updated state
+                loadQuests()
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Failed to unlock quest: ${e.message}"
+                )
+            }
+        }
+    }
 
     /**
      * Load quest detail for a specific quest ID
@@ -169,6 +199,37 @@ class QuestViewModel @Inject constructor(
             }
         }
     }
+    
+    /**
+     * Load quest detail by chapter ID (for PersonalizedChapterQuest navigation)
+     */
+    fun loadQuestDetailByChapterId(chapterId: String) {
+        viewModelScope.launch {
+            try {
+                // Show loading state while fetching
+                _uiState.value = _uiState.value.copy(isLoading = true)
+                
+                // Get fresh quest data from repository to ensure latest completion state
+                val quest = questRepository.getQuestByChapterId(chapterId)
+                
+                _uiState.value = _uiState.value.copy(
+                    selectedQuest = quest,
+                    error = if (quest == null) "No quest found for this chapter" else null,
+                    isLoading = false
+                )
+                
+                // Also refresh the quests list to ensure UI state is consistent
+                if (quest != null) {
+                    loadQuests()
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = e.message,
+                    isLoading = false
+                )
+            }
+        }
+    }
 
     /**
      * Submit answer for a quest
@@ -178,16 +239,20 @@ class QuestViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isSubmittingAnswer = true)
             
             try {
+                // Complete the quest in the database
                 questRepository.completeQuest(questId, answer)
                 
-                // Clear selected quest and refresh list
+                // Get the updated quest with completion status
+                val updatedQuest = questRepository.getQuestById(questId)
+                
+                // Update the selected quest to reflect completion immediately
                 _uiState.value = _uiState.value.copy(
                     isSubmittingAnswer = false,
-                    selectedQuest = null,
+                    selectedQuest = updatedQuest,
                     error = null
                 )
                 
-                // Reload quests to reflect completion
+                // Reload the quest list to ensure home screen shows updated state
                 loadQuests()
                 
                 // Trigger quest generation after meaningful user action

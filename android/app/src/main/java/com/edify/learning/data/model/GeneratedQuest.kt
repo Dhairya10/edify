@@ -16,6 +16,7 @@ data class GeneratedQuest(
     val involvedChapterIds: String = "", // Comma-separated list of chapter IDs for convergent quests
     val userId: String = "default_user",
     val isCompleted: Boolean = false,
+    val isUnlocked: Boolean = false, // Track whether user has unlocked this quest
     val userAnswer: String? = null,
     val completedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis()

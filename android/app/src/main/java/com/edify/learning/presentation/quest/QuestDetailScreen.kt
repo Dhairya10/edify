@@ -9,9 +9,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,9 +31,10 @@ fun QuestDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
-    // Load quest details
+    // Load quest details - try by chapterId (for PersonalizedChapterQuest navigation)
+    // Load quest details using LaunchedEffect for proper composition handling
     LaunchedEffect(questId) {
-        viewModel.loadQuestDetail(questId)
+        viewModel.loadQuestDetailByChapterId(questId)
     }
     
     Column(
@@ -66,8 +69,9 @@ fun QuestDetailScreen(
             QuestDetailContent(
                 quest = uiState.selectedQuest!!,
                 onAnswerSubmit = { answer ->
-                    viewModel.submitQuestAnswer(questId, answer)
-                    onNavigateBack() // Navigate back after submission
+                    // Use the actual quest ID from the loaded quest, not the navigation parameter
+                    viewModel.submitQuestAnswer(uiState.selectedQuest!!.id, answer)
+                    // Don't navigate back automatically - let user see their submitted answer
                 },
                 isSubmitting = uiState.isSubmittingAnswer
             )
@@ -126,8 +130,16 @@ fun QuestDetailContent(
     onAnswerSubmit: (String) -> Unit,
     isSubmitting: Boolean = false
 ) {
-    var userAnswer by remember { mutableStateOf("") }
+    // Use remember with quest.id as key to reset state when quest changes
+    var userAnswer by remember(quest.id) { mutableStateOf(quest.userAnswer ?: "") }
     val scrollState = rememberScrollState()
+    
+    // Update the userAnswer when quest's userAnswer changes (e.g., after submission)
+    LaunchedEffect(quest.userAnswer) {
+        if (quest.userAnswer != null && quest.userAnswer != userAnswer) {
+            userAnswer = quest.userAnswer!!
+        }
+    }
     
     Column(
         modifier = Modifier
@@ -135,6 +147,7 @@ fun QuestDetailContent(
             .background(White)
             .verticalScroll(scrollState)
             .padding(16.dp)
+            .imePadding() // Add padding for keyboard
     ) {
         // Question display
         Text(
@@ -195,7 +208,7 @@ fun QuestDetailContent(
                 )
             } else {
                 Text(
-                    text = "Submit Answer",
+                    text = if (quest.isCompleted) "Update Answer" else "Submit Answer",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.White

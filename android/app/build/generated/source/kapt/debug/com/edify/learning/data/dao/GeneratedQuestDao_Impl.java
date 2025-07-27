@@ -46,6 +46,8 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
 
   private final SharedSQLiteStatement __preparedStmtOfCompleteQuest;
 
+  private final SharedSQLiteStatement __preparedStmtOfUnlockQuestByChapterId;
+
   private final SharedSQLiteStatement __preparedStmtOfDeleteQuestById;
 
   private final SharedSQLiteStatement __preparedStmtOfDeleteAllQuests;
@@ -56,7 +58,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `generated_quests` (`id`,`chapterId`,`subjectName`,`title`,`question`,`questType`,`involvedChapterIds`,`userId`,`isCompleted`,`userAnswer`,`completedAt`,`createdAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `generated_quests` (`id`,`chapterId`,`subjectName`,`title`,`question`,`questType`,`involvedChapterIds`,`userId`,`isCompleted`,`isUnlocked`,`userAnswer`,`completedAt`,`createdAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -104,17 +106,19 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
         }
         final int _tmp = entity.isCompleted() ? 1 : 0;
         statement.bindLong(9, _tmp);
+        final int _tmp_1 = entity.isUnlocked() ? 1 : 0;
+        statement.bindLong(10, _tmp_1);
         if (entity.getUserAnswer() == null) {
-          statement.bindNull(10);
-        } else {
-          statement.bindString(10, entity.getUserAnswer());
-        }
-        if (entity.getCompletedAt() == null) {
           statement.bindNull(11);
         } else {
-          statement.bindLong(11, entity.getCompletedAt());
+          statement.bindString(11, entity.getUserAnswer());
         }
-        statement.bindLong(12, entity.getCreatedAt());
+        if (entity.getCompletedAt() == null) {
+          statement.bindNull(12);
+        } else {
+          statement.bindLong(12, entity.getCompletedAt());
+        }
+        statement.bindLong(13, entity.getCreatedAt());
       }
     };
     this.__deletionAdapterOfGeneratedQuest = new EntityDeletionOrUpdateAdapter<GeneratedQuest>(__db) {
@@ -138,7 +142,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `generated_quests` SET `id` = ?,`chapterId` = ?,`subjectName` = ?,`title` = ?,`question` = ?,`questType` = ?,`involvedChapterIds` = ?,`userId` = ?,`isCompleted` = ?,`userAnswer` = ?,`completedAt` = ?,`createdAt` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `generated_quests` SET `id` = ?,`chapterId` = ?,`subjectName` = ?,`title` = ?,`question` = ?,`questType` = ?,`involvedChapterIds` = ?,`userId` = ?,`isCompleted` = ?,`isUnlocked` = ?,`userAnswer` = ?,`completedAt` = ?,`createdAt` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -186,21 +190,23 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
         }
         final int _tmp = entity.isCompleted() ? 1 : 0;
         statement.bindLong(9, _tmp);
+        final int _tmp_1 = entity.isUnlocked() ? 1 : 0;
+        statement.bindLong(10, _tmp_1);
         if (entity.getUserAnswer() == null) {
-          statement.bindNull(10);
-        } else {
-          statement.bindString(10, entity.getUserAnswer());
-        }
-        if (entity.getCompletedAt() == null) {
           statement.bindNull(11);
         } else {
-          statement.bindLong(11, entity.getCompletedAt());
+          statement.bindString(11, entity.getUserAnswer());
         }
-        statement.bindLong(12, entity.getCreatedAt());
-        if (entity.getId() == null) {
-          statement.bindNull(13);
+        if (entity.getCompletedAt() == null) {
+          statement.bindNull(12);
         } else {
-          statement.bindString(13, entity.getId());
+          statement.bindLong(12, entity.getCompletedAt());
+        }
+        statement.bindLong(13, entity.getCreatedAt());
+        if (entity.getId() == null) {
+          statement.bindNull(14);
+        } else {
+          statement.bindString(14, entity.getId());
         }
       }
     };
@@ -209,6 +215,14 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
       @NonNull
       public String createQuery() {
         final String _query = "UPDATE generated_quests SET isCompleted = 1, userAnswer = ?, completedAt = ? WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfUnlockQuestByChapterId = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE generated_quests SET isUnlocked = 1 WHERE chapterId = ? AND userId = ?";
         return _query;
       }
     };
@@ -323,6 +337,42 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
   }
 
   @Override
+  public Object unlockQuestByChapterId(final String chapterId, final String userId,
+      final Continuation<? super Unit> arg2) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUnlockQuestByChapterId.acquire();
+        int _argIndex = 1;
+        if (chapterId == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, chapterId);
+        }
+        _argIndex = 2;
+        if (userId == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, userId);
+        }
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfUnlockQuestByChapterId.release(_stmt);
+        }
+      }
+    }, arg2);
+  }
+
+  @Override
   public Object deleteQuestById(final String questId, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
@@ -399,6 +449,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           final int _cursorIndexOfInvolvedChapterIds = CursorUtil.getColumnIndexOrThrow(_cursor, "involvedChapterIds");
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfIsUnlocked = CursorUtil.getColumnIndexOrThrow(_cursor, "isUnlocked");
           final int _cursorIndexOfUserAnswer = CursorUtil.getColumnIndexOrThrow(_cursor, "userAnswer");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -457,6 +508,10 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
             _tmpIsCompleted = _tmp != 0;
+            final boolean _tmpIsUnlocked;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsUnlocked);
+            _tmpIsUnlocked = _tmp_1 != 0;
             final String _tmpUserAnswer;
             if (_cursor.isNull(_cursorIndexOfUserAnswer)) {
               _tmpUserAnswer = null;
@@ -471,7 +526,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             }
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
+            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpIsUnlocked,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
             _result.add(_item);
           }
           return _result;
@@ -514,6 +569,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           final int _cursorIndexOfInvolvedChapterIds = CursorUtil.getColumnIndexOrThrow(_cursor, "involvedChapterIds");
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfIsUnlocked = CursorUtil.getColumnIndexOrThrow(_cursor, "isUnlocked");
           final int _cursorIndexOfUserAnswer = CursorUtil.getColumnIndexOrThrow(_cursor, "userAnswer");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -571,6 +627,10 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
             _tmpIsCompleted = _tmp != 0;
+            final boolean _tmpIsUnlocked;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsUnlocked);
+            _tmpIsUnlocked = _tmp_1 != 0;
             final String _tmpUserAnswer;
             if (_cursor.isNull(_cursorIndexOfUserAnswer)) {
               _tmpUserAnswer = null;
@@ -585,7 +645,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             }
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _result = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
+            _result = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpIsUnlocked,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
           } else {
             _result = null;
           }
@@ -623,6 +683,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           final int _cursorIndexOfInvolvedChapterIds = CursorUtil.getColumnIndexOrThrow(_cursor, "involvedChapterIds");
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfIsUnlocked = CursorUtil.getColumnIndexOrThrow(_cursor, "isUnlocked");
           final int _cursorIndexOfUserAnswer = CursorUtil.getColumnIndexOrThrow(_cursor, "userAnswer");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -681,6 +742,10 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
             _tmpIsCompleted = _tmp != 0;
+            final boolean _tmpIsUnlocked;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsUnlocked);
+            _tmpIsUnlocked = _tmp_1 != 0;
             final String _tmpUserAnswer;
             if (_cursor.isNull(_cursorIndexOfUserAnswer)) {
               _tmpUserAnswer = null;
@@ -695,7 +760,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             }
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
+            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpIsUnlocked,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
             _result.add(_item);
           }
           return _result;
@@ -736,6 +801,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           final int _cursorIndexOfInvolvedChapterIds = CursorUtil.getColumnIndexOrThrow(_cursor, "involvedChapterIds");
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfIsUnlocked = CursorUtil.getColumnIndexOrThrow(_cursor, "isUnlocked");
           final int _cursorIndexOfUserAnswer = CursorUtil.getColumnIndexOrThrow(_cursor, "userAnswer");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -794,6 +860,10 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
             _tmpIsCompleted = _tmp != 0;
+            final boolean _tmpIsUnlocked;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsUnlocked);
+            _tmpIsUnlocked = _tmp_1 != 0;
             final String _tmpUserAnswer;
             if (_cursor.isNull(_cursorIndexOfUserAnswer)) {
               _tmpUserAnswer = null;
@@ -808,7 +878,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             }
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
+            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpIsUnlocked,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
             _result.add(_item);
           }
           return _result;
@@ -895,6 +965,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           final int _cursorIndexOfInvolvedChapterIds = CursorUtil.getColumnIndexOrThrow(_cursor, "involvedChapterIds");
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfIsUnlocked = CursorUtil.getColumnIndexOrThrow(_cursor, "isUnlocked");
           final int _cursorIndexOfUserAnswer = CursorUtil.getColumnIndexOrThrow(_cursor, "userAnswer");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -953,6 +1024,10 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
             _tmpIsCompleted = _tmp != 0;
+            final boolean _tmpIsUnlocked;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsUnlocked);
+            _tmpIsUnlocked = _tmp_1 != 0;
             final String _tmpUserAnswer;
             if (_cursor.isNull(_cursorIndexOfUserAnswer)) {
               _tmpUserAnswer = null;
@@ -967,7 +1042,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             }
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
+            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpIsUnlocked,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
             _result.add(_item);
           }
           return _result;
@@ -1012,6 +1087,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           final int _cursorIndexOfInvolvedChapterIds = CursorUtil.getColumnIndexOrThrow(_cursor, "involvedChapterIds");
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfIsUnlocked = CursorUtil.getColumnIndexOrThrow(_cursor, "isUnlocked");
           final int _cursorIndexOfUserAnswer = CursorUtil.getColumnIndexOrThrow(_cursor, "userAnswer");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -1070,6 +1146,10 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
             _tmpIsCompleted = _tmp != 0;
+            final boolean _tmpIsUnlocked;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsUnlocked);
+            _tmpIsUnlocked = _tmp_1 != 0;
             final String _tmpUserAnswer;
             if (_cursor.isNull(_cursorIndexOfUserAnswer)) {
               _tmpUserAnswer = null;
@@ -1084,7 +1164,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             }
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
+            _item = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpIsUnlocked,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
             _result.add(_item);
           }
           return _result;
@@ -1148,6 +1228,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           final int _cursorIndexOfInvolvedChapterIds = CursorUtil.getColumnIndexOrThrow(_cursor, "involvedChapterIds");
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfIsCompleted = CursorUtil.getColumnIndexOrThrow(_cursor, "isCompleted");
+          final int _cursorIndexOfIsUnlocked = CursorUtil.getColumnIndexOrThrow(_cursor, "isUnlocked");
           final int _cursorIndexOfUserAnswer = CursorUtil.getColumnIndexOrThrow(_cursor, "userAnswer");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -1206,6 +1287,10 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsCompleted);
             _tmpIsCompleted = _tmp != 0;
+            final boolean _tmpIsUnlocked;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsUnlocked);
+            _tmpIsUnlocked = _tmp_1 != 0;
             final String _tmpUserAnswer;
             if (_cursor.isNull(_cursorIndexOfUserAnswer)) {
               _tmpUserAnswer = null;
@@ -1220,7 +1305,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
             }
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item_1 = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
+            _item_1 = new GeneratedQuest(_tmpId,_tmpChapterId,_tmpSubjectName,_tmpTitle,_tmpQuestion,_tmpQuestType,_tmpInvolvedChapterIds,_tmpUserId,_tmpIsCompleted,_tmpIsUnlocked,_tmpUserAnswer,_tmpCompletedAt,_tmpCreatedAt);
             _result.add(_item_1);
           }
           return _result;
