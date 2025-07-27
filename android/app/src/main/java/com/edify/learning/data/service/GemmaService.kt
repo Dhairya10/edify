@@ -542,6 +542,43 @@ class GemmaService @Inject constructor(
         }
     }
     
+    suspend fun translateText(text: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            if (!isInitialized) {
+                initializeModel().getOrThrow()
+            }
+            
+            val translationPrompt = createTranslationPrompt(text)
+            val result = generateResponse(translationPrompt)
+            
+            result.fold(
+                onSuccess = { response ->
+                    if (response.isNotEmpty()) {
+                        Result.success(response)
+                    } else {
+                        Result.failure(Exception("Translation failed: Empty response"))
+                    }
+                },
+                onFailure = { error ->
+                    Result.failure(Exception("Translation failed: ${error.message}"))
+                }
+            )
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Translation error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
+    private fun createTranslationPrompt(text: String): String {
+        return """
+        Translate the following English text to Hindi. Provide only the Hindi translation without any additional text or explanations.
+        
+        English text: $text
+        
+        Hindi translation:
+        """.trimIndent()
+    }
+
     fun createSummaryPrompt(content: String): String {
         return """
         Create a brief summary for mobile learning. Be concise and focused.

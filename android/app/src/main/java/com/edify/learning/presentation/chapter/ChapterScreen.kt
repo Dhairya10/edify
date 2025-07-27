@@ -1,6 +1,7 @@
 package com.edify.learning.presentation.chapter
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,6 +10,7 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.*
 import com.edify.learning.R
@@ -27,8 +29,12 @@ import com.edify.learning.data.model.ChapterContent
 import com.edify.learning.data.util.ContentParser
 import com.edify.learning.presentation.components.MarkdownRenderer
 import com.edify.learning.presentation.components.ImageViewer
+import com.edify.learning.presentation.components.TranslationDialog
+import com.edify.learning.data.service.GemmaService
 import com.edify.learning.ui.theme.*
 import java.io.File
+import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun AddNoteDialog(
@@ -95,13 +101,18 @@ fun ChapterScreen(
     viewModel: ChapterViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToNotes: (String) -> Unit,
-    onNavigateToChat: (String, String?) -> Unit
+    onNavigateToChat: (String, String?) -> Unit,
+    gemmaService: GemmaService
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val selectedText by viewModel.selectedText.collectAsState()
     val selectedContent by viewModel.selectedContent.collectAsState()
     val isImageSelected by viewModel.isImageSelected.collectAsState()
 
+    // Translation selection mode state
+    var isTranslationSelectionMode by remember { mutableStateOf(false) }
+    var selectedParagraph by remember { mutableStateOf("") }
+    
     // Monitor text selection state
     var hasTextSelection by remember { mutableStateOf(false) }
 
@@ -113,64 +124,96 @@ fun ChapterScreen(
 
     var showAddNoteDialog by remember { mutableStateOf(false) }
     var showImageViewer by remember { mutableStateOf(false) }
+    
+    // Translation dialog state
+    var showTranslationDialog by remember { mutableStateOf(false) }
+    var originalParagraph by remember { mutableStateOf("") }
+    var translatedParagraph by remember { mutableStateOf("") }
+    var isTranslating by remember { mutableStateOf(false) }
+    
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var selectedImagePath by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(White)
-    ) {
-        // Top App Bar
-        TopAppBar(
-            title = {
-                Text(
-                    text = uiState.chapter?.title ?: "Chapter",
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back"
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = White,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = uiState.chapter?.title ?: "Chapter",
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
-                }
-            },
-            actions = {
-                // Add Note Button
-                IconButton(
-                    onClick = { showAddNoteDialog = true }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Note"
-                    )
-                }
-
-                // Chat Button with custom icon
-                IconButton(
-                    onClick = {
-                        uiState.chapter?.let { chapter ->
-                            onNavigateToChat(chapter.id, selectedText.ifBlank { null })
-                        }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
+                },
+                actions = {
+                    // Add Note Button
+                    IconButton(
+                        onClick = { showAddNoteDialog = true }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Note"
+                        )
+                    }
+
+                    // Chat Button with custom icon
+                    IconButton(
+                        onClick = {
+                            uiState.chapter?.let { chapter ->
+                                onNavigateToChat(chapter.id, selectedText.ifBlank { null })
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chat),
+                            contentDescription = "Chat"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = PrimaryBlue,
+                    titleContentColor = White,
+                    navigationIconContentColor = White,
+                    actionIconContentColor = White
+                )
+            )
+        },
+        floatingActionButton = {
+            // Translation FAB
+            if (!isTranslationSelectionMode) {
+                FloatingActionButton(
+                    onClick = {
+                        isTranslationSelectionMode = true
+                    },
+                    containerColor = SecondaryBlue,
+                    contentColor = White
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_chat),
-                        contentDescription = "Chat"
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Translate"
                     )
                 }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = PrimaryBlue,
-                titleContentColor = White,
-                navigationIconContentColor = White,
-                actionIconContentColor = White
-            )
-        )
-
-        // Content based on loading state
+            }
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Main content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                // Content based on loading state
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -226,7 +269,58 @@ fun ChapterScreen(
                                 MarkdownRenderer(
                                     content = parsedContent,
                                     baseImagePath = "file:///android_asset/images",
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isSelectionMode = isTranslationSelectionMode,
+                                    onParagraphSelected = { paragraph ->
+                                        // Handle paragraph selection for translation
+                                        selectedParagraph = paragraph
+                                        isTranslationSelectionMode = false
+                                        
+                                        // Check character limit (increased for paragraphs)
+                                        if (paragraph.length > 2000) {
+                                            Toast.makeText(
+                                                context,
+                                                "Selected paragraph exceeds 2000 character limit. Please select a shorter paragraph.",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            return@MarkdownRenderer
+                                        }
+                                        
+                                        // Start translation process
+                                        originalParagraph = paragraph
+                                        translatedParagraph = ""
+                                        isTranslating = true
+                                        showTranslationDialog = true
+                                        
+                                        scope.launch {
+                                            try {
+                                                val result = gemmaService.translateText(paragraph)
+                                                result.fold(
+                                                    onSuccess = { translation ->
+                                                        translatedParagraph = translation
+                                                        isTranslating = false
+                                                    },
+                                                    onFailure = { error ->
+                                                        isTranslating = false
+                                                        translatedParagraph = "Translation failed: ${error.message}"
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Translation failed. Please try again.",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                )
+                                            } catch (e: Exception) {
+                                                isTranslating = false
+                                                translatedParagraph = "Translation error occurred"
+                                                Toast.makeText(
+                                                    context,
+                                                    "Translation error. Please try again.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    }
                                 )
                             } else {
                                 Text(
@@ -243,22 +337,31 @@ fun ChapterScreen(
             }
         }
 
-        // Error State
-        uiState.error?.let { error ->
-            LaunchedEffect(error) {
-                // Show snackbar or handle error
-                viewModel.clearError()
+            // Error State
+            uiState.error?.let { error ->
+                LaunchedEffect(error) {
+                    // Show snackbar or handle error
+                    viewModel.clearError()
+                }
             }
-        }
 
-        // Success Message
-        val context = LocalContext.current
-        uiState.message?.let { message ->
-            LaunchedEffect(message) {
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                viewModel.clearMessage()
+            // Success Message
+            uiState.message?.let { message ->
+                LaunchedEffect(message) {
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    viewModel.clearMessage()
+                }
             }
-        }
+            }
+            
+            // Translation Selection Mode Overlay - Just dim the screen
+            if (isTranslationSelectionMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.2f))
+                )
+            }
         }
 
         // Add Note Dialog
@@ -278,7 +381,23 @@ fun ChapterScreen(
                 onDismiss = { showImageViewer = false }
             )
         }
-    } 
+        
+        // Translation Dialog
+        if (showTranslationDialog) {
+            TranslationDialog(
+                originalText = originalParagraph,
+                translatedText = translatedParagraph,
+                isLoading = isTranslating,
+                onDismiss = {
+                    showTranslationDialog = false
+                    originalParagraph = ""
+                    translatedParagraph = ""
+                    isTranslating = false
+                }
+            )
+        }
+    }
+}
 
 
 

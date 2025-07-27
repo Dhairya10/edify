@@ -62,9 +62,10 @@ class ChatViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(messages = messages)
                 }
                 
-                // If there's selected text, automatically start explanation
+                // If there's selected text, pre-populate the input field with quoted text
                 selectedText?.let { text ->
-                    sendExplanationRequest(text)
+                    val quotedText = "❝ $text ❞\n\n"
+                    _messageInput.value = quotedText
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
