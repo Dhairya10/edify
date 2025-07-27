@@ -27,8 +27,11 @@ import com.edify.learning.presentation.notes.NotesScreen
 import com.edify.learning.presentation.chat.ChatScreen
 import com.edify.learning.presentation.chat.ChatViewModel
 import com.edify.learning.presentation.revision.RevisionScreen
-import com.edify.learning.presentation.profile.ProfileScreen
+import com.edify.learning.presentation.quest.QuestScreen
+import com.edify.learning.presentation.quest.QuestDetailScreen
+import com.edify.learning.presentation.developer.DeveloperModeScreen
 import com.edify.learning.ui.theme.EdifyTheme
+import com.edify.learning.utils.DeveloperMode
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -51,7 +54,14 @@ fun EdifyApp() {
     val currentRoute = navBackStackEntry?.destination?.route
     
     // Routes that should show bottom navigation
-    val bottomNavRoutes = listOf("library", "notes", "profile")
+    val bottomNavRoutes = buildList {
+        add("library")
+        add("notes")
+        add("quest")
+        if (DeveloperMode.ENABLED) {
+            add("developer")
+        }
+    }
     val showBottomNav = currentRoute in bottomNavRoutes
     
     Scaffold(
@@ -99,8 +109,19 @@ fun EdifyApp() {
                 NotesScreen()
             }
             
-            composable("profile") {
-                ProfileScreen()
+            composable("quest") {
+                QuestScreen(
+                    onNavigateToQuestDetail = { questId ->
+                        navController.navigate("quest_detail/$questId")
+                    }
+                )
+            }
+            
+            // Developer Mode Screen (only available when enabled)
+            if (DeveloperMode.ENABLED) {
+                composable("developer") {
+                    DeveloperModeScreen()
+                }
             }
             
             // Detail Screens (without bottom navigation)
@@ -167,6 +188,15 @@ fun EdifyApp() {
                 RevisionScreen(
                     chapterId = chapterId,
                     chapterTitle = chapterTitle,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable("quest_detail/{questId}") { backStackEntry ->
+                val questId = backStackEntry.arguments?.getString("questId") ?: ""
+                
+                QuestDetailScreen(
+                    questId = questId,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

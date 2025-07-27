@@ -27,10 +27,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import javax.annotation.processing.Generated;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import kotlinx.coroutines.flow.Flow;
 
+@Generated("androidx.room.RoomProcessor")
 @SuppressWarnings({"unchecked", "deprecation"})
 public final class ChatDao_Impl implements ChatDao {
   private final RoomDatabase __db;
@@ -43,6 +45,8 @@ public final class ChatDao_Impl implements ChatDao {
 
   private final EntityDeletionOrUpdateAdapter<ChatMessage> __updateAdapterOfChatMessage;
 
+  private final SharedSQLiteStatement __preparedStmtOfDeleteById;
+
   private final SharedSQLiteStatement __preparedStmtOfDeleteMessagesBySession;
 
   public ChatDao_Impl(@NonNull final RoomDatabase __db) {
@@ -51,7 +55,7 @@ public final class ChatDao_Impl implements ChatDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `chat_messages` (`id`,`sessionId`,`content`,`isFromUser`,`timestamp`,`messageType`,`attachmentPath`) VALUES (?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `chat_messages` (`id`,`sessionId`,`chapterId`,`content`,`isFromUser`,`timestamp`,`messageType`,`attachmentPath`) VALUES (?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -67,24 +71,29 @@ public final class ChatDao_Impl implements ChatDao {
         } else {
           statement.bindString(2, entity.getSessionId());
         }
-        if (entity.getContent() == null) {
+        if (entity.getChapterId() == null) {
           statement.bindNull(3);
         } else {
-          statement.bindString(3, entity.getContent());
+          statement.bindString(3, entity.getChapterId());
+        }
+        if (entity.getContent() == null) {
+          statement.bindNull(4);
+        } else {
+          statement.bindString(4, entity.getContent());
         }
         final int _tmp = entity.isFromUser() ? 1 : 0;
-        statement.bindLong(4, _tmp);
-        statement.bindLong(5, entity.getTimestamp());
+        statement.bindLong(5, _tmp);
+        statement.bindLong(6, entity.getTimestamp());
         final String _tmp_1 = __converters.fromMessageType(entity.getMessageType());
         if (_tmp_1 == null) {
-          statement.bindNull(6);
-        } else {
-          statement.bindString(6, _tmp_1);
-        }
-        if (entity.getAttachmentPath() == null) {
           statement.bindNull(7);
         } else {
-          statement.bindString(7, entity.getAttachmentPath());
+          statement.bindString(7, _tmp_1);
+        }
+        if (entity.getAttachmentPath() == null) {
+          statement.bindNull(8);
+        } else {
+          statement.bindString(8, entity.getAttachmentPath());
         }
       }
     };
@@ -109,7 +118,7 @@ public final class ChatDao_Impl implements ChatDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `chat_messages` SET `id` = ?,`sessionId` = ?,`content` = ?,`isFromUser` = ?,`timestamp` = ?,`messageType` = ?,`attachmentPath` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `chat_messages` SET `id` = ?,`sessionId` = ?,`chapterId` = ?,`content` = ?,`isFromUser` = ?,`timestamp` = ?,`messageType` = ?,`attachmentPath` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -125,30 +134,43 @@ public final class ChatDao_Impl implements ChatDao {
         } else {
           statement.bindString(2, entity.getSessionId());
         }
-        if (entity.getContent() == null) {
+        if (entity.getChapterId() == null) {
           statement.bindNull(3);
         } else {
-          statement.bindString(3, entity.getContent());
+          statement.bindString(3, entity.getChapterId());
+        }
+        if (entity.getContent() == null) {
+          statement.bindNull(4);
+        } else {
+          statement.bindString(4, entity.getContent());
         }
         final int _tmp = entity.isFromUser() ? 1 : 0;
-        statement.bindLong(4, _tmp);
-        statement.bindLong(5, entity.getTimestamp());
+        statement.bindLong(5, _tmp);
+        statement.bindLong(6, entity.getTimestamp());
         final String _tmp_1 = __converters.fromMessageType(entity.getMessageType());
         if (_tmp_1 == null) {
-          statement.bindNull(6);
-        } else {
-          statement.bindString(6, _tmp_1);
-        }
-        if (entity.getAttachmentPath() == null) {
           statement.bindNull(7);
         } else {
-          statement.bindString(7, entity.getAttachmentPath());
+          statement.bindString(7, _tmp_1);
         }
-        if (entity.getId() == null) {
+        if (entity.getAttachmentPath() == null) {
           statement.bindNull(8);
         } else {
-          statement.bindString(8, entity.getId());
+          statement.bindString(8, entity.getAttachmentPath());
         }
+        if (entity.getId() == null) {
+          statement.bindNull(9);
+        } else {
+          statement.bindString(9, entity.getId());
+        }
+      }
+    };
+    this.__preparedStmtOfDeleteById = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM chat_messages WHERE id = ?";
+        return _query;
       }
     };
     this.__preparedStmtOfDeleteMessagesBySession = new SharedSQLiteStatement(__db) {
@@ -235,6 +257,31 @@ public final class ChatDao_Impl implements ChatDao {
   }
 
   @Override
+  public Object deleteById(final long id, final Continuation<? super Unit> arg1) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteById.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, id);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteById.release(_stmt);
+        }
+      }
+    }, arg1);
+  }
+
+  @Override
   public Object deleteMessagesBySession(final String sessionId,
       final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
@@ -265,16 +312,11 @@ public final class ChatDao_Impl implements ChatDao {
   }
 
   @Override
-  public Flow<List<ChatMessage>> getMessagesBySession(final String sessionId) {
-    final String _sql = "SELECT * FROM chat_messages WHERE sessionId = ? ORDER BY timestamp ASC";
-    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
-    int _argIndex = 1;
-    if (sessionId == null) {
-      _statement.bindNull(_argIndex);
-    } else {
-      _statement.bindString(_argIndex, sessionId);
-    }
-    return CoroutinesRoom.createFlow(__db, false, new String[] {"chat_messages"}, new Callable<List<ChatMessage>>() {
+  public Object getAllMessages(final Continuation<? super List<ChatMessage>> arg0) {
+    final String _sql = "SELECT * FROM chat_messages ORDER BY timestamp DESC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<ChatMessage>>() {
       @Override
       @NonNull
       public List<ChatMessage> call() throws Exception {
@@ -282,6 +324,7 @@ public final class ChatDao_Impl implements ChatDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfSessionId = CursorUtil.getColumnIndexOrThrow(_cursor, "sessionId");
+          final int _cursorIndexOfChapterId = CursorUtil.getColumnIndexOrThrow(_cursor, "chapterId");
           final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
           final int _cursorIndexOfIsFromUser = CursorUtil.getColumnIndexOrThrow(_cursor, "isFromUser");
           final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
@@ -301,6 +344,12 @@ public final class ChatDao_Impl implements ChatDao {
               _tmpSessionId = null;
             } else {
               _tmpSessionId = _cursor.getString(_cursorIndexOfSessionId);
+            }
+            final String _tmpChapterId;
+            if (_cursor.isNull(_cursorIndexOfChapterId)) {
+              _tmpChapterId = null;
+            } else {
+              _tmpChapterId = _cursor.getString(_cursorIndexOfChapterId);
             }
             final String _tmpContent;
             if (_cursor.isNull(_cursorIndexOfContent)) {
@@ -328,7 +377,90 @@ public final class ChatDao_Impl implements ChatDao {
             } else {
               _tmpAttachmentPath = _cursor.getString(_cursorIndexOfAttachmentPath);
             }
-            _item = new ChatMessage(_tmpId,_tmpSessionId,_tmpContent,_tmpIsFromUser,_tmpTimestamp,_tmpMessageType,_tmpAttachmentPath);
+            _item = new ChatMessage(_tmpId,_tmpSessionId,_tmpChapterId,_tmpContent,_tmpIsFromUser,_tmpTimestamp,_tmpMessageType,_tmpAttachmentPath);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, arg0);
+  }
+
+  @Override
+  public Flow<List<ChatMessage>> getMessagesBySession(final String sessionId) {
+    final String _sql = "SELECT * FROM chat_messages WHERE sessionId = ? ORDER BY timestamp ASC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    if (sessionId == null) {
+      _statement.bindNull(_argIndex);
+    } else {
+      _statement.bindString(_argIndex, sessionId);
+    }
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"chat_messages"}, new Callable<List<ChatMessage>>() {
+      @Override
+      @NonNull
+      public List<ChatMessage> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfSessionId = CursorUtil.getColumnIndexOrThrow(_cursor, "sessionId");
+          final int _cursorIndexOfChapterId = CursorUtil.getColumnIndexOrThrow(_cursor, "chapterId");
+          final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
+          final int _cursorIndexOfIsFromUser = CursorUtil.getColumnIndexOrThrow(_cursor, "isFromUser");
+          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
+          final int _cursorIndexOfMessageType = CursorUtil.getColumnIndexOrThrow(_cursor, "messageType");
+          final int _cursorIndexOfAttachmentPath = CursorUtil.getColumnIndexOrThrow(_cursor, "attachmentPath");
+          final List<ChatMessage> _result = new ArrayList<ChatMessage>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final ChatMessage _item;
+            final String _tmpId;
+            if (_cursor.isNull(_cursorIndexOfId)) {
+              _tmpId = null;
+            } else {
+              _tmpId = _cursor.getString(_cursorIndexOfId);
+            }
+            final String _tmpSessionId;
+            if (_cursor.isNull(_cursorIndexOfSessionId)) {
+              _tmpSessionId = null;
+            } else {
+              _tmpSessionId = _cursor.getString(_cursorIndexOfSessionId);
+            }
+            final String _tmpChapterId;
+            if (_cursor.isNull(_cursorIndexOfChapterId)) {
+              _tmpChapterId = null;
+            } else {
+              _tmpChapterId = _cursor.getString(_cursorIndexOfChapterId);
+            }
+            final String _tmpContent;
+            if (_cursor.isNull(_cursorIndexOfContent)) {
+              _tmpContent = null;
+            } else {
+              _tmpContent = _cursor.getString(_cursorIndexOfContent);
+            }
+            final boolean _tmpIsFromUser;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsFromUser);
+            _tmpIsFromUser = _tmp != 0;
+            final long _tmpTimestamp;
+            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
+            final MessageType _tmpMessageType;
+            final String _tmp_1;
+            if (_cursor.isNull(_cursorIndexOfMessageType)) {
+              _tmp_1 = null;
+            } else {
+              _tmp_1 = _cursor.getString(_cursorIndexOfMessageType);
+            }
+            _tmpMessageType = __converters.toMessageType(_tmp_1);
+            final String _tmpAttachmentPath;
+            if (_cursor.isNull(_cursorIndexOfAttachmentPath)) {
+              _tmpAttachmentPath = null;
+            } else {
+              _tmpAttachmentPath = _cursor.getString(_cursorIndexOfAttachmentPath);
+            }
+            _item = new ChatMessage(_tmpId,_tmpSessionId,_tmpChapterId,_tmpContent,_tmpIsFromUser,_tmpTimestamp,_tmpMessageType,_tmpAttachmentPath);
             _result.add(_item);
           }
           return _result;
@@ -342,6 +474,91 @@ public final class ChatDao_Impl implements ChatDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object getMessagesByChapter(final String chapterId,
+      final Continuation<? super List<ChatMessage>> arg1) {
+    final String _sql = "SELECT * FROM chat_messages WHERE chapterId = ? ORDER BY timestamp ASC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    if (chapterId == null) {
+      _statement.bindNull(_argIndex);
+    } else {
+      _statement.bindString(_argIndex, chapterId);
+    }
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<ChatMessage>>() {
+      @Override
+      @NonNull
+      public List<ChatMessage> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfSessionId = CursorUtil.getColumnIndexOrThrow(_cursor, "sessionId");
+          final int _cursorIndexOfChapterId = CursorUtil.getColumnIndexOrThrow(_cursor, "chapterId");
+          final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
+          final int _cursorIndexOfIsFromUser = CursorUtil.getColumnIndexOrThrow(_cursor, "isFromUser");
+          final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
+          final int _cursorIndexOfMessageType = CursorUtil.getColumnIndexOrThrow(_cursor, "messageType");
+          final int _cursorIndexOfAttachmentPath = CursorUtil.getColumnIndexOrThrow(_cursor, "attachmentPath");
+          final List<ChatMessage> _result = new ArrayList<ChatMessage>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final ChatMessage _item;
+            final String _tmpId;
+            if (_cursor.isNull(_cursorIndexOfId)) {
+              _tmpId = null;
+            } else {
+              _tmpId = _cursor.getString(_cursorIndexOfId);
+            }
+            final String _tmpSessionId;
+            if (_cursor.isNull(_cursorIndexOfSessionId)) {
+              _tmpSessionId = null;
+            } else {
+              _tmpSessionId = _cursor.getString(_cursorIndexOfSessionId);
+            }
+            final String _tmpChapterId;
+            if (_cursor.isNull(_cursorIndexOfChapterId)) {
+              _tmpChapterId = null;
+            } else {
+              _tmpChapterId = _cursor.getString(_cursorIndexOfChapterId);
+            }
+            final String _tmpContent;
+            if (_cursor.isNull(_cursorIndexOfContent)) {
+              _tmpContent = null;
+            } else {
+              _tmpContent = _cursor.getString(_cursorIndexOfContent);
+            }
+            final boolean _tmpIsFromUser;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsFromUser);
+            _tmpIsFromUser = _tmp != 0;
+            final long _tmpTimestamp;
+            _tmpTimestamp = _cursor.getLong(_cursorIndexOfTimestamp);
+            final MessageType _tmpMessageType;
+            final String _tmp_1;
+            if (_cursor.isNull(_cursorIndexOfMessageType)) {
+              _tmp_1 = null;
+            } else {
+              _tmp_1 = _cursor.getString(_cursorIndexOfMessageType);
+            }
+            _tmpMessageType = __converters.toMessageType(_tmp_1);
+            final String _tmpAttachmentPath;
+            if (_cursor.isNull(_cursorIndexOfAttachmentPath)) {
+              _tmpAttachmentPath = null;
+            } else {
+              _tmpAttachmentPath = _cursor.getString(_cursorIndexOfAttachmentPath);
+            }
+            _item = new ChatMessage(_tmpId,_tmpSessionId,_tmpChapterId,_tmpContent,_tmpIsFromUser,_tmpTimestamp,_tmpMessageType,_tmpAttachmentPath);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, arg1);
   }
 
   @Override
@@ -363,6 +580,7 @@ public final class ChatDao_Impl implements ChatDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfSessionId = CursorUtil.getColumnIndexOrThrow(_cursor, "sessionId");
+          final int _cursorIndexOfChapterId = CursorUtil.getColumnIndexOrThrow(_cursor, "chapterId");
           final int _cursorIndexOfContent = CursorUtil.getColumnIndexOrThrow(_cursor, "content");
           final int _cursorIndexOfIsFromUser = CursorUtil.getColumnIndexOrThrow(_cursor, "isFromUser");
           final int _cursorIndexOfTimestamp = CursorUtil.getColumnIndexOrThrow(_cursor, "timestamp");
@@ -381,6 +599,12 @@ public final class ChatDao_Impl implements ChatDao {
               _tmpSessionId = null;
             } else {
               _tmpSessionId = _cursor.getString(_cursorIndexOfSessionId);
+            }
+            final String _tmpChapterId;
+            if (_cursor.isNull(_cursorIndexOfChapterId)) {
+              _tmpChapterId = null;
+            } else {
+              _tmpChapterId = _cursor.getString(_cursorIndexOfChapterId);
             }
             final String _tmpContent;
             if (_cursor.isNull(_cursorIndexOfContent)) {
@@ -408,7 +632,7 @@ public final class ChatDao_Impl implements ChatDao {
             } else {
               _tmpAttachmentPath = _cursor.getString(_cursorIndexOfAttachmentPath);
             }
-            _result = new ChatMessage(_tmpId,_tmpSessionId,_tmpContent,_tmpIsFromUser,_tmpTimestamp,_tmpMessageType,_tmpAttachmentPath);
+            _result = new ChatMessage(_tmpId,_tmpSessionId,_tmpChapterId,_tmpContent,_tmpIsFromUser,_tmpTimestamp,_tmpMessageType,_tmpAttachmentPath);
           } else {
             _result = null;
           }

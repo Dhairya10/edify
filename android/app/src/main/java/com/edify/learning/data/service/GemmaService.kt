@@ -13,6 +13,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,6 +25,9 @@ class GemmaService @Inject constructor(
     
     private var llmInference: LlmInference? = null
     private var isInitialized = false
+    private val inferenceLock = kotlinx.coroutines.sync.Mutex()
+    @Volatile
+    private var isGenerating = false
     
     companion object {
         // Custom Gemma model file used in this project
@@ -291,8 +296,7 @@ class GemmaService @Inject constructor(
                 val initResult = initializeModel()
                 if (initResult.isFailure) {
                     android.util.Log.e(TAG, "Model initialization failed with error: ${initResult.exceptionOrNull()?.message}")
-                    // Use mock responses instead when the model is not available
-                    return@withContext Result.success(getMockResponse(prompt))
+                    return@withContext initResult.map { "" } // Return the failure
                 }
             }
             
@@ -306,13 +310,11 @@ class GemmaService @Inject constructor(
             if (response.isNotBlank()) {
                 Result.success(response)
             } else {
-                // Use mock response as fallback
-                Result.success(getMockResponse(prompt))
+                Result.failure(IllegalStateException("Generated empty response"))
             }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error generating response: ${e.message}")
-            // Provide a mock response instead of just an error message
-            Result.success(getMockResponse(prompt))
+            Result.failure(e)
         }
     }
     
@@ -394,6 +396,23 @@ class GemmaService @Inject constructor(
     private fun getMockResponse(prompt: String): String {
         val promptLower = prompt.lowercase()
         
+        // Check if this is a quest generation request expecting JSON response
+        if (promptLower.contains("respond in json format") || 
+            promptLower.contains("json format") ||
+            promptLower.contains("curriculum designer") ||
+            promptLower.contains("expert educator") ||
+            promptLower.contains("learning coach")) {
+            
+            // Return a properly formatted JSON response for quest generation
+            if (promptLower.contains("strategy") && (promptLower.contains("convergent") || promptLower.contains("divergent"))) {
+                // Strategy selection mock response
+                return """{"strategy": "Divergent", "chapter": "mock_chapter_id"}"""
+            } else {
+                // Quest generation mock response
+                return """{"title": "Mock Quest - Model Unavailable", "questionText": "This is a placeholder quest generated because the Gemma model is not available. Please ensure the model file is properly installed."}"""
+            }
+        }
+        
         // Check if this is a greeting or introduction
         if (promptLower.contains("hello") || promptLower.contains("hi") || 
             promptLower.contains("hey") || promptLower.startsWith("introduce")) {
@@ -437,34 +456,42 @@ class GemmaService @Inject constructor(
     
     fun generateResponseStream(prompt: String): Flow<String> = flow {
         try {
-            if (!isInitialized) {
-                initializeModel().getOrThrow()
-            }
-            
-            android.util.Log.d(TAG, "Starting response generation")
-            
-            val inference = llmInference
-            if (inference != null) {
+            // Use mutex to prevent concurrent access to MediaPipe inference
+            inferenceLock.withLock {
+                // Wait for any ongoing generation to complete
+                while (isGenerating) {
+                    android.util.Log.d(TAG, "Waiting for ongoing generation to complete...")
+                    delay(100) // Brief delay before checking again
+                }
+                
+                if (!isInitialized) {
+                    initializeModel().getOrThrow()
+                }
+                
+                android.util.Log.d(TAG, "Starting response generation")
+                isGenerating = true
+                
                 try {
-                    // Generate response on background thread (non-blocking for UI)
+                    val inference = llmInference ?: throw IllegalStateException("LLM inference not initialized")
+                    
+                    // Generate response with proper error handling
                     val fullResponse = inference.generateResponse(prompt)
                     
-                    // Emit the complete response immediately when ready
+                    // Emit the response or throw if empty
                     if (fullResponse != null && fullResponse.isNotBlank()) {
                         emit(fullResponse)
                     } else {
-                        emit(getMockResponse(prompt))
+                        throw IllegalStateException("LLM generated empty response")
                     }
-                } catch (e: Exception) {
-                    android.util.Log.e(TAG, "Error in response generation: ${e.message}")
-                    emit(getMockResponse(prompt))
+                } finally {
+                    isGenerating = false
                 }
-            } else {
-                emit(getMockResponse(prompt))
             }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Response generation error: ${e.message}")
-            emit(getMockResponse(prompt))
+            e.printStackTrace()
+            isGenerating = false
+            throw e
         }
     }.flowOn(Dispatchers.IO)
     

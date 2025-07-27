@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.edify.learning.data.dao.*
 import com.edify.learning.data.database.EdifyDatabase
 import com.edify.learning.data.service.GemmaService
+import com.edify.learning.data.service.QuestService
+import com.edify.learning.data.service.QuestGenerationService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -56,10 +58,55 @@ object DatabaseModule {
     }
     
     @Provides
+    fun provideChapterStatsDao(database: EdifyDatabase): ChapterStatsDao {
+        return database.chapterStatsDao()
+    }
+    
+    @Provides
+    fun provideUserProfileDao(database: EdifyDatabase): UserProfileDao {
+        return database.userProfileDao()
+    }
+    
+    @Provides
+    fun provideGeneratedQuestDao(database: EdifyDatabase): GeneratedQuestDao {
+        return database.generatedQuestDao()
+    }
+    
+    @Provides
     @Singleton
     fun provideGemmaService(
         @ApplicationContext context: Context
     ): GemmaService {
         return GemmaService(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideQuestService(
+        chapterDao: ChapterDao
+    ): QuestService {
+        return QuestService(chapterDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideQuestGenerationService(
+        chapterStatsDao: ChapterStatsDao,
+        generatedQuestDao: GeneratedQuestDao,
+        chapterDao: ChapterDao,
+        noteDao: NoteDao,
+        chatDao: ChatDao,
+        subjectDao: SubjectDao,
+        gemmaService: GemmaService
+    ): QuestGenerationService {
+        return QuestGenerationService(
+            chapterStatsDao,
+            generatedQuestDao,
+            chapterDao,
+            noteDao,
+            chatDao,
+            subjectDao,
+            gemmaService
+        )
     }
 }

@@ -4,8 +4,11 @@ import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.presentation.MainActivity_GeneratedInjector;
 import com.edify.learning.presentation.chapter.ChapterViewModel_HiltModules;
 import com.edify.learning.presentation.chat.ChatViewModel_HiltModules;
+import com.edify.learning.presentation.developer.DeveloperModeViewModel_HiltModules;
+import com.edify.learning.presentation.developer.QuestScoringViewModel_HiltModules;
 import com.edify.learning.presentation.home.HomeViewModel_HiltModules;
 import com.edify.learning.presentation.notes.NotesViewModel_HiltModules;
+import com.edify.learning.presentation.quest.QuestViewModel_HiltModules;
 import com.edify.learning.presentation.revision.RevisionViewModel_HiltModules;
 import com.edify.learning.presentation.subject.SubjectViewModel_HiltModules;
 import dagger.Binds;
@@ -51,8 +54,10 @@ import dagger.hilt.android.scopes.ViewScoped;
 import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.internal.GeneratedComponent;
 import dagger.hilt.migration.DisableInstallInCheck;
+import javax.annotation.processing.Generated;
 import javax.inject.Singleton;
 
+@Generated("dagger.hilt.processor.internal.root.RootProcessor")
 public final class EdifyApplication_HiltComponents {
   private EdifyApplication_HiltComponents() {
   }
@@ -61,6 +66,7 @@ public final class EdifyApplication_HiltComponents {
       subcomponents = ServiceC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ServiceCBuilderModule {
     @Binds
     ServiceComponentBuilder bind(ServiceC.Builder builder);
@@ -70,6 +76,7 @@ public final class EdifyApplication_HiltComponents {
       subcomponents = ActivityRetainedC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ActivityRetainedCBuilderModule {
     @Binds
     ActivityRetainedComponentBuilder bind(ActivityRetainedC.Builder builder);
@@ -79,6 +86,7 @@ public final class EdifyApplication_HiltComponents {
       subcomponents = ActivityC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ActivityCBuilderModule {
     @Binds
     ActivityComponentBuilder bind(ActivityC.Builder builder);
@@ -88,6 +96,7 @@ public final class EdifyApplication_HiltComponents {
       subcomponents = ViewModelC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ViewModelCBuilderModule {
     @Binds
     ViewModelComponentBuilder bind(ViewModelC.Builder builder);
@@ -97,6 +106,7 @@ public final class EdifyApplication_HiltComponents {
       subcomponents = ViewC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ViewCBuilderModule {
     @Binds
     ViewComponentBuilder bind(ViewC.Builder builder);
@@ -106,6 +116,7 @@ public final class EdifyApplication_HiltComponents {
       subcomponents = FragmentC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface FragmentCBuilderModule {
     @Binds
     FragmentComponentBuilder bind(FragmentC.Builder builder);
@@ -115,6 +126,7 @@ public final class EdifyApplication_HiltComponents {
       subcomponents = ViewWithFragmentC.class
   )
   @DisableInstallInCheck
+  @Generated("dagger.hilt.processor.internal.root.RootProcessor")
   abstract interface ViewWithFragmentCBuilderModule {
     @Binds
     ViewWithFragmentComponentBuilder bind(ViewWithFragmentC.Builder builder);
@@ -151,11 +163,14 @@ public final class EdifyApplication_HiltComponents {
       modules = {
           ChapterViewModel_HiltModules.KeyModule.class,
           ChatViewModel_HiltModules.KeyModule.class,
+          DeveloperModeViewModel_HiltModules.KeyModule.class,
           ActivityCBuilderModule.class,
           ViewModelCBuilderModule.class,
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HomeViewModel_HiltModules.KeyModule.class,
           NotesViewModel_HiltModules.KeyModule.class,
+          QuestScoringViewModel_HiltModules.KeyModule.class,
+          QuestViewModel_HiltModules.KeyModule.class,
           RevisionViewModel_HiltModules.KeyModule.class,
           SubjectViewModel_HiltModules.KeyModule.class
       }
@@ -195,9 +210,12 @@ public final class EdifyApplication_HiltComponents {
       modules = {
           ChapterViewModel_HiltModules.BindsModule.class,
           ChatViewModel_HiltModules.BindsModule.class,
+          DeveloperModeViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HomeViewModel_HiltModules.BindsModule.class,
           NotesViewModel_HiltModules.BindsModule.class,
+          QuestScoringViewModel_HiltModules.BindsModule.class,
+          QuestViewModel_HiltModules.BindsModule.class,
           RevisionViewModel_HiltModules.BindsModule.class,
           SubjectViewModel_HiltModules.BindsModule.class
       }

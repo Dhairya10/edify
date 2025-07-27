@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edify.learning.data.model.Exercise
 import com.edify.learning.data.model.UserResponse
+import com.edify.learning.data.model.UserAction
 import com.edify.learning.data.repository.LearningRepository
+import com.edify.learning.data.repository.QuestRepository
+import com.edify.learning.data.service.QuestGenerationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,7 +23,9 @@ data class RevisionUiState(
 
 @HiltViewModel
 class RevisionViewModel @Inject constructor(
-    private val repository: LearningRepository
+    private val repository: LearningRepository,
+    private val questRepository: QuestRepository,
+    private val questGenerationService: QuestGenerationService
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(RevisionUiState())
@@ -96,6 +101,9 @@ class RevisionViewModel @Inject constructor(
                 )
                 
                 repository.saveUserResponse(updatedResponse)
+            
+            // Quest generation is already triggered in repository.saveUserResponse()
+            // No need to call it again here to avoid race conditions
                 
                 // Update UI state
                 val currentResponses = _uiState.value.userResponses.toMutableMap()

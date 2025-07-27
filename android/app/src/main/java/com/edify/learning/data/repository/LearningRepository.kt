@@ -5,10 +5,13 @@ import android.graphics.Bitmap
 import com.edify.learning.data.dao.*
 import com.edify.learning.data.model.*
 import com.edify.learning.data.service.GemmaService
+import com.edify.learning.data.service.QuestGenerationService
 import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,7 +23,9 @@ class LearningRepository @Inject constructor(
     private val noteDao: NoteDao,
     private val chatDao: ChatDao,
     private val userResponseDao: UserResponseDao,
-    private val gemmaService: GemmaService
+    private val chapterStatsDao: ChapterStatsDao,
+    private val gemmaService: GemmaService,
+    private val questGenerationService: QuestGenerationService
 ) {
     
     // Subject operations
@@ -78,7 +83,15 @@ class LearningRepository @Inject constructor(
     fun getNotesByChapterAndType(chapterId: String, type: NoteType): Flow<List<Note>> = 
         noteDao.getNotesByChapterAndType(chapterId, type)
     
-    suspend fun insertNote(note: Note) = noteDao.insertNote(note)
+    suspend fun insertNote(note: Note) {
+        noteDao.insertNote(note)
+        // Trigger quest generation after adding note
+        updateChapterStatsForNote(note.chapterId)
+        // Call in a coroutine-friendly way
+        withContext(Dispatchers.IO) {
+            questGenerationService.checkAndGenerateQuests()
+        }
+    }
     
     suspend fun deleteNote(note: Note) = noteDao.deleteNote(note)
     
@@ -86,7 +99,19 @@ class LearningRepository @Inject constructor(
     fun getChatMessages(sessionId: String): Flow<List<ChatMessage>> = 
         chatDao.getMessagesBySession(sessionId)
     
-    suspend fun insertChatMessage(message: ChatMessage) = chatDao.insertMessage(message)
+    suspend fun insertChatMessage(message: ChatMessage) {
+        chatDao.insertMessage(message)
+        // Trigger quest generation after chat interaction
+        if (message.isFromUser) {
+            // Only trigger on user questions, not AI responses
+            // Use message.chapterId directly instead of looking up by sessionId
+            updateChapterStatsForChat(message.chapterId, message.content)
+            // Call in a coroutine-friendly way
+            withContext(Dispatchers.IO) {
+                questGenerationService.checkAndGenerateQuests()
+            }
+        }
+    }
     
     suspend fun generateGemmaResponse(
         prompt: String,
@@ -121,7 +146,7 @@ class LearningRepository @Inject constructor(
         }
     }
     
-    fun generateGemmaResponseStream(
+    suspend fun generateGemmaResponseStream(
         prompt: String,
         context: String? = null,
         isExplanation: Boolean = false
@@ -156,6 +181,9 @@ class LearningRepository @Inject constructor(
     
     suspend fun saveUserResponse(response: UserResponse) {
         userResponseDao.insertOrUpdateResponse(response)
+        // Trigger quest generation after revision answer
+        updateChapterStatsForRevision(response)
+        questGenerationService.checkAndGenerateQuests()
     }
     
     suspend fun deleteUserResponse(response: UserResponse) {
@@ -353,5 +381,101 @@ class LearningRepository @Inject constructor(
             ]
         }
         """.trimIndent()
+    }
+    
+    // Chapter Stats Management for Quest Generation
+    private suspend fun updateChapterStatsForNote(chapterId: String, userId: String = "default_user") {
+        val existingStats = chapterStatsDao.getChapterStats(chapterId, userId)
+        if (existingStats != null) {
+            val updatedStats = existingStats.copy(
+                noteCount = existingStats.noteCount + 1,
+                lastVisited = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
+        } else {
+            val newStats = ChapterStats(
+                chapterId = chapterId,
+                userId = userId,
+                noteCount = 1,
+                visitCount = 1,
+                lastVisited = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(newStats)
+        }
+    }
+    
+    private suspend fun updateChapterStatsForChat(chapterId: String, question: String, userId: String = "default_user") {
+        // Create chat entry without analysis for now - this will be updated later when Gemma is enabled
+        val chatEntry = ChatEntry(
+            chatId = "chat_${System.currentTimeMillis()}",
+            question = question,
+            timestamp = System.currentTimeMillis()
+        )
+        
+        val existingStats = chapterStatsDao.getChapterStats(chapterId, userId)
+        if (existingStats != null) {
+            val updatedChatHistory = existingStats.chatHistory + chatEntry
+            val updatedStats = existingStats.copy(
+                chatHistory = updatedChatHistory,
+                lastVisited = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
+        } else {
+            val newStats = ChapterStats(
+                chapterId = chapterId,
+                userId = userId,
+                chatHistory = listOf(chatEntry),
+                visitCount = 1,
+                lastVisited = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(newStats)
+        }
+    }
+    
+    private suspend fun updateChapterStatsForRevision(response: UserResponse, userId: String = "default_user") {
+        val existingStats = chapterStatsDao.getChapterStats(response.chapterId, userId)
+        val revisionEntry = RevisionEntry(
+            questionId = response.id.toString(),
+            userAnswer = response.textResponse ?: "",
+            timestamp = response.createdAt
+        )
+        
+        if (existingStats != null) {
+            val updatedRevisionHistory = existingStats.revisionHistory + revisionEntry
+            val updatedStats = existingStats.copy(
+                revisionHistory = updatedRevisionHistory,
+                lastVisited = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
+        } else {
+            val newStats = ChapterStats(
+                chapterId = response.chapterId,
+                userId = userId,
+                revisionHistory = listOf(revisionEntry),
+                visitCount = 1,
+                lastVisited = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(newStats)
+        }
+    }
+    
+    suspend fun updateChapterVisit(chapterId: String, userId: String = "default_user") {
+        // Use incrementVisitCount method for direct update without fetching first
+        try {
+            // Try to increment the visit count directly
+            chapterStatsDao.incrementVisitCount(chapterId, userId, System.currentTimeMillis())
+        } catch (e: Exception) {
+            // If the record doesn't exist yet, create a new one
+            val newStats = ChapterStats(
+                chapterId = chapterId,
+                userId = userId,
+                visitCount = 1,
+                lastVisited = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(newStats)
+        }
     }
 }

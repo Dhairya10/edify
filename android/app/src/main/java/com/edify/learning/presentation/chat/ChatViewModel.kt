@@ -11,6 +11,7 @@ import com.edify.learning.data.model.ChatMessage
 import com.edify.learning.data.model.ChatSession
 import com.edify.learning.data.model.MessageType
 import com.edify.learning.data.repository.LearningRepository
+import com.edify.learning.data.repository.QuestRepository
 import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,8 +25,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val repository: LearningRepository
+    private val repository: LearningRepository,
+    private val questRepository: QuestRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -96,6 +98,7 @@ class ChatViewModel @Inject constructor(
                 val userMessage = ChatMessage(
                     id = UUID.randomUUID().toString(),
                     sessionId = currentSessionId,
+                    chapterId = currentChapterId,
                     content = input,
                     isFromUser = true,
                     messageType = if (image != null) MessageType.IMAGE else MessageType.TEXT,
@@ -105,6 +108,9 @@ class ChatViewModel @Inject constructor(
                 repository.insertChatMessage(userMessage)
                 _messageInput.value = ""
                 _selectedImage.value = null // Clear selected image
+                
+                // Chat interaction tracking is handled automatically in 
+                // repository.insertChatMessage() via updateChapterStatsForChat
                 
                 // Start enhanced loading with progress
                 startLoadingWithProgress(isExplanation = false)
@@ -122,6 +128,7 @@ class ChatViewModel @Inject constructor(
                         val gemmaMessage = ChatMessage(
                             id = UUID.randomUUID().toString(),
                             sessionId = currentSessionId,
+                            chapterId = currentChapterId,
                             content = gemmaResponse,
                             isFromUser = false,
                             messageType = MessageType.TEXT
@@ -147,7 +154,8 @@ class ChatViewModel @Inject constructor(
                 val userMessage = ChatMessage(
                     id = UUID.randomUUID().toString(),
                     sessionId = currentSessionId,
-                    content = "Explain: \"$selectedText\"",
+                    chapterId = currentChapterId, // Include chapterId for quest generation
+                    content = "Please explain: $selectedText",
                     isFromUser = true,
                     messageType = MessageType.TEXT
                 )
@@ -169,6 +177,7 @@ class ChatViewModel @Inject constructor(
                         val gemmaMessage = ChatMessage(
                             id = UUID.randomUUID().toString(),
                             sessionId = currentSessionId,
+                            chapterId = currentChapterId, // Include chapterId for consistency
                             content = explanation,
                             isFromUser = false,
                             messageType = MessageType.TEXT
