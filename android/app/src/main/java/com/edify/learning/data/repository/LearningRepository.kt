@@ -96,8 +96,8 @@ class LearningRepository @Inject constructor(
     suspend fun deleteNote(note: Note) = noteDao.deleteNote(note)
     
     // Chat operations
-    fun getChatMessages(sessionId: String): Flow<List<ChatMessage>> = 
-        chatDao.getMessagesBySession(sessionId)
+    fun getChatMessages(chapterId: String): Flow<List<ChatMessage>> = 
+        chatDao.getMessagesByChapter(chapterId)
     
     suspend fun insertChatMessage(message: ChatMessage) {
         chatDao.insertMessage(message)

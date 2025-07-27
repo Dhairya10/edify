@@ -12,6 +12,7 @@ import com.edify.learning.data.model.ChatSession
 import com.edify.learning.data.model.MessageType
 import com.edify.learning.data.repository.LearningRepository
 import com.edify.learning.data.repository.QuestRepository
+import com.edify.learning.data.service.ChatResponseService
 import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,6 +28,7 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val repository: LearningRepository,
     private val questRepository: QuestRepository,
+    private val chatResponseService: ChatResponseService,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
     
@@ -45,7 +47,7 @@ class ChatViewModel @Inject constructor(
     
     fun initializeChat(chapterId: String, selectedText: String?) {
         currentChapterId = chapterId
-        currentSessionId = UUID.randomUUID().toString()
+        currentSessionId = UUID.randomUUID().toString() // Generate session ID for new messages
         
         viewModelScope.launch {
             try {
@@ -57,9 +59,32 @@ class ChatViewModel @Inject constructor(
                     chapterSummary
                 }
                 
-                // Load existing messages for this session
-                repository.getChatMessages(currentSessionId).collect { messages ->
+                // Load existing messages for this chapter (not session-based)
+                repository.getChatMessages(chapterId).collect { messages ->
                     _uiState.value = _uiState.value.copy(messages = messages)
+                    
+                    // Check if there's an ongoing response generation using the service
+                    val lastMessage = messages.lastOrNull()
+                    if (lastMessage?.isFromUser == true) {
+                        // Check if we have a pending response for this message
+                        val isResponsePending = chatResponseService.isResponsePending(lastMessage.id)
+                        if (isResponsePending) {
+                            // Show loading state for pending response with proper callbacks
+                            startLoadingWithProgress()
+                            
+                            // Set up a monitoring coroutine to stop loading when response completes
+                            viewModelScope.launch {
+                                // Poll until the response is no longer pending
+                                while (chatResponseService.isResponsePending(lastMessage.id)) {
+                                    kotlinx.coroutines.delay(500) // Check every 500ms
+                                }
+                                // Response completed, stop loading
+                                stopLoading()
+                            }
+                        }
+                        // Note: We don't auto-generate responses for messages without responses
+                        // This prevents duplicate response generation when returning to chat
+                    }
                 }
                 
                 // If there's selected text, pre-populate the input field with quoted text
@@ -107,39 +132,32 @@ class ChatViewModel @Inject constructor(
                 )
                 
                 repository.insertChatMessage(userMessage)
+                
+                // Clear input and image
                 _messageInput.value = ""
-                _selectedImage.value = null // Clear selected image
+                _selectedImage.value = null
                 
-                // Chat interaction tracking is handled automatically in 
-                // repository.insertChatMessage() via updateChapterStatsForChat
-                
-                // Start enhanced loading with progress
-                startLoadingWithProgress(isExplanation = false)
-                
-                // Generate Gemma response with image support
-                val response = repository.generateGemmaResponseWithImage(
+                // Use ChatResponseService for robust background response generation
+                // Loading state is managed by the service callbacks
+                chatResponseService.generateChatResponse(
+                    userMessage = userMessage,
                     prompt = input,
                     context = contextContent,
                     image = image,
-                    isExplanation = false
-                )
-                
-                response.fold(
-                    onSuccess = { gemmaResponse ->
-                        val gemmaMessage = ChatMessage(
-                            id = UUID.randomUUID().toString(),
-                            sessionId = currentSessionId,
-                            chapterId = currentChapterId,
-                            content = gemmaResponse,
-                            isFromUser = false,
-                            messageType = MessageType.TEXT
-                        )
-                        
-                        repository.insertChatMessage(gemmaMessage)
-                        stopLoading()
+                    isExplanation = false,
+                    onLoadingStateChange = { isLoading ->
+                        viewModelScope.launch {
+                            if (isLoading) {
+                                startLoadingWithProgress()
+                            } else {
+                                stopLoading()
+                            }
+                        }
                     },
-                    onFailure = { error ->
-                        setError(error.message ?: "Failed to generate response")
+                    onError = { errorMessage ->
+                        viewModelScope.launch {
+                            setError(errorMessage)
+                        }
                     }
                 )
             } catch (e: Exception) {
@@ -148,53 +166,12 @@ class ChatViewModel @Inject constructor(
         }
     }
     
-    private fun sendExplanationRequest(selectedText: String) {
-        viewModelScope.launch {
-            try {
-                // Add user message with selected text
-                val userMessage = ChatMessage(
-                    id = UUID.randomUUID().toString(),
-                    sessionId = currentSessionId,
-                    chapterId = currentChapterId, // Include chapterId for quest generation
-                    content = "Please explain: $selectedText",
-                    isFromUser = true,
-                    messageType = MessageType.TEXT
-                )
-                
-                repository.insertChatMessage(userMessage)
-                
-                // Start enhanced loading with progress for explanation
-                startLoadingWithProgress(isExplanation = true)
-                
-                // Generate explanation
-                val response = repository.generateGemmaResponse(
-                    prompt = selectedText,
-                    context = contextContent,
-                    isExplanation = true
-                )
-                
-                response.fold(
-                    onSuccess = { explanation ->
-                        val gemmaMessage = ChatMessage(
-                            id = UUID.randomUUID().toString(),
-                            sessionId = currentSessionId,
-                            chapterId = currentChapterId, // Include chapterId for consistency
-                            content = explanation,
-                            isFromUser = false,
-                            messageType = MessageType.TEXT
-                        )
-                        
-                        repository.insertChatMessage(gemmaMessage)
-                        stopLoading()
-                    },
-                    onFailure = { error ->
-                        setError(error.message ?: "Failed to generate explanation")
-                    }
-                )
-            } catch (e: Exception) {
-                setError(e.message ?: "Failed to send explanation request")
-            }
-        }
+    fun sendExplanationRequest(selectedText: String) {
+        // Pre-populate input field with formatted explanation request
+        _messageInput.value = "❝ $selectedText ❞\n\nPlease explain this."
+        
+        // Use the generic sendMessage method
+        sendMessage()
     }
     
     fun clearError() {
