@@ -48,6 +48,9 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE chapterId = :chapterId")
     suspend fun deleteNotesByChapter(chapterId: String)
     
+    @Query("DELETE FROM notes")
+    suspend fun deleteAllNotes()
+    
     @Query("SELECT COUNT(*) FROM notes WHERE chapterId = :chapterId AND type = :type")
     suspend fun getNotesCountByType(chapterId: String, type: NoteType): Int
 }

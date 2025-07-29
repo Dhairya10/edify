@@ -47,7 +47,7 @@ fun NotesScreen() {
             .background(DarkBackground)
     ) {
         // Top App Bar
-        TopAppBar(
+        CenterAlignedTopAppBar(
             title = {
                 Text(
                     text = "Notes",
@@ -55,10 +55,11 @@ fun NotesScreen() {
                     color = TextPrimary
                 )
             },
-            colors = TopAppBarDefaults.topAppBarColors(
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = DarkBackground,
                 titleContentColor = TextPrimary
-            )
+            ),
+            windowInsets = WindowInsets(0.dp)
         )
         
         Box(

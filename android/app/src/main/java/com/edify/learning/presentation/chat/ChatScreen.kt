@@ -61,6 +61,7 @@ fun ChatScreen(
     val uiState by viewModel.uiState.collectAsState()
     val messageInput by viewModel.messageInput.collectAsState()
     val selectedImage by viewModel.selectedImage.collectAsState()
+    val userInitial by viewModel.userInitial.collectAsState()
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     
@@ -85,16 +86,13 @@ fun ChatScreen(
             .imePadding() // Add IME padding to handle keyboard
     ) {
         // Top App Bar
-        TopAppBar(
+        CenterAlignedTopAppBar(
             title = {
-                Column {
-                    Text(
-                        text = "Chat",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                    // Remove status from top bar as requested
-                }
+                Text(
+                    text = "Chat",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
             },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
@@ -104,11 +102,12 @@ fun ChatScreen(
                     )
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = DarkSurface,
                 titleContentColor = TextPrimary,
                 navigationIconContentColor = TextPrimary
-            )
+            ),
+            windowInsets = WindowInsets(0.dp)
         )
         
         // Progress indicator removed - response time is variable
@@ -125,7 +124,10 @@ fun ChatScreen(
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
             items(uiState.messages) { message ->
-                MessageBubble(message = message)
+                MessageBubble(
+                    message = message,
+                    userInitial = userInitial
+                )
             }
             
             // Enhanced typing indicator with progress
@@ -191,6 +193,7 @@ fun ChatScreen(
 @Composable
 fun MessageBubble(
     message: ChatMessage,
+    userInitial: String = "U",
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -316,7 +319,7 @@ fun MessageBubble(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "A",
+                    text = userInitial,
                     color = Black,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp

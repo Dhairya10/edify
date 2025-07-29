@@ -24,6 +24,7 @@ class LearningRepository @Inject constructor(
     private val chatDao: ChatDao,
     private val userResponseDao: UserResponseDao,
     private val chapterStatsDao: ChapterStatsDao,
+    private val generatedQuestDao: GeneratedQuestDao,
     private val gemmaService: GemmaService,
     private val questGenerationService: QuestGenerationService
 ) {
@@ -46,6 +47,17 @@ class LearningRepository @Inject constructor(
     
     suspend fun updateLastReadChapter(subjectId: String, chapterId: String) {
         subjectDao.updateLastReadChapter(subjectId, chapterId)
+    }
+    
+    suspend fun clearAllData() {
+        // Clear all app data from all tables
+        subjectDao.deleteAllSubjects()
+        chapterDao.deleteAllChapters()
+        noteDao.deleteAllNotes()
+        chatDao.deleteAllMessages()
+        userResponseDao.deleteAllResponses()
+        chapterStatsDao.deleteAll()
+        generatedQuestDao.deleteAllQuests()
     }
     
     // Chapter operations
@@ -235,11 +247,11 @@ class LearningRepository @Inject constructor(
                 // Clear existing data and reload from assets
                 subjectDao.deleteAllSubjects()
                 chapterDao.deleteAllChapters()
-            } else {
-                println("Repository: Content already exists with $totalChapters chapters, refreshing titles from JSON")
-                refreshChapterTitles()
-                return
-            }
+        } else {
+            println("Repository: Content already exists with $totalChapters chapters, refreshing titles from JSON")
+            refreshChapterTitles()
+            return
+        }
         }
         
         println("Repository: Starting content initialization from assets")
@@ -250,8 +262,8 @@ class LearningRepository @Inject constructor(
             val subjects = ContentLoader.loadAllSubjects(context)
             
             if (subjects.isNotEmpty()) {
-                println("Repository: Found ${subjects.size} subjects: ${subjects.map { it.name }}")
-                subjectDao.insertSubjects(subjects)
+            println("Repository: Found ${subjects.size} subjects: ${subjects.map { it.name }}")
+            subjectDao.insertSubjects(subjects)
                 
                 // Load chapters for each subject
                 subjects.forEach { subject ->
@@ -286,7 +298,7 @@ class LearningRepository @Inject constructor(
             iconRes = "ic_math",
             totalChapters = 2,
             completedChapters = 0,
-            lastReadChapterId = "math_ch1"
+            lastReadChapterId = null
         )
         
         val scienceSubject = Subject(

@@ -31,6 +31,9 @@ interface UserResponseDao {
     @Query("DELETE FROM user_responses WHERE chapterId = :chapterId")
     suspend fun deleteAllResponsesForChapter(chapterId: String)
     
+    @Query("DELETE FROM user_responses")
+    suspend fun deleteAllResponses()
+    
     @Query("SELECT COUNT(*) FROM user_responses WHERE chapterId = :chapterId")
     suspend fun getResponseCountForChapter(chapterId: String): Int
 }

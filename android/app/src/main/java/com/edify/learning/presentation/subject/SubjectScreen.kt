@@ -55,7 +55,7 @@ fun SubjectScreen(
             .background(DarkBackground)
     ) {
         // Top App Bar
-        TopAppBar(
+        CenterAlignedTopAppBar(
             title = {
                 Text(
                     text = uiState.subject?.name ?: "Subject",
@@ -70,11 +70,12 @@ fun SubjectScreen(
                     )
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = DarkSurface,
                 titleContentColor = TextPrimary,
                 navigationIconContentColor = TextPrimary
-            )
+            ),
+            windowInsets = WindowInsets(0.dp)
         )
         
         Column(

@@ -2,6 +2,7 @@ package com.edify.learning.presentation.chapter;
 
 import com.edify.learning.data.repository.LearningRepository;
 import com.edify.learning.data.repository.QuestRepository;
+import com.edify.learning.data.repository.UserProfileRepository;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -27,24 +28,29 @@ public final class ChapterViewModel_Factory implements Factory<ChapterViewModel>
 
   private final Provider<QuestRepository> questRepositoryProvider;
 
+  private final Provider<UserProfileRepository> userProfileRepositoryProvider;
+
   public ChapterViewModel_Factory(Provider<LearningRepository> repositoryProvider,
-      Provider<QuestRepository> questRepositoryProvider) {
+      Provider<QuestRepository> questRepositoryProvider,
+      Provider<UserProfileRepository> userProfileRepositoryProvider) {
     this.repositoryProvider = repositoryProvider;
     this.questRepositoryProvider = questRepositoryProvider;
+    this.userProfileRepositoryProvider = userProfileRepositoryProvider;
   }
 
   @Override
   public ChapterViewModel get() {
-    return newInstance(repositoryProvider.get(), questRepositoryProvider.get());
+    return newInstance(repositoryProvider.get(), questRepositoryProvider.get(), userProfileRepositoryProvider.get());
   }
 
   public static ChapterViewModel_Factory create(Provider<LearningRepository> repositoryProvider,
-      Provider<QuestRepository> questRepositoryProvider) {
-    return new ChapterViewModel_Factory(repositoryProvider, questRepositoryProvider);
+      Provider<QuestRepository> questRepositoryProvider,
+      Provider<UserProfileRepository> userProfileRepositoryProvider) {
+    return new ChapterViewModel_Factory(repositoryProvider, questRepositoryProvider, userProfileRepositoryProvider);
   }
 
   public static ChapterViewModel newInstance(LearningRepository repository,
-      QuestRepository questRepository) {
-    return new ChapterViewModel(repository, questRepository);
+      QuestRepository questRepository, UserProfileRepository userProfileRepository) {
+    return new ChapterViewModel(repository, questRepository, userProfileRepository);
   }
 }

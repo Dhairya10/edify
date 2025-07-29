@@ -1,6 +1,7 @@
 package com.edify.learning.presentation.home;
 
 import com.edify.learning.data.repository.LearningRepository;
+import com.edify.learning.data.repository.UserProfileRepository;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -24,20 +25,26 @@ import javax.inject.Provider;
 public final class HomeViewModel_Factory implements Factory<HomeViewModel> {
   private final Provider<LearningRepository> repositoryProvider;
 
-  public HomeViewModel_Factory(Provider<LearningRepository> repositoryProvider) {
+  private final Provider<UserProfileRepository> userProfileRepositoryProvider;
+
+  public HomeViewModel_Factory(Provider<LearningRepository> repositoryProvider,
+      Provider<UserProfileRepository> userProfileRepositoryProvider) {
     this.repositoryProvider = repositoryProvider;
+    this.userProfileRepositoryProvider = userProfileRepositoryProvider;
   }
 
   @Override
   public HomeViewModel get() {
-    return newInstance(repositoryProvider.get());
+    return newInstance(repositoryProvider.get(), userProfileRepositoryProvider.get());
   }
 
-  public static HomeViewModel_Factory create(Provider<LearningRepository> repositoryProvider) {
-    return new HomeViewModel_Factory(repositoryProvider);
+  public static HomeViewModel_Factory create(Provider<LearningRepository> repositoryProvider,
+      Provider<UserProfileRepository> userProfileRepositoryProvider) {
+    return new HomeViewModel_Factory(repositoryProvider, userProfileRepositoryProvider);
   }
 
-  public static HomeViewModel newInstance(LearningRepository repository) {
-    return new HomeViewModel(repository);
+  public static HomeViewModel newInstance(LearningRepository repository,
+      UserProfileRepository userProfileRepository) {
+    return new HomeViewModel(repository, userProfileRepository);
   }
 }

@@ -43,7 +43,7 @@ fun QuestDetailScreen(
             .background(White)
     ) {
         // Top App Bar
-        TopAppBar(
+        CenterAlignedTopAppBar(
             title = {
                 Text(
                     text = uiState.selectedQuest?.title ?: "Quest",
@@ -60,9 +60,10 @@ fun QuestDetailScreen(
                     )
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = White
-            )
+            ),
+            windowInsets = WindowInsets(0.dp)
         )
         
         if (uiState.selectedQuest != null) {

@@ -35,6 +35,13 @@ sealed class BottomNavItem(
         unselectedIconResId = R.drawable.stars_24dp_ffffff_fill0_wght400_grad0_opsz24
     )
     
+    object Profile : BottomNavItem(
+        route = "profile",
+        title = "Profile",
+        selectedIconResId = R.drawable.account_circle_24dp_ffffff_fill1_wght400_grad0_opsz24,
+        unselectedIconResId = R.drawable.account_circle_24dp_ffffff_fill0_wght400_grad0_opsz24
+    )
+    
     object Developer : BottomNavItem(
         route = "developer",
         title = "Dev",
@@ -52,9 +59,8 @@ fun BottomNavigationBar(
         add(BottomNavItem.Library)
         add(BottomNavItem.Notes)
         add(BottomNavItem.Quest)
-        if (DeveloperMode.ENABLED) {
-            add(BottomNavItem.Developer)
-        }
+        add(BottomNavItem.Profile)
+        // Developer mode is now shown on home screen instead of bottom nav
     }
     
     NavigationBar(

@@ -626,13 +626,13 @@ class GemmaService @Inject constructor(
         }
     }
     
-    suspend fun translateText(text: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun translateText(text: String, targetLanguage: String = "Hindi"): Result<String> = withContext(Dispatchers.IO) {
         try {
             if (!isInitialized) {
                 initializeModel().getOrThrow()
             }
             
-            val translationPrompt = createTranslationPrompt(text)
+            val translationPrompt = createTranslationPrompt(text, targetLanguage)
             val result = generateResponse(translationPrompt)
             
             result.fold(
@@ -653,13 +653,13 @@ class GemmaService @Inject constructor(
         }
     }
     
-    private fun createTranslationPrompt(text: String): String {
+    private fun createTranslationPrompt(text: String, targetLanguage: String): String {
         return """
-        Translate the following English text to Hindi. Provide only the Hindi translation without any additional text or explanations.
+        Translate the following English text to $targetLanguage. Provide only the $targetLanguage translation without any additional text or explanations.
         
         English text: $text
         
-        Hindi translation:
+        $targetLanguage translation:
         """.trimIndent()
     }
 

@@ -6,20 +6,24 @@ import com.edify.learning.data.model.Chapter
 import com.edify.learning.data.model.Note
 import com.edify.learning.data.model.NoteType
 import com.edify.learning.data.model.ContentItem
+import com.edify.learning.data.model.UserProfile
 import com.edify.learning.data.repository.LearningRepository
 import com.edify.learning.data.repository.QuestRepository
+import com.edify.learning.data.repository.UserProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class ChapterViewModel @Inject constructor(
     private val repository: LearningRepository,
-    private val questRepository: QuestRepository
+    private val questRepository: QuestRepository,
+    private val userProfileRepository: UserProfileRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(ChapterUiState())
@@ -34,9 +38,15 @@ class ChapterViewModel @Inject constructor(
     private val _isImageSelected = MutableStateFlow(false)
     val isImageSelected: StateFlow<Boolean> = _isImageSelected.asStateFlow()
     
+    private val _userLanguagePreference = MutableStateFlow("English")
+    val userLanguagePreference: StateFlow<String> = _userLanguagePreference.asStateFlow()
+    
     fun loadChapter(chapterId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
+            
+            // Load user language preference from profile
+            loadUserLanguagePreference()
             
             try {
                 val chapter = repository.getChapterById(chapterId)
@@ -179,6 +189,16 @@ class ChapterViewModel @Inject constructor(
     
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    private suspend fun loadUserLanguagePreference() {
+        try {
+            val userProfile = userProfileRepository.getCurrentUser()
+            _userLanguagePreference.value = userProfile?.languagePreference ?: "English"
+        } catch (e: Exception) {
+            // Default to English if there's an error fetching the user profile
+            _userLanguagePreference.value = "English"
+        }
     }
 }
 

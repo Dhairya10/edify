@@ -12,6 +12,7 @@ import com.edify.learning.data.model.ChatSession
 import com.edify.learning.data.model.MessageType
 import com.edify.learning.data.repository.LearningRepository
 import com.edify.learning.data.repository.QuestRepository
+import com.edify.learning.data.repository.UserProfileRepository
 import com.edify.learning.data.service.ChatResponseService
 import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,7 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val repository: LearningRepository,
     private val questRepository: QuestRepository,
+    private val userProfileRepository: UserProfileRepository,
     private val chatResponseService: ChatResponseService,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -41,6 +43,9 @@ class ChatViewModel @Inject constructor(
     private val _selectedImage = MutableStateFlow<Bitmap?>(null)
     val selectedImage: StateFlow<Bitmap?> = _selectedImage.asStateFlow()
     
+    private val _userInitial = MutableStateFlow("U")
+    val userInitial: StateFlow<String> = _userInitial.asStateFlow()
+    
     private var currentSessionId: String = ""
     private var currentChapterId: String = ""
     private var contextContent: String? = null
@@ -48,6 +53,9 @@ class ChatViewModel @Inject constructor(
     fun initializeChat(chapterId: String, selectedText: String?) {
         currentChapterId = chapterId
         currentSessionId = UUID.randomUUID().toString() // Generate session ID for new messages
+        
+        // Load user profile data for personalization
+        loadUserProfile()
         
         viewModelScope.launch {
             try {
@@ -273,6 +281,22 @@ class ChatViewModel @Inject constructor(
             clearError()
             _messageInput.value = lastUserMessage.content
             sendMessage()
+        }
+    }
+    
+    private fun loadUserProfile() {
+        viewModelScope.launch {
+            try {
+                val userName = userProfileRepository.getUserName()
+                val initial = if (userName != "there" && userName.isNotBlank()) {
+                    userName.first().uppercaseChar().toString()
+                } else {
+                    "U" // Default to "U" for User
+                }
+                _userInitial.value = initial
+            } catch (e: Exception) {
+                _userInitial.value = "U" // Fallback to default
+            }
         }
     }
 }

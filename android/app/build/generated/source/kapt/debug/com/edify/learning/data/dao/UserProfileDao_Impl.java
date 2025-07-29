@@ -38,13 +38,15 @@ public final class UserProfileDao_Impl implements UserProfileDao {
 
   private final SharedSQLiteStatement __preparedStmtOfUpdatePersonalizationStatus;
 
+  private final SharedSQLiteStatement __preparedStmtOfUpdateOnboardingInfo;
+
   public UserProfileDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfUserProfile = new EntityInsertionAdapter<UserProfile>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `user_profile` (`userId`,`hasUnlockedPersonalizedQuests`,`createdAt`,`updatedAt`) VALUES (?,?,?,?)";
+        return "INSERT OR REPLACE INTO `user_profile` (`userId`,`name`,`languagePreference`,`classLevel`,`hasCompletedOnboarding`,`hasUnlockedPersonalizedQuests`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -55,10 +57,23 @@ public final class UserProfileDao_Impl implements UserProfileDao {
         } else {
           statement.bindString(1, entity.getUserId());
         }
-        final int _tmp = entity.getHasUnlockedPersonalizedQuests() ? 1 : 0;
-        statement.bindLong(2, _tmp);
-        statement.bindLong(3, entity.getCreatedAt());
-        statement.bindLong(4, entity.getUpdatedAt());
+        if (entity.getName() == null) {
+          statement.bindNull(2);
+        } else {
+          statement.bindString(2, entity.getName());
+        }
+        if (entity.getLanguagePreference() == null) {
+          statement.bindNull(3);
+        } else {
+          statement.bindString(3, entity.getLanguagePreference());
+        }
+        statement.bindLong(4, entity.getClassLevel());
+        final int _tmp = entity.getHasCompletedOnboarding() ? 1 : 0;
+        statement.bindLong(5, _tmp);
+        final int _tmp_1 = entity.getHasUnlockedPersonalizedQuests() ? 1 : 0;
+        statement.bindLong(6, _tmp_1);
+        statement.bindLong(7, entity.getCreatedAt());
+        statement.bindLong(8, entity.getUpdatedAt());
       }
     };
     this.__preparedStmtOfDeleteById = new SharedSQLiteStatement(__db) {
@@ -74,6 +89,14 @@ public final class UserProfileDao_Impl implements UserProfileDao {
       @NonNull
       public String createQuery() {
         final String _query = "UPDATE user_profile SET hasUnlockedPersonalizedQuests = ?, updatedAt = ? WHERE userId = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfUpdateOnboardingInfo = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE user_profile SET name = ?, languagePreference = ?, classLevel = ?, hasCompletedOnboarding = ?, updatedAt = ? WHERE userId = ?";
         return _query;
       }
     };
@@ -182,6 +205,56 @@ public final class UserProfileDao_Impl implements UserProfileDao {
   }
 
   @Override
+  public Object updateOnboardingInfo(final String userId, final String name, final String language,
+      final int classLevel, final boolean completed, final long timestamp,
+      final Continuation<? super Unit> arg6) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateOnboardingInfo.acquire();
+        int _argIndex = 1;
+        if (name == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, name);
+        }
+        _argIndex = 2;
+        if (language == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, language);
+        }
+        _argIndex = 3;
+        _stmt.bindLong(_argIndex, classLevel);
+        _argIndex = 4;
+        final int _tmp = completed ? 1 : 0;
+        _stmt.bindLong(_argIndex, _tmp);
+        _argIndex = 5;
+        _stmt.bindLong(_argIndex, timestamp);
+        _argIndex = 6;
+        if (userId == null) {
+          _stmt.bindNull(_argIndex);
+        } else {
+          _stmt.bindString(_argIndex, userId);
+        }
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfUpdateOnboardingInfo.release(_stmt);
+        }
+      }
+    }, arg6);
+  }
+
+  @Override
   public Object getAllProfiles(final Continuation<? super List<UserProfile>> arg0) {
     final String _sql = "SELECT * FROM user_profile ORDER BY createdAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
@@ -193,6 +266,10 @@ public final class UserProfileDao_Impl implements UserProfileDao {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
+          final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
+          final int _cursorIndexOfLanguagePreference = CursorUtil.getColumnIndexOrThrow(_cursor, "languagePreference");
+          final int _cursorIndexOfClassLevel = CursorUtil.getColumnIndexOrThrow(_cursor, "classLevel");
+          final int _cursorIndexOfHasCompletedOnboarding = CursorUtil.getColumnIndexOrThrow(_cursor, "hasCompletedOnboarding");
           final int _cursorIndexOfHasUnlockedPersonalizedQuests = CursorUtil.getColumnIndexOrThrow(_cursor, "hasUnlockedPersonalizedQuests");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfUpdatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "updatedAt");
@@ -205,15 +282,33 @@ public final class UserProfileDao_Impl implements UserProfileDao {
             } else {
               _tmpUserId = _cursor.getString(_cursorIndexOfUserId);
             }
-            final boolean _tmpHasUnlockedPersonalizedQuests;
+            final String _tmpName;
+            if (_cursor.isNull(_cursorIndexOfName)) {
+              _tmpName = null;
+            } else {
+              _tmpName = _cursor.getString(_cursorIndexOfName);
+            }
+            final String _tmpLanguagePreference;
+            if (_cursor.isNull(_cursorIndexOfLanguagePreference)) {
+              _tmpLanguagePreference = null;
+            } else {
+              _tmpLanguagePreference = _cursor.getString(_cursorIndexOfLanguagePreference);
+            }
+            final int _tmpClassLevel;
+            _tmpClassLevel = _cursor.getInt(_cursorIndexOfClassLevel);
+            final boolean _tmpHasCompletedOnboarding;
             final int _tmp;
-            _tmp = _cursor.getInt(_cursorIndexOfHasUnlockedPersonalizedQuests);
-            _tmpHasUnlockedPersonalizedQuests = _tmp != 0;
+            _tmp = _cursor.getInt(_cursorIndexOfHasCompletedOnboarding);
+            _tmpHasCompletedOnboarding = _tmp != 0;
+            final boolean _tmpHasUnlockedPersonalizedQuests;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfHasUnlockedPersonalizedQuests);
+            _tmpHasUnlockedPersonalizedQuests = _tmp_1 != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new UserProfile(_tmpUserId,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new UserProfile(_tmpUserId,_tmpName,_tmpLanguagePreference,_tmpClassLevel,_tmpHasCompletedOnboarding,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -243,6 +338,10 @@ public final class UserProfileDao_Impl implements UserProfileDao {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
+          final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
+          final int _cursorIndexOfLanguagePreference = CursorUtil.getColumnIndexOrThrow(_cursor, "languagePreference");
+          final int _cursorIndexOfClassLevel = CursorUtil.getColumnIndexOrThrow(_cursor, "classLevel");
+          final int _cursorIndexOfHasCompletedOnboarding = CursorUtil.getColumnIndexOrThrow(_cursor, "hasCompletedOnboarding");
           final int _cursorIndexOfHasUnlockedPersonalizedQuests = CursorUtil.getColumnIndexOrThrow(_cursor, "hasUnlockedPersonalizedQuests");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfUpdatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "updatedAt");
@@ -254,15 +353,33 @@ public final class UserProfileDao_Impl implements UserProfileDao {
             } else {
               _tmpUserId = _cursor.getString(_cursorIndexOfUserId);
             }
-            final boolean _tmpHasUnlockedPersonalizedQuests;
+            final String _tmpName;
+            if (_cursor.isNull(_cursorIndexOfName)) {
+              _tmpName = null;
+            } else {
+              _tmpName = _cursor.getString(_cursorIndexOfName);
+            }
+            final String _tmpLanguagePreference;
+            if (_cursor.isNull(_cursorIndexOfLanguagePreference)) {
+              _tmpLanguagePreference = null;
+            } else {
+              _tmpLanguagePreference = _cursor.getString(_cursorIndexOfLanguagePreference);
+            }
+            final int _tmpClassLevel;
+            _tmpClassLevel = _cursor.getInt(_cursorIndexOfClassLevel);
+            final boolean _tmpHasCompletedOnboarding;
             final int _tmp;
-            _tmp = _cursor.getInt(_cursorIndexOfHasUnlockedPersonalizedQuests);
-            _tmpHasUnlockedPersonalizedQuests = _tmp != 0;
+            _tmp = _cursor.getInt(_cursorIndexOfHasCompletedOnboarding);
+            _tmpHasCompletedOnboarding = _tmp != 0;
+            final boolean _tmpHasUnlockedPersonalizedQuests;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfHasUnlockedPersonalizedQuests);
+            _tmpHasUnlockedPersonalizedQuests = _tmp_1 != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new UserProfile(_tmpUserId,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new UserProfile(_tmpUserId,_tmpName,_tmpLanguagePreference,_tmpClassLevel,_tmpHasCompletedOnboarding,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }

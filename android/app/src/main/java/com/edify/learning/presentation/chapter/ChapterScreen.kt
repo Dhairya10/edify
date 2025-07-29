@@ -129,6 +129,7 @@ fun ChapterScreen(
     gemmaService: GemmaService
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val userLanguagePreference by viewModel.userLanguagePreference.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     
@@ -145,7 +146,7 @@ fun ChapterScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = uiState.chapter?.title ?: "Chapter",
@@ -194,9 +195,10 @@ fun ChapterScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = DarkBackground
-                )
+                ),
+                windowInsets = WindowInsets(0.dp)
             )
         },
         floatingActionButton = {
@@ -308,7 +310,7 @@ fun ChapterScreen(
                                                         
                                                         coroutineScope.launch {
                                                             try {
-                                                                gemmaService.translateText(selectedText).fold(
+                                                                gemmaService.translateText(selectedText, userLanguagePreference).fold(
                                                                     onSuccess = { translation ->
                                                                         translatedParagraph = translation
                                                                         isTranslating = false
