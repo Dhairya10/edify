@@ -35,11 +35,11 @@ private val DarkColorScheme = darkColorScheme(
     primary = SecondaryBlue,
     secondary = PrimaryBlue,
     tertiary = Pink80,
-    background = Color(0xFF1C1C1E),
-    surface = Color(0xFF2C2C2E),
+    background = Black,
+    surface = DarkCard,
     onPrimary = White,
     onSecondary = White,
-    onTertiary = Color(0xFF1C1C1E),
+    onTertiary = Black,
     onBackground = White,
     onSurface = White,
     error = ErrorColor,
@@ -48,25 +48,18 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun EdifyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Force dark theme always
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false, // Disabled to use brand colors
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    // Always use dark theme to match wireframe
+    val colorScheme = DarkColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = PrimaryBlue.toArgb()
+            window.statusBarColor = Black.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }

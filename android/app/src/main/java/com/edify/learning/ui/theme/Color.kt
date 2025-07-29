@@ -10,16 +10,22 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Edify Brand Colors
+// Edify Brand Colors - Dark Theme
 val PrimaryBlue = Color(0xFF003c63)      // #003c63
-val SecondaryBlue = Color(0xFF5ea9ec)    // #5ea9ec
+val SecondaryBlue = Color(0xFFFFFFFF)    // #FFFFFF
 val White = Color(0xFFFFFFFF)            // white
-val BackgroundGray = Color(0xFFF5F5F5)   // Light gray for backgrounds
-val TextPrimary = Color(0xFF1C1C1E)      // Dark text
-val TextSecondary = Color(0xFF8E8E93)    // Light text
-val SurfaceColor = Color(0xFFFFFFFF)     // Surface color
+val Black = Color(0xFF000000)            // Pure black
+val DarkBackground = Color(0xFF1C1C1E)   // Dark background
+val DarkSurface = Color(0xFF2C2C2E)      // Dark surface
+val DarkCard = Color(0xFF1C1C1E)         // Darker card background
+val TextPrimary = Color(0xFFFFFFFF)      // Light text for dark theme
+val TextSecondary = Color(0xFF8E8E93)    // Secondary text
+val SurfaceColor = Color(0xFF2C2C2E)     // Dark surface color
 val ErrorColor = Color(0xFFFF3B30)       // Error color
 val SuccessColor = Color(0xFF34C759)     // Success color
+
+// Legacy colors for compatibility
+val BackgroundGray = Color(0xFF1C1C1E)   // Now dark background
 
 // Subject Colors
 val MathColor = Color(0xFF5ea9ec)
@@ -36,3 +42,7 @@ val UserMessageBackground = Color(0xFF007AFF)
 val GemmaMessageBackground = Color(0xFFF2F2F7)
 val UserMessageText = Color(0xFFFFFFFF)
 val GemmaMessageText = Color(0xFF1C1C1E)
+
+// Gradient Colors
+val GradientDarkBlue = Color(0xFF21374A)
+val GradientMidBlue = Color(0xFF2A4257)

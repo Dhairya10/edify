@@ -12,10 +12,12 @@ import com.edify.learning.data.dao.ChatDao;
 import com.edify.learning.data.dao.GeneratedQuestDao;
 import com.edify.learning.data.dao.NoteDao;
 import com.edify.learning.data.dao.SubjectDao;
+import com.edify.learning.data.dao.UserProfileDao;
 import com.edify.learning.data.dao.UserResponseDao;
 import com.edify.learning.data.database.EdifyDatabase;
 import com.edify.learning.data.repository.LearningRepository;
 import com.edify.learning.data.repository.QuestRepository;
+import com.edify.learning.data.repository.UserProfileRepository;
 import com.edify.learning.data.service.ChatResponseService;
 import com.edify.learning.data.service.GemmaService;
 import com.edify.learning.data.service.QuestGenerationService;
@@ -29,6 +31,7 @@ import com.edify.learning.di.DatabaseModule_ProvideGeneratedQuestDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideNoteDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideQuestGenerationServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideSubjectDaoFactory;
+import com.edify.learning.di.DatabaseModule_ProvideUserProfileDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideUserResponseDaoFactory;
 import com.edify.learning.domain.service.QuestScoringService;
 import com.edify.learning.presentation.MainActivity;
@@ -46,6 +49,10 @@ import com.edify.learning.presentation.home.HomeViewModel;
 import com.edify.learning.presentation.home.HomeViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.edify.learning.presentation.notes.NotesViewModel;
 import com.edify.learning.presentation.notes.NotesViewModel_HiltModules_KeyModule_ProvideFactory;
+import com.edify.learning.presentation.onboarding.OnboardingViewModel;
+import com.edify.learning.presentation.onboarding.OnboardingViewModel_HiltModules_KeyModule_ProvideFactory;
+import com.edify.learning.presentation.profile.ProfileViewModel;
+import com.edify.learning.presentation.profile.ProfileViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.edify.learning.presentation.quest.QuestViewModel;
 import com.edify.learning.presentation.quest.QuestViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.edify.learning.presentation.revision.RevisionViewModel;
@@ -417,7 +424,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     @Override
     public Set<String> getViewModelKeys() {
-      return ImmutableSet.<String>of(ChapterViewModel_HiltModules_KeyModule_ProvideFactory.provide(), ChatViewModel_HiltModules_KeyModule_ProvideFactory.provide(), DeveloperModeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), NotesViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestScoringViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestViewModel_HiltModules_KeyModule_ProvideFactory.provide(), RevisionViewModel_HiltModules_KeyModule_ProvideFactory.provide(), SubjectViewModel_HiltModules_KeyModule_ProvideFactory.provide(), TranslationViewModel_HiltModules_KeyModule_ProvideFactory.provide());
+      return ImmutableSet.<String>of(ChapterViewModel_HiltModules_KeyModule_ProvideFactory.provide(), ChatViewModel_HiltModules_KeyModule_ProvideFactory.provide(), DeveloperModeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide(), NotesViewModel_HiltModules_KeyModule_ProvideFactory.provide(), OnboardingViewModel_HiltModules_KeyModule_ProvideFactory.provide(), ProfileViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestScoringViewModel_HiltModules_KeyModule_ProvideFactory.provide(), QuestViewModel_HiltModules_KeyModule_ProvideFactory.provide(), RevisionViewModel_HiltModules_KeyModule_ProvideFactory.provide(), SubjectViewModel_HiltModules_KeyModule_ProvideFactory.provide(), TranslationViewModel_HiltModules_KeyModule_ProvideFactory.provide());
     }
 
     @Override
@@ -453,6 +460,10 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private Provider<NotesViewModel> notesViewModelProvider;
 
+    private Provider<OnboardingViewModel> onboardingViewModelProvider;
+
+    private Provider<ProfileViewModel> profileViewModelProvider;
+
     private Provider<QuestScoringViewModel> questScoringViewModelProvider;
 
     private Provider<QuestViewModel> questViewModelProvider;
@@ -481,16 +492,18 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       this.developerModeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
       this.homeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
       this.notesViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 4);
-      this.questScoringViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 5);
-      this.questViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 6);
-      this.revisionViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 7);
-      this.subjectViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 8);
-      this.translationViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 9);
+      this.onboardingViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 5);
+      this.profileViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 6);
+      this.questScoringViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 7);
+      this.questViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 8);
+      this.revisionViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 9);
+      this.subjectViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 10);
+      this.translationViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 11);
     }
 
     @Override
     public Map<String, Provider<ViewModel>> getHiltViewModelMap() {
-      return ImmutableMap.<String, Provider<ViewModel>>builderWithExpectedSize(10).put("com.edify.learning.presentation.chapter.ChapterViewModel", ((Provider) chapterViewModelProvider)).put("com.edify.learning.presentation.chat.ChatViewModel", ((Provider) chatViewModelProvider)).put("com.edify.learning.presentation.developer.DeveloperModeViewModel", ((Provider) developerModeViewModelProvider)).put("com.edify.learning.presentation.home.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.edify.learning.presentation.notes.NotesViewModel", ((Provider) notesViewModelProvider)).put("com.edify.learning.presentation.developer.QuestScoringViewModel", ((Provider) questScoringViewModelProvider)).put("com.edify.learning.presentation.quest.QuestViewModel", ((Provider) questViewModelProvider)).put("com.edify.learning.presentation.revision.RevisionViewModel", ((Provider) revisionViewModelProvider)).put("com.edify.learning.presentation.subject.SubjectViewModel", ((Provider) subjectViewModelProvider)).put("com.edify.learning.presentation.components.TranslationViewModel", ((Provider) translationViewModelProvider)).build();
+      return ImmutableMap.<String, Provider<ViewModel>>builderWithExpectedSize(12).put("com.edify.learning.presentation.chapter.ChapterViewModel", ((Provider) chapterViewModelProvider)).put("com.edify.learning.presentation.chat.ChatViewModel", ((Provider) chatViewModelProvider)).put("com.edify.learning.presentation.developer.DeveloperModeViewModel", ((Provider) developerModeViewModelProvider)).put("com.edify.learning.presentation.home.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.edify.learning.presentation.notes.NotesViewModel", ((Provider) notesViewModelProvider)).put("com.edify.learning.presentation.onboarding.OnboardingViewModel", ((Provider) onboardingViewModelProvider)).put("com.edify.learning.presentation.profile.ProfileViewModel", ((Provider) profileViewModelProvider)).put("com.edify.learning.presentation.developer.QuestScoringViewModel", ((Provider) questScoringViewModelProvider)).put("com.edify.learning.presentation.quest.QuestViewModel", ((Provider) questViewModelProvider)).put("com.edify.learning.presentation.revision.RevisionViewModel", ((Provider) revisionViewModelProvider)).put("com.edify.learning.presentation.subject.SubjectViewModel", ((Provider) subjectViewModelProvider)).put("com.edify.learning.presentation.components.TranslationViewModel", ((Provider) translationViewModelProvider)).build();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -518,30 +531,36 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
           return (T) new ChapterViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get());
 
           case 1: // com.edify.learning.presentation.chat.ChatViewModel 
-          return (T) new ChatViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.chatResponseServiceProvider.get(), ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+          return (T) new ChatViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.userProfileRepositoryProvider.get(), singletonCImpl.chatResponseServiceProvider.get(), ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
 
           case 2: // com.edify.learning.presentation.developer.DeveloperModeViewModel 
           return (T) new DeveloperModeViewModel(singletonCImpl.provideEdifyDatabaseProvider.get());
 
           case 3: // com.edify.learning.presentation.home.HomeViewModel 
-          return (T) new HomeViewModel(singletonCImpl.learningRepositoryProvider.get());
+          return (T) new HomeViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.userProfileRepositoryProvider.get());
 
           case 4: // com.edify.learning.presentation.notes.NotesViewModel 
           return (T) new NotesViewModel(singletonCImpl.learningRepositoryProvider.get());
 
-          case 5: // com.edify.learning.presentation.developer.QuestScoringViewModel 
+          case 5: // com.edify.learning.presentation.onboarding.OnboardingViewModel 
+          return (T) new OnboardingViewModel(singletonCImpl.userProfileDao());
+
+          case 6: // com.edify.learning.presentation.profile.ProfileViewModel 
+          return (T) new ProfileViewModel(singletonCImpl.userProfileRepositoryProvider.get(), singletonCImpl.learningRepositoryProvider.get());
+
+          case 7: // com.edify.learning.presentation.developer.QuestScoringViewModel 
           return (T) new QuestScoringViewModel(singletonCImpl.questScoringServiceProvider.get());
 
-          case 6: // com.edify.learning.presentation.quest.QuestViewModel 
+          case 8: // com.edify.learning.presentation.quest.QuestViewModel 
           return (T) new QuestViewModel(singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
-          case 7: // com.edify.learning.presentation.revision.RevisionViewModel 
+          case 9: // com.edify.learning.presentation.revision.RevisionViewModel 
           return (T) new RevisionViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
-          case 8: // com.edify.learning.presentation.subject.SubjectViewModel 
+          case 10: // com.edify.learning.presentation.subject.SubjectViewModel 
           return (T) new SubjectViewModel(singletonCImpl.learningRepositoryProvider.get());
 
-          case 9: // com.edify.learning.presentation.components.TranslationViewModel 
+          case 11: // com.edify.learning.presentation.components.TranslationViewModel 
           return (T) new TranslationViewModel(singletonCImpl.provideGemmaServiceProvider.get());
 
           default: throw new AssertionError(id);
@@ -633,6 +652,8 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private Provider<QuestRepository> questRepositoryProvider;
 
+    private Provider<UserProfileRepository> userProfileRepositoryProvider;
+
     private Provider<ChatResponseService> chatResponseServiceProvider;
 
     private Provider<QuestScoringService> questScoringServiceProvider;
@@ -671,6 +692,10 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       return DatabaseModule_ProvideGeneratedQuestDaoFactory.provideGeneratedQuestDao(provideEdifyDatabaseProvider.get());
     }
 
+    private UserProfileDao userProfileDao() {
+      return DatabaseModule_ProvideUserProfileDaoFactory.provideUserProfileDao(provideEdifyDatabaseProvider.get());
+    }
+
     @SuppressWarnings("unchecked")
     private void initialize(final ApplicationContextModule applicationContextModuleParam) {
       this.provideEdifyDatabaseProvider = DoubleCheck.provider(new SwitchingProvider<EdifyDatabase>(singletonCImpl, 1));
@@ -678,8 +703,9 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       this.provideQuestGenerationServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestGenerationService>(singletonCImpl, 3));
       this.learningRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<LearningRepository>(singletonCImpl, 0));
       this.questRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<QuestRepository>(singletonCImpl, 4));
-      this.chatResponseServiceProvider = DoubleCheck.provider(new SwitchingProvider<ChatResponseService>(singletonCImpl, 5));
-      this.questScoringServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestScoringService>(singletonCImpl, 6));
+      this.userProfileRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<UserProfileRepository>(singletonCImpl, 5));
+      this.chatResponseServiceProvider = DoubleCheck.provider(new SwitchingProvider<ChatResponseService>(singletonCImpl, 6));
+      this.questScoringServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestScoringService>(singletonCImpl, 7));
     }
 
     @Override
@@ -716,7 +742,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       public T get() {
         switch (id) {
           case 0: // com.edify.learning.data.repository.LearningRepository 
-          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
+          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
           case 1: // com.edify.learning.data.database.EdifyDatabase 
           return (T) DatabaseModule_ProvideEdifyDatabaseFactory.provideEdifyDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
@@ -730,10 +756,13 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
           case 4: // com.edify.learning.data.repository.QuestRepository 
           return (T) new QuestRepository(singletonCImpl.generatedQuestDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.chapterDao(), singletonCImpl.subjectDao(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
-          case 5: // com.edify.learning.data.service.ChatResponseService 
+          case 5: // com.edify.learning.data.repository.UserProfileRepository 
+          return (T) new UserProfileRepository(singletonCImpl.userProfileDao());
+
+          case 6: // com.edify.learning.data.service.ChatResponseService 
           return (T) new ChatResponseService(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.chatDao(), singletonCImpl.provideGemmaServiceProvider.get());
 
-          case 6: // com.edify.learning.domain.service.QuestScoringService 
+          case 7: // com.edify.learning.domain.service.QuestScoringService 
           return (T) new QuestScoringService(singletonCImpl.chapterStatsDao());
 
           default: throw new AssertionError(id);

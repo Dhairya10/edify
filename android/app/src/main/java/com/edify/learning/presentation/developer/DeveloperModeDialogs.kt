@@ -298,7 +298,7 @@ private fun getFieldsForTable(entityClass: String): List<String> {
         "ChatMessage" -> listOf("id", "sessionId", "chapterId", "content", "isFromUser", "timestamp", "messageType", "attachmentPath")
         "UserResponse" -> listOf("id", "chapterId", "questionId", "userAnswer", "isCorrect", "timestamp")
         "ChapterStats" -> listOf("id", "chapterId", "userId", "visitCount", "noteCount", "revisionHistory", "chatHistory", "interestScore", "lastVisited")
-        "UserProfile" -> listOf("userId", "hasUnlockedPersonalizedQuests", "createdAt", "updatedAt")
+        "UserProfile" -> listOf("userId", "name", "languagePreference", "classLevel", "hasCompletedOnboarding", "hasUnlockedPersonalizedQuests", "createdAt", "updatedAt")
         else -> emptyList()
     }
 }

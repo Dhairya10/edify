@@ -4,12 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -32,6 +40,10 @@ import com.edify.learning.presentation.revision.RevisionScreen
 import com.edify.learning.presentation.quest.QuestScreen
 import com.edify.learning.presentation.quest.QuestDetailScreen
 import com.edify.learning.presentation.developer.DeveloperModeScreen
+import com.edify.learning.presentation.onboarding.OnboardingScreen
+import com.edify.learning.presentation.onboarding.OnboardingViewModel
+import com.edify.learning.presentation.profile.ProfileScreen
+import com.edify.learning.presentation.profile.ProfileViewModel
 import com.edify.learning.ui.theme.EdifyTheme
 import com.edify.learning.utils.DeveloperMode
 import dagger.hilt.android.AndroidEntryPoint
@@ -55,39 +67,69 @@ fun EdifyApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     
+    // Check onboarding status
+    val onboardingViewModel: OnboardingViewModel = hiltViewModel()
+    var hasCompletedOnboarding by remember { mutableStateOf<Boolean?>(null) }
+    
+    LaunchedEffect(Unit) {
+        hasCompletedOnboarding = onboardingViewModel.checkOnboardingStatus()
+    }
+    
     // Routes that should show bottom navigation
     val bottomNavRoutes = buildList {
         add("library")
         add("notes")
         add("quest")
-        if (DeveloperMode.ENABLED) {
-            add("developer")
-        }
+        add("profile")
+        // Dev Mode is now shown on home screen instead of bottom nav
     }
     val showBottomNav = currentRoute in bottomNavRoutes
     
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            if (showBottomNav) {
-                BottomNavigationBar(
-                    currentRoute = currentRoute,
-                    onNavigateToTab = { route ->
-                        navController.navigate(route) {
-                            // Pop up to the start destination to avoid building up a large stack
-                            popUpTo("library") {
-                                saveState = true
-                            }
-                            // Avoid multiple copies of the same destination
-                            launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
-                            restoreState = true
-                        }
-                    }
-                )
+    // Show onboarding if not completed, otherwise show main app
+    when (hasCompletedOnboarding) {
+        null -> {
+            // Loading state
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color.White)
             }
         }
-    ) { innerPadding ->
+        false -> {
+            // Show onboarding
+            OnboardingScreen(
+                onOnboardingComplete = {
+                    hasCompletedOnboarding = true
+                }
+            )
+        }
+        true -> {
+            // Show main app
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    if (showBottomNav) {
+                        BottomNavigationBar(
+                            currentRoute = currentRoute,
+                            onNavigateToTab = { route ->
+                                navController.navigate(route) {
+                                    // Pop up to the start destination to avoid building up a large stack
+                                    popUpTo("library") {
+                                        saveState = true
+                                    }
+                                    // Avoid multiple copies of the same destination
+                                    launchSingleTop = true
+                                    // Restore state when reselecting a previously selected item
+                                    restoreState = true
+                                }
+                            }
+                        )
+                    }
+                }
+            ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = "library",
@@ -119,11 +161,19 @@ fun EdifyApp() {
                 )
             }
             
-            // Developer Mode Screen (only available when enabled)
+            // Developer Mode Screen (only available when enabled - accessed from home screen now)
             if (DeveloperMode.ENABLED) {
                 composable("developer") {
                     DeveloperModeScreen()
                 }
+            }
+            
+            // Profile Screen
+            composable("profile") {
+                val profileViewModel: ProfileViewModel = hiltViewModel()
+                ProfileScreen(
+                    viewModel = profileViewModel
+                )
             }
             
             // Detail Screens (without bottom navigation)
@@ -204,6 +254,8 @@ fun EdifyApp() {
                     questId = questId,
                     onNavigateBack = { navController.popBackStack() }
                 )
+            }
+        }
             }
         }
     }

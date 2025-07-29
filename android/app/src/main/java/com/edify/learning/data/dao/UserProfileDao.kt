@@ -23,4 +23,7 @@ interface UserProfileDao {
     
     @Query("UPDATE user_profile SET hasUnlockedPersonalizedQuests = :hasUnlocked, updatedAt = :timestamp WHERE userId = :userId")
     suspend fun updatePersonalizationStatus(userId: String, hasUnlocked: Boolean, timestamp: Long = System.currentTimeMillis())
+    
+    @Query("UPDATE user_profile SET name = :name, languagePreference = :language, classLevel = :classLevel, hasCompletedOnboarding = :completed, updatedAt = :timestamp WHERE userId = :userId")
+    suspend fun updateOnboardingInfo(userId: String, name: String, language: String, classLevel: Int, completed: Boolean, timestamp: Long = System.currentTimeMillis())
 }

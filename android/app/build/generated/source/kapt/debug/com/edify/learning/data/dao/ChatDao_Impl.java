@@ -49,6 +49,8 @@ public final class ChatDao_Impl implements ChatDao {
 
   private final SharedSQLiteStatement __preparedStmtOfDeleteMessagesBySession;
 
+  private final SharedSQLiteStatement __preparedStmtOfDeleteAllMessages;
+
   public ChatDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfChatMessage = new EntityInsertionAdapter<ChatMessage>(__db) {
@@ -181,6 +183,14 @@ public final class ChatDao_Impl implements ChatDao {
         return _query;
       }
     };
+    this.__preparedStmtOfDeleteAllMessages = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM chat_messages";
+        return _query;
+      }
+    };
   }
 
   @Override
@@ -309,6 +319,29 @@ public final class ChatDao_Impl implements ChatDao {
           }
         } finally {
           __preparedStmtOfDeleteMessagesBySession.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object deleteAllMessages(final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteAllMessages.acquire();
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteAllMessages.release(_stmt);
         }
       }
     }, $completion);

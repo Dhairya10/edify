@@ -47,7 +47,7 @@ fun RevisionScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = White,
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { 
                     Text(
                         text = "Revision: $chapterTitle",
@@ -60,11 +60,12 @@ fun RevisionScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = PrimaryBlue,
                     titleContentColor = White,
                     navigationIconContentColor = White
-                )
+                ),
+                windowInsets = WindowInsets(0.dp)
             )
         }
     ) { paddingValues ->

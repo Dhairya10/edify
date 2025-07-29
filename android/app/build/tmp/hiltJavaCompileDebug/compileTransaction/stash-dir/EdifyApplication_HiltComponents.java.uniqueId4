@@ -9,6 +9,8 @@ import com.edify.learning.presentation.developer.DeveloperModeViewModel_HiltModu
 import com.edify.learning.presentation.developer.QuestScoringViewModel_HiltModules;
 import com.edify.learning.presentation.home.HomeViewModel_HiltModules;
 import com.edify.learning.presentation.notes.NotesViewModel_HiltModules;
+import com.edify.learning.presentation.onboarding.OnboardingViewModel_HiltModules;
+import com.edify.learning.presentation.profile.ProfileViewModel_HiltModules;
 import com.edify.learning.presentation.quest.QuestViewModel_HiltModules;
 import com.edify.learning.presentation.revision.RevisionViewModel_HiltModules;
 import com.edify.learning.presentation.subject.SubjectViewModel_HiltModules;
@@ -170,6 +172,8 @@ public final class EdifyApplication_HiltComponents {
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HomeViewModel_HiltModules.KeyModule.class,
           NotesViewModel_HiltModules.KeyModule.class,
+          OnboardingViewModel_HiltModules.KeyModule.class,
+          ProfileViewModel_HiltModules.KeyModule.class,
           QuestScoringViewModel_HiltModules.KeyModule.class,
           QuestViewModel_HiltModules.KeyModule.class,
           RevisionViewModel_HiltModules.KeyModule.class,
@@ -216,6 +220,8 @@ public final class EdifyApplication_HiltComponents {
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HomeViewModel_HiltModules.BindsModule.class,
           NotesViewModel_HiltModules.BindsModule.class,
+          OnboardingViewModel_HiltModules.BindsModule.class,
+          ProfileViewModel_HiltModules.BindsModule.class,
           QuestScoringViewModel_HiltModules.BindsModule.class,
           QuestViewModel_HiltModules.BindsModule.class,
           RevisionViewModel_HiltModules.BindsModule.class,

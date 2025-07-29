@@ -30,7 +30,7 @@ object ContentLoader {
                     iconRes = "ic_math",
                     totalChapters = mathChapters.size,
                     completedChapters = 0,
-                    lastReadChapterId = mathChapters.firstOrNull()?.id
+                    lastReadChapterId = null
                 )
             )
         }
@@ -47,7 +47,7 @@ object ContentLoader {
                     iconRes = "ic_science",
                     totalChapters = scienceChapters.size,
                     completedChapters = 0,
-                    lastReadChapterId = scienceChapters.firstOrNull()?.id
+                    lastReadChapterId = null
                 )
             )
         }
@@ -64,7 +64,7 @@ object ContentLoader {
                     iconRes = "ic_english",
                     totalChapters = englishChapters.size,
                     completedChapters = 0,
-                    lastReadChapterId = englishChapters.firstOrNull()?.id
+                    lastReadChapterId = null
                 )
             )
         }
@@ -81,7 +81,7 @@ object ContentLoader {
                     iconRes = "ic_social",
                     totalChapters = socialChapters.size,
                     completedChapters = 0,
-                    lastReadChapterId = socialChapters.firstOrNull()?.id
+                    lastReadChapterId = null
                 )
             )
         }

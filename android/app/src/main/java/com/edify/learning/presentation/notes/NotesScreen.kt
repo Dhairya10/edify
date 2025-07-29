@@ -8,24 +8,26 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn 
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.edify.learning.R
 import com.edify.learning.data.model.Subject
 import com.edify.learning.ui.theme.*
 
@@ -37,46 +39,31 @@ fun NotesScreen() {
     val selectedSubjectFilter by viewModel.selectedSubjectFilter.collectAsState()
     var selectedNoteForDetail by remember { mutableStateOf<NoteWithSubjectInfo?>(null) }
     
-    // Pull to refresh state
-    val pullToRefreshState = rememberPullToRefreshState()
-    
-    // Handle pull to refresh
-    LaunchedEffect(pullToRefreshState.isRefreshing) {
-        if (pullToRefreshState.isRefreshing) {
-            viewModel.refreshNotes()
-        }
-    }
-    
-    // Stop refreshing when data is loaded
-    LaunchedEffect(uiState.isLoading) {
-        if (!uiState.isLoading && pullToRefreshState.isRefreshing) {
-            pullToRefreshState.endRefresh()
-        }
-    }
+
     
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
+            .background(DarkBackground)
     ) {
         // Top App Bar
-        TopAppBar(
+        CenterAlignedTopAppBar(
             title = {
                 Text(
                     text = "Notes",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
                 )
             },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = PrimaryBlue,
-                titleContentColor = White
-            )
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = DarkBackground,
+                titleContentColor = TextPrimary
+            ),
+            windowInsets = WindowInsets(0.dp)
         )
         
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(pullToRefreshState.nestedScrollConnection)
+            modifier = Modifier.fillMaxSize()
         ) {
             Column(
                 modifier = Modifier
@@ -116,7 +103,7 @@ fun NotesScreen() {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = PrimaryBlue)
+                            CircularProgressIndicator(color = TextPrimary)
                         }
                     }
                     uiState.displayNotes.isEmpty() -> {
@@ -147,7 +134,7 @@ fun NotesScreen() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
-                        colors = CardDefaults.cardColors(containerColor = ErrorColor.copy(alpha = 0.1f))
+                        colors = CardDefaults.cardColors(containerColor = ErrorColor.copy(alpha = 0.2f))
                     ) {
                         Text(
                             text = error,
@@ -157,12 +144,7 @@ fun NotesScreen() {
                     }
                 }
             }
-            
-            // Pull to refresh container
-            PullToRefreshContainer(
-                modifier = Modifier.align(Alignment.TopCenter),
-                state = pullToRefreshState,
-            )
+
         }
     }
     
@@ -170,7 +152,11 @@ fun NotesScreen() {
     selectedNoteForDetail?.let { noteWithSubject ->
         NoteDetailDialog(
             noteWithSubject = noteWithSubject,
-            onDismiss = { selectedNoteForDetail = null }
+            onDismiss = { selectedNoteForDetail = null },
+            onDeleteNote = { 
+                viewModel.deleteNote(noteWithSubject)
+                selectedNoteForDetail = null
+            }
         )
     }
 }
@@ -181,29 +167,23 @@ fun SubjectFilterChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val chipColor = if (subject != null) {
-        Color(android.graphics.Color.parseColor(subject.color))
-    } else {
-        PrimaryBlue
-    }
-    
     Card(
         modifier = Modifier
             .wrapContentSize()
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) chipColor else Color.Transparent
+            containerColor = if (isSelected) White else Color.Transparent
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = chipColor
+            color = White
         ),
         shape = RoundedCornerShape(20.dp)
     ) {
         Text(
             text = subject?.name ?: "All",
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            color = if (isSelected) White else chipColor,
+            color = if (isSelected) DarkBackground else White,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp
         )
@@ -223,7 +203,7 @@ fun ImprovedNoteCard(
             .fillMaxWidth()
             .wrapContentHeight()
             .clickable { onNoteClick(noteWithSubject) },
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -233,53 +213,45 @@ fun ImprovedNoteCard(
                 .wrapContentHeight()
                 .padding(16.dp)
         ) {
-            // Chapter name at the top
+            // Note title at the top
             Text(
-                text = noteWithSubject.chapterTitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF003c63),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                text = noteWithSubject.note.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             
+            // Note content
+            Text(
+                text = getImprovedDisplayContent(noteWithSubject.note.content),
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            // Subject badge at the bottom right
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
+                horizontalArrangement = Arrangement.End
             ) {
-                // Note Content
-                Column(
-                    modifier = Modifier.weight(1f)
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF3A3A3C)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = noteWithSubject.note.title,
-                        style = MaterialTheme.typography.titleMedium,
+                        text = noteWithSubject.subjectName,
+                        style = MaterialTheme.typography.bodySmall,
                         color = TextPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Text(
-                        text = getImprovedDisplayContent(noteWithSubject.note.content),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
-                
-                // Delete Button
-                IconButton(
-                    onClick = { showDeleteDialog = true },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete note",
-                        tint = Color(0xFF003c63),
-                        modifier = Modifier.size(20.dp)
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
@@ -342,86 +314,214 @@ fun EmptySubjectNotesState(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        val message = if (selectedFilter == null) {
-            "No notes found. Start taking notes while reading chapters!"
-        } else {
-            "No notes found for this subject. Start taking notes while reading chapters!"
+        // Empty state icon
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    color = Color(0xFF3A3A3C),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.draft_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                contentDescription = "No notes",
+                modifier = Modifier.size(48.dp),
+                tint = Color.Unspecified
+            )
         }
         
-        Text(
-            text = message,
-            style = MaterialTheme.typography.titleMedium,
-            color = TextSecondary,
-            fontWeight = FontWeight.Medium
-        )
+        Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Start reading and add notes to see them here",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary.copy(alpha = 0.7f),
-            modifier = Modifier.padding(horizontal = 16.dp)
+            text = "No Notes Yet",
+            style = MaterialTheme.typography.headlineSmall,
+            color = TextPrimary,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "Notes you take during your study sessions\nwill appear here automatically.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Explore Library Button
+        Button(
+            onClick = { /* TODO: Navigate to library */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = TextPrimary,
+                contentColor = DarkBackground
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.book_5_24dp_000000_fill0_wght400_grad0_opsz24),
+                contentDescription = "Book icon",
+                modifier = Modifier.size(20.dp),
+                tint = Color.Unspecified
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Explore Library",
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp
+            )
+        }
     }
 }
 
 @Composable
 fun NoteDetailDialog(
     noteWithSubject: NoteWithSubjectInfo,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onDeleteNote: () -> Unit = {}
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Column {
-                Text(
-                    text = noteWithSubject.chapterTitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF003c63),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-                Text(
-                    text = noteWithSubject.note.title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = Color.Black
-                )
-            }
-        },
-        text = {
-            LazyColumn {
-                item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
-                        text = getFullContent(noteWithSubject.note.content),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black,
-                        lineHeight = 24.sp
+                        text = noteWithSubject.chapterTitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        text = noteWithSubject.note.title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = TextPrimary
+                    )
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Close",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = onDismiss
-            ) {
-                Text(
-                    "Close",
-                    color = Color(0xFF003c63),
-                    fontWeight = FontWeight.Medium
-                )
+        text = {
+            Column {
+                LazyColumn(
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    item {
+                        Text(
+                            text = getFullContent(noteWithSubject.note.content),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            lineHeight = 24.sp
+                        )
+                    }
+                }
+                
+                // Delete icon at bottom-right
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete note",
+                            tint = ErrorColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         },
-        containerColor = Color.White,
-        titleContentColor = Color.Black,
-        textContentColor = Color.Black,
+        confirmButton = {},
+        containerColor = DarkCard,
+        titleContentColor = TextPrimary,
+        textContentColor = TextPrimary,
         modifier = Modifier.fillMaxWidth(0.95f)
     )
+    
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text(
+                    "Delete Note",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    "Are you sure you want to delete this note? This action cannot be undone.",
+                    color = TextSecondary
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteNote()
+                        showDeleteDialog = false
+                        onDismiss()
+                    }
+                ) {
+                    Text(
+                        "Delete",
+                        color = ErrorColor,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text(
+                        "Cancel",
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            containerColor = DarkCard,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary
+        )
+    }
 }
 
 fun getFullContent(content: String): String {

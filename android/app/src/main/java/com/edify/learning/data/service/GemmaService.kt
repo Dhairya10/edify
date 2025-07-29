@@ -4,6 +4,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOptions
+import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
+import com.google.mediapipe.tasks.genai.llminference.GraphOptions
+// TODO: Fix MediaPipe framework dependency issues
+// import com.google.mediapipe.framework.image.BitmapImageBuilder
+// import com.google.mediapipe.framework.image.MPImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -318,23 +323,101 @@ class GemmaService @Inject constructor(
         }
     }
     
+    // TODO: Temporarily commented out due to MediaPipe framework dependency issues
+    // Will be restored once BitmapImageBuilder and MPImage classes are available
+    suspend fun generateResponseWithImage(prompt: String, image: Bitmap): Result<String> = withContext(Dispatchers.IO) {
+        android.util.Log.w(TAG, "Image inference temporarily disabled due to MediaPipe framework issues")
+        
+        // Fallback to enhanced text-based approach
+        val imageContextPrompt = createImageContextPrompt(prompt, image)
+        
+        return@withContext generateResponse(imageContextPrompt).fold(
+            onSuccess = { response ->
+                Result.success(response)
+            },
+            onFailure = { error ->
+                android.util.Log.w(TAG, "Text-based fallback failed: ${error.message}")
+                Result.success(getMockImageResponse(prompt))
+            }
+        )
+    }
+    
+    /*
+    // Original multimodal implementation - commented out due to dependency issues
     suspend fun generateResponseWithImage(prompt: String, image: Bitmap): Result<String> = withContext(Dispatchers.IO) {
         try {
-            android.util.Log.d(TAG, "Generating response with image context: ${prompt.take(50)}...")
+            if (!isInitialized) {
+                initializeModel().getOrThrow()
+            }
             
-            // Since MediaPipe multimodal classes are not available in this version,
-            // we'll enhance the text prompt with image context information
-            val imageContextPrompt = createImageContextPrompt(prompt, image)
+            android.util.Log.d(TAG, "Generating multimodal response with image: ${prompt.take(50)}...")
             
-            // Use the regular text-based response generation with enhanced prompt
-            return@withContext generateResponse(imageContextPrompt)
+            // Convert Bitmap to MPImage as per MediaPipe documentation
+            val mpImage: MPImage = BitmapImageBuilder(image).build()
+            android.util.Log.d(TAG, "Converted bitmap to MPImage successfully")
+            
+            // Create session options with vision modality enabled
+            val sessionOptions = LlmInferenceSession.LlmInferenceSessionOptions.builder()
+                .setTopK(TOP_K)
+                .setTemperature(TEMPERATURE)
+                .setGraphOptions(
+                    GraphOptions.builder()
+                        .setEnableVisionModality(true)
+                        .build()
+                )
+                .build()
+            
+            // Create LLM inference options with max images = 1 for Gemma-3n
+            val options = LlmInferenceOptions.builder()
+                .setModelPath(llmInference?.let { "" } ?: throw IllegalStateException("Model not initialized"))
+                .setMaxTokens(MAX_TOKENS)
+                .setMaxTopK(TOP_K)
+                .setMaxNumImages(1) // Gemma-3n accepts maximum of 1 image per session
+                .build()
+            
+            // Use the existing llmInference instance with session-based approach
+            llmInference?.let { inference ->
+                LlmInferenceSession.createFromOptions(inference, sessionOptions).use { session ->
+                    android.util.Log.d(TAG, "Created LlmInferenceSession with vision modality")
+                    
+                    // Add text query and image to session as per documentation
+                    session.addQueryChunk(prompt)
+                    session.addImage(mpImage)
+                    
+                    android.util.Log.d(TAG, "Added query chunk and image to session")
+                    
+                    // Generate response using multimodal input
+                    val response = session.generateResponse()
+                    
+                    if (response.isNotBlank()) {
+                        android.util.Log.d(TAG, "Successfully generated multimodal response: ${response.take(100)}...")
+                        return@withContext Result.success(response)
+                    } else {
+                        throw IllegalStateException("Empty response from multimodal model")
+                    }
+                }
+            } ?: throw IllegalStateException("LLM inference not initialized")
             
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Image response generation error: ${e.message}")
+            android.util.Log.e(TAG, "Multimodal response generation error: ${e.message}")
             e.printStackTrace()
-            return@withContext Result.success(getMockImageResponse(prompt))
+            
+            // Fallback to enhanced text-based approach if multimodal fails
+            android.util.Log.w(TAG, "Falling back to enhanced text-based image analysis")
+            val imageContextPrompt = createImageContextPrompt(prompt, image)
+            
+            return@withContext generateResponse(imageContextPrompt).fold(
+                onSuccess = { response ->
+                    Result.success(response)
+                },
+                onFailure = { error ->
+                    android.util.Log.w(TAG, "Text-based fallback also failed: ${error.message}")
+                    Result.success(getMockImageResponse(prompt))
+                }
+            )
         }
     }
+    */
     
     private fun createImageContextPrompt(originalPrompt: String, image: Bitmap): String {
         // Analyze basic image properties
@@ -357,15 +440,16 @@ class GemmaService @Inject constructor(
         }
         
         return """
-            I can see you've shared an image ($imageInfo, aspect ratio: $aspectRatio) that appears to be $likelyContent.
+            I can see you've shared an image with the following properties:
+            - Dimensions: ${image.width}x${image.height} pixels
+            - Aspect ratio: $aspectRatio
+            - Likely content type: $likelyContent
             
             Your question: "$originalPrompt"
             
-            Based on your question and the image properties, I can provide helpful guidance:
-            
             ${getContextualResponse(originalPrompt, likelyContent)}
             
-            If you need more specific help with the visual content, feel free to describe what you see in the image, and I can provide more targeted assistance based on that description.
+            While I can't see the actual visual details, I can provide guidance based on your question and the image characteristics. Feel free to describe specific elements you see for more targeted help.
         """.trimIndent()
     }
     
@@ -542,13 +626,13 @@ class GemmaService @Inject constructor(
         }
     }
     
-    suspend fun translateText(text: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun translateText(text: String, targetLanguage: String = "Hindi"): Result<String> = withContext(Dispatchers.IO) {
         try {
             if (!isInitialized) {
                 initializeModel().getOrThrow()
             }
             
-            val translationPrompt = createTranslationPrompt(text)
+            val translationPrompt = createTranslationPrompt(text, targetLanguage)
             val result = generateResponse(translationPrompt)
             
             result.fold(
@@ -569,13 +653,13 @@ class GemmaService @Inject constructor(
         }
     }
     
-    private fun createTranslationPrompt(text: String): String {
+    private fun createTranslationPrompt(text: String, targetLanguage: String): String {
         return """
-        Translate the following English text to Hindi. Provide only the Hindi translation without any additional text or explanations.
+        Translate the following English text to $targetLanguage. Provide only the $targetLanguage translation without any additional text or explanations.
         
         English text: $text
         
-        Hindi translation:
+        $targetLanguage translation:
         """.trimIndent()
     }
 

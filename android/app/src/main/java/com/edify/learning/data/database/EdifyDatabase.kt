@@ -18,7 +18,7 @@ import com.edify.learning.data.model.*
         UserProfile::class,
         GeneratedQuest::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
