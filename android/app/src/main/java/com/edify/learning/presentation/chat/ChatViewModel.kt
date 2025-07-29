@@ -106,6 +106,14 @@ class ChatViewModel @Inject constructor(
     
     fun onImageSelected(image: Bitmap?) {
         _selectedImage.value = image
+        
+        // Pre-populate default prompt when image is selected
+        if (image != null && _messageInput.value.trim().isEmpty()) {
+            _messageInput.value = "Please explain what you see in this image"
+        } else if (image == null && _messageInput.value.trim() == "Please explain what you see in this image") {
+            // Clear default prompt if image is removed and input hasn't been modified
+            _messageInput.value = ""
+        }
     }
     
     fun sendMessage() {

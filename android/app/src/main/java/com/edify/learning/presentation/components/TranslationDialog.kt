@@ -39,7 +39,7 @@ fun TranslationDialog(
                 .fillMaxWidth()
                 .padding(8.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = DarkSurface)
         ) {
             Column(
                 modifier = Modifier
@@ -78,7 +78,7 @@ fun TranslationDialog(
                     text = "Original Text",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = TextSecondary
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -86,33 +86,34 @@ fun TranslationDialog(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp),
-                    colors = CardDefaults.cardColors(containerColor = BackgroundGray),
-                    shape = RoundedCornerShape(8.dp)
+                        .wrapContentHeight()
+                        .heightIn(min = 80.dp, max = 150.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkCard),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(12.dp)
+                            .fillMaxWidth()
+                            .padding(16.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
                         Text(
                             text = originalText,
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextPrimary,
-                            lineHeight = 20.sp
+                            lineHeight = 22.sp
                         )
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 
                 // Translated text section
                 Text(
                     text = "Translated Text",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = TextSecondary
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -120,62 +121,69 @@ fun TranslationDialog(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp),
-                    colors = CardDefaults.cardColors(containerColor = SecondaryBlue.copy(alpha = 0.1f)),
-                    shape = RoundedCornerShape(8.dp)
+                        .wrapContentHeight()
+                        .heightIn(min = 80.dp, max = 150.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkCard),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     if (isLoading) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
+                                    modifier = Modifier.size(24.dp),
                                     color = SecondaryBlue,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = "Translating",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = TextSecondary
+                                    strokeWidth = 2.5.dp
                                 )
                                 
-                                // Animated dots
-                                var dotCount by remember { mutableStateOf(0) }
-                                LaunchedEffect(Unit) {
-                                    while (isLoading) {
-                                        kotlinx.coroutines.delay(500)
-                                        dotCount = (dotCount + 1) % 4
+                                Spacer(modifier = Modifier.height(12.dp))
+                                
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Translating",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondary
+                                    )
+                                    
+                                    // Animated dots
+                                    var dotCount by remember { mutableStateOf(0) }
+                                    LaunchedEffect(Unit) {
+                                        while (isLoading) {
+                                            kotlinx.coroutines.delay(500)
+                                            dotCount = (dotCount + 1) % 4
+                                        }
                                     }
+                                    
+                                    Text(
+                                        text = ".".repeat(dotCount),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondary,
+                                        modifier = Modifier.width(20.dp)
+                                    )
                                 }
-                                
-                                Text(
-                                    text = ".".repeat(dotCount),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = TextSecondary,
-                                    modifier = Modifier.width(20.dp)
-                                )
                             }
                         }
                     } else {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp)
+                                .padding(16.dp)
                                 .verticalScroll(rememberScrollState())
                         ) {
                             Text(
                                 text = translatedText,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = TextPrimary,
-                                lineHeight = 20.sp
+                                lineHeight = 22.sp
                             )
                         }
                     }

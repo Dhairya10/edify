@@ -5,19 +5,28 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.edify.learning.R
+import java.util.Calendar
 import com.edify.learning.data.model.Subject
 import com.edify.learning.data.model.Chapter
 import com.edify.learning.presentation.home.SearchResult
@@ -33,16 +42,17 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val greeting = remember { getGreeting() }
     
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
-            .padding(16.dp)
+            .background(Black)
+            .padding(20.dp)
     ) {
-        // Welcome Header
-        Text(
-            text = "Welcome back,",
+        // Welcome Header with enhanced styling
+                        Text(
+            text = greeting,
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             modifier = Modifier.padding(bottom = 4.dp)
@@ -50,13 +60,13 @@ fun HomeScreen(
         
         Text(
             text = "Alex",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineLarge,
             color = TextPrimary,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 32.dp)
         )
         
-        // Search Bar
+        // Enhanced Search Bar - Dark Theme
         OutlinedTextField(
             value = searchQuery,
             onValueChange = viewModel::onSearchQueryChanged,
@@ -68,16 +78,31 @@ fun HomeScreen(
                     tint = TextSecondary
                 )
             },
+            trailingIcon = {
+                if (searchQuery.isNotBlank()) {
+                    IconButton(
+                        onClick = { viewModel.onSearchQueryChanged("") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear search",
+                            tint = TextSecondary
+                        )
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            shape = RoundedCornerShape(12.dp),
+                .padding(bottom = 28.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = SecondaryBlue,
-                unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
+                focusedBorderColor = DarkCard,
+                unfocusedBorderColor = DarkCard,
                 focusedTextColor = TextPrimary,
                 unfocusedTextColor = TextPrimary,
-                cursorColor = SecondaryBlue
+                cursorColor = SecondaryBlue,
+                focusedContainerColor = DarkCard,
+                unfocusedContainerColor = DarkCard
             )
         )
         
@@ -182,34 +207,66 @@ fun ContinueReadingCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onContinueReading() },
-        colors = CardDefaults.cardColors(containerColor = PrimaryBlue),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(DarkCard)
+                .padding(20.dp)
         ) {
-            Text(
-                text = "Continue Reading",
-                style = MaterialTheme.typography.labelMedium,
-                color = White.copy(alpha = 0.8f),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            Text(
-                text = lastReadChapter?.let { chapter ->
-                    "Chapter ${chapter.chapterNumber}: ${chapter.title}"
-                } ?: "Continue your studies",
-                style = MaterialTheme.typography.titleMedium,
-                color = White,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            
-            Text(
-                text = subject.name,
-                style = MaterialTheme.typography.bodyMedium,
-                color = White.copy(alpha = 0.8f)
-            )
+            Column {
+                Text(
+                    text = "CONTINUE READING",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextSecondary,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(getSubjectColor(subject.name).copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = getSubjectIcon(subject.name)),
+                            contentDescription = subject.name,
+                            tint = getSubjectColor(subject.name),
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = subject.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (lastReadChapter != null) {
+                            Text(
+                                text = lastReadChapter.title,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -224,9 +281,9 @@ fun SubjectCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -234,44 +291,42 @@ fun SubjectCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Subject Icon/Color
+            // Subject Icon with colored background
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(android.graphics.Color.parseColor(subject.color))),
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                getSubjectColor(subject.name).copy(alpha = 0.3f),
+                                getSubjectColor(subject.name).copy(alpha = 0.1f)
+                            )
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = subject.name.first().toString(),
-                    color = White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                Icon(
+                    painter = painterResource(id = getSubjectIcon(subject.name)),
+                    contentDescription = subject.name,
+                    tint = White,
+                    modifier = Modifier.size(32.dp)
                 )
             }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
+
+            Spacer(modifier = Modifier.width(20.dp))
+
             // Subject Info
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = subject.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = TextPrimary,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
-                )
-                
-                Text(
-                    text = subject.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
@@ -288,55 +343,63 @@ fun SearchResultCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = when (searchResult.type) {
-                        SearchResultType.SUBJECT -> "Subject"
-                        SearchResultType.CHAPTER -> "Chapter"
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = SecondaryBlue,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier
-                        .background(
-                            color = SecondaryBlue.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = when (searchResult.type) {
+                            SearchResultType.SUBJECT -> Color(0xFF4CAF50).copy(alpha = 0.1f)
+                            SearchResultType.CHAPTER -> SecondaryBlue.copy(alpha = 0.1f)
+                        }
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = when (searchResult.type) {
+                            SearchResultType.SUBJECT -> "Subject"
+                            SearchResultType.CHAPTER -> "Chapter"
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = when (searchResult.type) {
+                            SearchResultType.SUBJECT -> Color(0xFF4CAF50)
+                            SearchResultType.CHAPTER -> SecondaryBlue
+                        },
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = searchResult.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = TextPrimary,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            
+
             Text(
                 text = searchResult.subtitle,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
-                modifier = Modifier.padding(top = 2.dp)
+                modifier = Modifier.padding(top = 4.dp)
             )
-            
+
             if (searchResult.description.isNotBlank()) {
                 Text(
                     text = searchResult.description,
@@ -344,9 +407,137 @@ fun SearchResultCard(
                     color = TextSecondary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         }
+    }
+}
+
+// Helper function to get subject icon
+@Composable
+fun getSubjectIcon(subjectName: String): Int {
+    return when (subjectName.lowercase()) {
+        "science" -> R.drawable.science_24dp_ffffff_fill1_wght400_grad0_opsz24
+        "mathematics" -> R.drawable.functions_24dp_ffffff_fill1_wght400_grad0_opsz24
+        "english" -> R.drawable.slab_serif_24dp_ffffff_fill1_wght400_grad0_opsz24
+        "social science" -> R.drawable.communities_24dp_ffffff_fill1_wght400_grad0_opsz24
+        else -> R.drawable.book_5_24dp_ffffff_fill1_wght400_grad0_opsz24
+    }
+}
+
+// Helper function to get subject color with dark blue tint
+@Composable
+fun getSubjectColor(subjectName: String): Color {
+    return when (subjectName.lowercase()) {
+        "science" -> Color(0xFF4A90E2)
+        "mathematics" -> Color(0xFFF5A623)
+        "english" -> Color(0xFF50E3C2)
+        "social science" -> Color(0xFF7ED321)
+        else -> SecondaryBlue
+    }.copy(alpha = 0.8f)
+}
+
+
+private val morningGreetings = listOf(
+    "Good morning,",
+    "Rise and shine,",
+    "Fresh start ahead,",
+    "Hello, early bird,",
+    "Morning sunshine,",
+    "Ready to seize the day?",
+    "Another beautiful morning,",
+    "Time to make things happen,",
+    "Bright and early today,",
+    "Morning motivation incoming,",
+    "Let's start strong,"
+)
+
+private val afternoonGreetings = listOf(
+    "Good afternoon,",
+    "Keep the energy up,",
+    "Afternoon productivity mode,",
+    "Hope your day's going well,",
+    "Afternoon achiever,",
+    "Steady progress continues,",
+    "Power through the afternoon,",
+    "Making moves this afternoon?",
+    "Afternoon focus time,",
+    "How's the day treating you?",
+)
+
+private val eveningGreetings = listOf(
+    "Good evening,",
+    "Time to wind down and grow,",
+    "Evening reflection time,",
+    "Hope today was fulfilling,",
+    "Perfect time for progress,",
+    "Evening inspiration awaits,",
+    "Peaceful evening ahead,",
+    "Let's make this evening count,",
+)
+
+private val nightGreetings = listOf(
+    "Welcome, night owl,",
+    "Burning the midnight oil?",
+    "Late night dedication,",
+    "Hello there, midnight warrior,",
+    "Night shift in full swing,",
+    "Stars are out, so are you,",
+    "Late night, big dreams,",
+    "When others sleep, you grow,",
+    "Moonlight motivation,",
+    "Night time is your time,",
+    "Embracing the quiet hours,",
+    "After-hours excellence,",
+    "The night is full of potential,"
+)
+
+
+// Weekend-specific greetings
+private val weekendMorningGreetings = listOf(
+    "Weekend warrior mode,",
+    "Weekend goals activated,",
+    "Making weekends count,"
+)
+
+// Special occasion greetings
+private val mondayGreetings = listOf(
+    "Monday momentum,",
+    "Fresh week energy,",
+    "New week, new wins,",
+    "Monday motivation,"
+)
+
+private val fridayGreetings = listOf(
+    "Friday finish strong,",
+    "End the week right,",
+    "Friday focus mode,",
+    "Weekend prep time,"
+)
+
+// Enhanced function with more variety
+private fun getGreeting(): String {
+    val calendar = Calendar.getInstance()
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
+    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+
+    return when (hour) {
+        in 5..11 -> {
+            val baseGreetings = morningGreetings.toMutableList()
+            
+            // Add day-specific greetings
+            when (dayOfWeek) {
+                Calendar.MONDAY -> baseGreetings.addAll(mondayGreetings)
+                Calendar.FRIDAY -> baseGreetings.addAll(fridayGreetings)
+                Calendar.SATURDAY, Calendar.SUNDAY -> baseGreetings.addAll(weekendMorningGreetings)
+            }
+            
+            baseGreetings.random()
+        }
+        in 12..16 -> afternoonGreetings.random()
+        in 17..20 -> eveningGreetings.random()
+        in 21..23, in 0..4 -> nightGreetings.random()
+        else -> "Welcome,"
     }
 }

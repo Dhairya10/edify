@@ -52,7 +52,7 @@ fun SubjectScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
+            .background(DarkBackground)
     ) {
         // Top App Bar
         TopAppBar(
@@ -71,23 +71,18 @@ fun SubjectScreen(
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = PrimaryBlue,
-                titleContentColor = White,
-                navigationIconContentColor = White
+                containerColor = DarkSurface,
+                titleContentColor = TextPrimary,
+                navigationIconContentColor = TextPrimary
             )
         )
         
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Mode Toggle
-            ModeToggle(
-                selectedMode = selectedMode,
-                onModeChanged = viewModel::onModeChanged,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
+            // Mode Toggle removed - showing only chapters
             
             // Loading State
             if (uiState.isLoading) {
@@ -105,7 +100,7 @@ fun SubjectScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ErrorColor.copy(alpha = 0.1f))
+                    colors = CardDefaults.cardColors(containerColor = DarkCard)
                 ) {
                     Text(
                         text = error,
@@ -115,24 +110,12 @@ fun SubjectScreen(
                 }
             }
             
-            // Content based on selected mode
-            when (selectedMode) {
-                SubjectMode.LEARNING -> {
-                    LearningModeContent(
-                        chapters = uiState.chapters,
-                        onChapterClick = onNavigateToChapter
-                    )
-                }
-                SubjectMode.REVISION -> {
-                    RevisionModeContent(
-                        exercises = uiState.exercises,
-                        userResponses = uiState.userResponses,
-                        onResponseChanged = { chapterId, exerciseIndex, response ->
-                            viewModel.updateUserResponse(chapterId, exerciseIndex, response)
-                        }
-                    )
-                }
-            }
+            // Always show Learning mode content in the UI
+            // Revision mode removed from UI but code remains intact
+            LearningModeContent(
+                chapters = uiState.chapters,
+                onChapterClick = onNavigateToChapter
+            )
         }
     }
 }
@@ -143,7 +126,8 @@ fun ModeToggle(
     onModeChanged: (SubjectMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    // Only showing Learning mode tab, Revision mode hidden from UI
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .background(
@@ -151,20 +135,12 @@ fun ModeToggle(
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(4.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         ModeToggleButton(
             text = "Learning",
-            isSelected = selectedMode == SubjectMode.LEARNING,
+            isSelected = true,  // Always selected as it's the only option
             onClick = { onModeChanged(SubjectMode.LEARNING) },
-            modifier = Modifier.weight(1f)
-        )
-        
-        ModeToggleButton(
-            text = "Revision",
-            isSelected = selectedMode == SubjectMode.REVISION,
-            onClick = { onModeChanged(SubjectMode.REVISION) },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -205,7 +181,7 @@ fun LearningModeContent(
         style = MaterialTheme.typography.titleLarge,
         color = TextPrimary,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 16.dp)
+        modifier = Modifier.padding(bottom = 12.dp)
     )
     
     LazyColumn(
@@ -340,8 +316,37 @@ fun ChapterCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     
+                    // Extract summary from chapter content JSON
+                    val chapterSummary = remember(chapter.id, chapter.content) {
+                        try {
+                            val jsonContent = chapter.content
+                            if (jsonContent.isNotBlank()) {
+                                val jsonObject = org.json.JSONObject(jsonContent)
+                                val contentObject = jsonObject.optJSONObject("content")
+                                val summaryObject = contentObject?.optJSONObject("summary")
+                                val summary = summaryObject?.optString("summary")
+                                
+                                if (!summary.isNullOrBlank()) {
+                                    // Extract first 100 characters with ellipsis
+                                    if (summary.length > 100) {
+                                        summary.substring(0, 100) + "..."
+                                    } else {
+                                        summary
+                                    }
+                                } else {
+                                    chapter.description
+                                }
+                            } else {
+                                chapter.description
+                            }
+                        } catch (e: Exception) {
+                            // Fallback to description if JSON parsing fails
+                            chapter.description
+                        }
+                    }
+                    
                     Text(
-                        text = chapter.description,
+                        text = chapterSummary,
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                         maxLines = 2,
@@ -415,7 +420,7 @@ fun CollapsibleChapterCard(
                     Text(
                         text = chapterExercises.chapterTitle,
                         style = MaterialTheme.typography.titleMedium,
-                        color = PrimaryBlue,
+                        color = TextPrimary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
@@ -428,7 +433,7 @@ fun CollapsibleChapterCard(
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
                     contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = PrimaryBlue
+                    tint = TextPrimary
                 )
             }
             
@@ -469,7 +474,7 @@ fun ExerciseQuestionCard(
             .fillMaxWidth()
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isCompleted) SuccessColor.copy(alpha = 0.1f) else White
+            containerColor = if (isCompleted) SuccessColor.copy(alpha = 0.2f) else DarkCard
         ),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -487,7 +492,7 @@ fun ExerciseQuestionCard(
                 Text(
                     text = "Question ${exerciseIndex + 1}",
                     style = MaterialTheme.typography.labelMedium,
-                    color = PrimaryBlue,
+                    color = SecondaryBlue,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
@@ -584,7 +589,7 @@ fun SubjectExerciseCard(
                     text = "Question ${exerciseIndex + 1}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = PrimaryBlue
+                    color = TextPrimary
                 )
                 
                 if (userResponse != null && (userResponse.textResponse?.isNotBlank() == true || userResponse.imageUri != null)) {
@@ -630,9 +635,11 @@ fun SubjectExerciseCard(
                 minLines = 3,
                 maxLines = 8,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = PrimaryBlue,
-                    focusedLabelColor = PrimaryBlue,
-                    cursorColor = PrimaryBlue
+                    focusedBorderColor = SecondaryBlue,
+                    focusedLabelColor = SecondaryBlue,
+                    cursorColor = SecondaryBlue,
+                    unfocusedBorderColor = TextSecondary,
+                    unfocusedLabelColor = TextSecondary
                 )
             )
             
@@ -751,7 +758,7 @@ fun ExerciseModal(
             modifier = Modifier
                 .fillMaxWidth(0.95f)
                 .heightIn(max = 600.dp), // Set maximum height for the modal
-            colors = CardDefaults.cardColors(containerColor = White),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -770,7 +777,7 @@ fun ExerciseModal(
                         Text(
                             text = "Question ${exerciseIndex + 1}",
                             style = MaterialTheme.typography.titleLarge,
-                            color = PrimaryBlue,
+                            color = TextPrimary,
                             fontWeight = FontWeight.Bold
                         )
                         Text(

@@ -180,18 +180,26 @@ private fun MarkdownText(
             .then(
                 if (isSelectionMode) {
                     Modifier
-                        .background(Color.Black.copy(alpha = 0.1f))
+                        .background(
+                            color = SecondaryBlue.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = SecondaryBlue.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
                         .clickable {
                             onParagraphSelected(text)
                         }
+                        .padding(8.dp)
                 } else {
                     Modifier
                 }
             )
     ) {
-        SelectionContainer(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        if (isSelectionMode) {
+            // In selection mode, disable text selection and show as clickable paragraph
             Text(
                 text = annotatedString,
                 style = style.copy(color = TextPrimary),
@@ -199,8 +207,20 @@ private fun MarkdownText(
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
             )
+        } else {
+            // Normal mode with text selection enabled
+            SelectionContainer(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = annotatedString,
+                    style = style.copy(color = TextPrimary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                )
+            }
         }
-
     }
 }
 
@@ -250,23 +270,17 @@ private fun MarkdownHeader(
     level: Int
 ) {
     val style = when (level) {
-        1 -> MaterialTheme.typography.headlineLarge
-        2 -> MaterialTheme.typography.headlineMedium
-        3 -> MaterialTheme.typography.headlineSmall
-        4 -> MaterialTheme.typography.titleLarge
+        1 -> MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
+        2 -> MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+        3 -> MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+        4 -> MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
         5 -> MaterialTheme.typography.titleMedium
         else -> MaterialTheme.typography.titleSmall
     }
-    
     Text(
         text = text,
-        style = style.copy(
-            color = PrimaryBlue,
-            fontWeight = FontWeight.Bold
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
+        style = style.copy(color = MaterialTheme.colorScheme.onBackground),
+        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
     )
 }
 

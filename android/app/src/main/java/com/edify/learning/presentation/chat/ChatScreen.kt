@@ -81,7 +81,7 @@ fun ChatScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
+            .background(Black)
             .imePadding() // Add IME padding to handle keyboard
     ) {
         // Top App Bar
@@ -89,7 +89,7 @@ fun ChatScreen(
             title = {
                 Column {
                     Text(
-                        text = "Chat with Gemma",
+                        text = "Chat",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
@@ -105,9 +105,9 @@ fun ChatScreen(
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = PrimaryBlue,
-                titleContentColor = White,
-                navigationIconContentColor = White
+                containerColor = DarkSurface,
+                titleContentColor = TextPrimary,
+                navigationIconContentColor = TextPrimary
             )
         )
         
@@ -119,6 +119,7 @@ fun ChatScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .background(Black)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
@@ -167,26 +168,23 @@ fun ChatScreen(
             }
         }
         
-        // Message Input
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp,
-            color = White
-        ) {
-            MessageInputField(
-                value = messageInput,
-                onValueChange = viewModel::onMessageInputChanged,
-                onSendMessage = {
-                    if (messageInput.isNotBlank() || selectedImage != null) {
-                        viewModel.sendMessage()
-                    }
-                },
-                enabled = !uiState.isGemmaTyping,
-                selectedImage = selectedImage,
-                onImageSelected = viewModel::onImageSelected,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
+        // Message Input - Dark Theme
+        MessageInputField(
+            value = messageInput,
+            onValueChange = viewModel::onMessageInputChanged,
+            onSendMessage = {
+                if (messageInput.isNotBlank() || selectedImage != null) {
+                    viewModel.sendMessage()
+                }
+            },
+            enabled = !uiState.isGemmaTyping,
+            selectedImage = selectedImage,
+            onImageSelected = viewModel::onImageSelected,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Black)
+                .padding(16.dp)
+        )
     }
 }
 
@@ -205,7 +203,7 @@ fun MessageBubble(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(SecondaryBlue),
+                    .background(Color.Gray),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -221,7 +219,7 @@ fun MessageBubble(
         Card(
             modifier = Modifier.widthIn(max = 280.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (message.isFromUser) UserMessageBackground else GemmaMessageBackground
+                containerColor = if (message.isFromUser) DarkSurface else DarkCard
             ),
             shape = RoundedCornerShape(
                 topStart = 16.dp,
@@ -235,17 +233,49 @@ fun MessageBubble(
             ) {
                 // Show image thumbnail if message has an attachment
                 message.attachmentPath?.let { imagePath ->
-                    AsyncImage(
-                        model = File(imagePath),
-                        contentDescription = "Attached image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop,
-                        error = painterResource(id = R.drawable.image_24px),
-                        placeholder = painterResource(id = R.drawable.image_24px)
-                    )
+                    val imageFile = File(imagePath)
+                    if (imageFile.exists()) {
+                        AsyncImage(
+                            model = imageFile,
+                            contentDescription = "Attached image",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(DarkSurface),
+                            contentScale = ContentScale.Crop,
+                            error = painterResource(id = R.drawable.image_24px),
+                            placeholder = painterResource(id = R.drawable.image_24px)
+                        )
+                    } else {
+                        // Fallback UI when image file doesn't exist
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.Gray.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.image_24px),
+                                    contentDescription = "Image not found",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Image not available",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
                     
                     if (message.content.isNotBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -258,7 +288,7 @@ fun MessageBubble(
                         // User messages as plain text
                         Text(
                             text = message.content,
-                            color = UserMessageText,
+                            color = TextPrimary,
                             fontSize = 14.sp,
                             lineHeight = 20.sp
                         )
@@ -266,7 +296,7 @@ fun MessageBubble(
                         // AI messages with markdown formatting
                         MarkdownText(
                             markdown = message.content,
-                            color = GemmaMessageText,
+                            color = TextPrimary,
                             fontSize = 14.sp,
                             lineHeight = 20.sp
                         )
@@ -282,12 +312,12 @@ fun MessageBubble(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(PrimaryBlue),
+                    .background(White),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "A",
-                    color = White,
+                    color = Black,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -323,7 +353,7 @@ fun TypingIndicator(
         Spacer(modifier = Modifier.width(8.dp))
         
         Card(
-            colors = CardDefaults.cardColors(containerColor = GemmaMessageBackground),
+            colors = CardDefaults.cardColors(containerColor = DarkCard),
             shape = RoundedCornerShape(
                 topStart = 16.dp,
                 topEnd = 16.dp,
@@ -384,7 +414,7 @@ fun EnhancedTypingIndicator(
         Spacer(modifier = Modifier.width(8.dp))
         
         Card(
-            colors = CardDefaults.cardColors(containerColor = GemmaMessageBackground),
+            colors = CardDefaults.cardColors(containerColor = DarkCard),
             shape = RoundedCornerShape(
                 topStart = 16.dp,
                 topEnd = 16.dp,
@@ -445,7 +475,7 @@ fun ErrorMessageCard(
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Red.copy(alpha = 0.1f)
+            containerColor = ErrorColor.copy(alpha = 0.1f)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -461,7 +491,7 @@ fun ErrorMessageCard(
                     text = "Error",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Red.copy(alpha = 0.8f)
+                    color = ErrorColor
                 )
                 
                 IconButton(
@@ -471,7 +501,7 @@ fun ErrorMessageCard(
                     Icon(
                         imageVector = Icons.Default.ArrowBack, // Using ArrowBack as close icon
                         contentDescription = "Dismiss",
-                        tint = Color.Red.copy(alpha = 0.6f),
+                        tint = ErrorColor.copy(alpha = 0.6f),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -544,21 +574,16 @@ fun MessageInputField(
         }
     }
     
-    Surface(
-        modifier = modifier,
-        color = White,
-        // Remove elevation to fix ugly box appearance
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+    Column(
+        modifier = modifier.background(Black)
     ) {
-        Column {
             // Selected image display
             selectedImage?.let { bitmap ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.1f))
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface)
                 ) {
                     Box {
                         Image(
@@ -616,9 +641,9 @@ fun MessageInputField(
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SecondaryBlue,
-                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
-                        focusedContainerColor = White,
-                        unfocusedContainerColor = White,
+                        unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f),
+                        focusedContainerColor = DarkSurface,
+                        unfocusedContainerColor = DarkSurface,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         disabledTextColor = TextSecondary,
@@ -641,14 +666,13 @@ fun MessageInputField(
                         .size(48.dp)
                         .border(
                             1.dp,
-                            if (enabled) SecondaryBlue.copy(alpha = 0.3f) else Color.Gray.copy(alpha = 0.2f),
+                            if (enabled) SecondaryBlue.copy(alpha = 0.3f) else TextSecondary.copy(alpha = 0.2f),
                             RoundedCornerShape(24.dp)
                         )
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.image_24px),
+                        painter = painterResource(id = R.drawable.image_24dp_ffffff_fill0_wght400_grad0_opsz24),
                         contentDescription = "Select image",
-                        tint = if (enabled) SecondaryBlue else Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -656,16 +680,15 @@ fun MessageInputField(
                 FloatingActionButton(
                     onClick = onSendMessage,
                     modifier = Modifier.size(48.dp),
-                    containerColor = SecondaryBlue,
-                    contentColor = White
+                    containerColor = White,
+                    contentColor = Black
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
+                        painter = painterResource(id = R.drawable.send_24dp_000000_fill0_wght400_grad0_opsz24),
                         contentDescription = "Send message",
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
         }
-    }
 }
