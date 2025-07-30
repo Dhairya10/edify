@@ -40,7 +40,7 @@ fun QuestDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
+            .background(Black)
     ) {
         // Top App Bar
         CenterAlignedTopAppBar(
@@ -61,7 +61,7 @@ fun QuestDetailScreen(
                 }
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = White
+                containerColor = DarkSurface
             ),
             windowInsets = WindowInsets(0.dp)
         )
@@ -145,20 +145,42 @@ fun QuestDetailContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
+            .background(Black)
             .verticalScroll(scrollState)
             .padding(16.dp)
             .imePadding() // Add padding for keyboard
     ) {
-        // Question display
-        Text(
-            text = quest.question,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary,
-            lineHeight = 28.sp,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
+        // Question display with character limit and scrolling
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 100.dp, max = 200.dp)
+                .padding(bottom = 24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = DarkSurface
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            val displayText = if (quest.question.length > 300) {
+                quest.question.take(300) + "..."
+            } else {
+                quest.question
+            }
+            
+            val scrollState = rememberScrollState()
+            
+            Text(
+                text = displayText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+                lineHeight = 24.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .padding(16.dp)
+            )
+        }
         
         // Answer input
         OutlinedTextField(
@@ -174,10 +196,12 @@ fun QuestDetailContent(
                 )
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedBorderColor = SecondaryBlue,
                 unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f),
-                focusedTextColor = TextPrimary,  // Ensure text is visible (dark color)
-                unfocusedTextColor = TextPrimary  // Ensure text is visible (dark color)
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary,
+                unfocusedContainerColor = DarkSurface,
+                focusedContainerColor = DarkSurface
             ),
             shape = RoundedCornerShape(12.dp),
             maxLines = 10,

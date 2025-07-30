@@ -138,6 +138,12 @@ fun EdifyApp() {
             // Bottom Navigation Screens
             composable("library") {
                 val viewModel: HomeViewModel = hiltViewModel()
+                
+                // Refresh the greeting every time user navigates to home screen
+                LaunchedEffect(Unit) {
+                    viewModel.refreshGreeting()
+                }
+                
                 HomeScreen(
                     viewModel = viewModel,
                     onNavigateToSubject = { subjectId ->
@@ -150,13 +156,24 @@ fun EdifyApp() {
             }
             
             composable("notes") {
-                NotesScreen()
+                NotesScreen(
+                    onNavigateToLibrary = {
+                        navController.navigate("library") {
+                            popUpTo("library") { inclusive = false }
+                        }
+                    }
+                )
             }
             
             composable("quest") {
                 QuestScreen(
                     onNavigateToQuestDetail = { questId ->
                         navController.navigate("quest_detail/$questId")
+                    },
+                    onNavigateToLibrary = {
+                        navController.navigate("library") {
+                            popUpTo("library") { inclusive = false }
+                        }
                     }
                 )
             }

@@ -8,6 +8,7 @@ import com.edify.learning.data.dao.ChatDao
 import com.edify.learning.data.dao.SubjectDao
 import com.edify.learning.data.model.*
 import com.google.gson.Gson
+import com.edify.learning.data.service.PromptService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -25,7 +26,8 @@ class QuestGenerationService @Inject constructor(
     private val noteDao: NoteDao,
     private val chatDao: ChatDao,
     private val subjectDao: SubjectDao,
-    private val gemmaService: GemmaService
+    private val gemmaService: GemmaService,
+    private val promptService: PromptService
 ) {
     
     private val gson = Gson()
@@ -134,9 +136,11 @@ class QuestGenerationService @Inject constructor(
                 val chapterInteractionData = gatherChapterInteractionData(listOf(chapterStats))
                 if (chapterInteractionData.isNotEmpty()) {
                     val questResponse = generateDivergentQuestForChapter(chapterInteractionData.first())
-                    saveDivergentQuest(questResponse, chapterStats, userId)
-                    questsGenerated++
-                    println("QUEST_GEN: Generated divergent quest for chapter ${chapterStats.chapterId}: '${questResponse.title}'")
+                    questResponse?.let { response ->
+                        saveDivergentQuest(response, chapterStats, userId)
+                        questsGenerated++
+                        println("QUEST_GEN: Generated divergent quest for chapter ${chapterStats.chapterId}: '${response.title}'")
+                    }
                 }
             } catch (e: Exception) {
                 println("QUEST_GEN: Failed to generate divergent quest for chapter ${chapterStats.chapterId}: ${e.message}")
@@ -173,19 +177,21 @@ class QuestGenerationService @Inject constructor(
     /**
      * Generate a divergent quest for a specific chapter
      */
-    private suspend fun generateDivergentQuestForChapter(chapterData: ChapterInteractionData): LLMQuestResponse {
-        val prompt = """
-            You are an expert educator. Your goal is to foster creativity and critical thinking. Generate a single, deep question for the chapter "${chapterData.chapterTitle}" (${chapterData.subject}) that encourages students to think beyond the text.
-            
-            Chapter Summary: ${chapterData.chapterDescription}
+    private suspend fun generateDivergentQuestForChapter(chapterData: ChapterInteractionData): LLMQuestResponse? {
+        val chapterTitle = chapterData.chapterTitle
+        val subjectName = chapterData.subject
+        val notesSummary = chapterData.notes.joinToString("; ")
+        val chatSummary = chapterData.chatQuestions.joinToString("; ")
+        val revisionSummary = chapterData.revisionAnswers.joinToString("; ")
 
-            The question should be a DIVERGENT quest that encourages deep exploration of this specific topic. It could relate to a core theme, implications, or a 'what if' scenario.
-
-            IMPORTANT: You MUST respond with ONLY valid JSON in this exact format:
-            {"title": "A Creative Title for the Quest", "questionText": "Your generated question."}
-            
-            Do not include any other text, explanations, or formatting. Only return the JSON object.
-        """.trimIndent()
+        val prompt = promptService.getFormattedPrompt(
+            "divergent_quest",
+            "chapterTitle" to chapterTitle,
+            "subjectName" to subjectName,
+            "notesSummary" to notesSummary,
+            "chatSummary" to chatSummary,
+            "revisionSummary" to revisionSummary
+        )
         
         return try {
             withTimeout(300000) { // 5 minute timeout for quest generation
@@ -286,7 +292,51 @@ class QuestGenerationService @Inject constructor(
                 val allChapterIds = chaptersForSelection.map { it.chapterId }
                 val pastQuests = generatedQuestDao.getPastQuestsForChapters(allChapterIds, allChapterIds.first(), userId)
                 
-                val questResponse = generateConvergentQuestWithLLMSelection(chapterInteractionData, pastQuests, userId)
+                val chapterOptions = chapterInteractionData.mapIndexed { index, data ->
+                    "${index + 1}. Chapter ID: ${data.chapterId} | Title: ${data.chapterTitle} | Subject: ${data.subject} | Interest Score: ${String.format("%.2f", data.interestScore)}\n   Summary: ${data.chapterDescription}"
+                }.joinToString("\n\n")
+                
+                val pastQuestContext = if (pastQuests.isNotEmpty()) {
+                    "\n\nPrevious questions asked about these topics (avoid similar themes):\n" +
+                    pastQuests.take(5).joinToString("\n") { "- ${it.title}: ${it.question}" }
+                } else {
+                    ""
+                }
+                
+                val prompt = promptService.getFormattedPrompt(
+                    "convergent_quest_llm_selection",
+                    "chapterOptions" to chapterOptions,
+                    "pastQuestContext" to pastQuestContext
+                )
+                
+                val questResponse = try {
+                    withTimeout(300000) { // 5 minute timeout for quest generation
+                        coroutineContext.ensureActive()
+                        val response = gemmaService.generateResponse(prompt)
+                        val responseText = response.getOrThrow()
+                        println("QUEST_GEN: Convergent quest with LLM selection RAW response from Gemma: '$responseText'")
+                        
+                        // Clean response by removing markdown code blocks if present
+                        val cleanedResponse = responseText
+                            .trim()
+                            .removePrefix("```json")
+                            .removePrefix("```")
+                            .removeSuffix("```")
+                            .trim()
+                        
+                        println("QUEST_GEN: Cleaned response: '$cleanedResponse'")
+                        gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    println("QUEST_GEN: Convergent quest generation with LLM selection timed out - no quest will be generated")
+                    throw e
+                } catch (e: CancellationException) {
+                    println("QUEST_GEN: Convergent quest generation with LLM selection cancelled")
+                    throw e
+                } catch (e: Exception) {
+                    println("QUEST_GEN: Convergent quest generation with LLM selection failed: ${e.message} - no quest will be generated")
+                    throw e
+                }
                 
                 // Find the selected chapters based on LLM response
                 val selectedChapterIds = questResponse.selectedChapterIds ?: emptyList()
@@ -301,82 +351,6 @@ class QuestGenerationService @Inject constructor(
             } catch (e: Exception) {
                 println("QUEST_GEN: Failed to generate convergent quest: ${e.message}")
             }
-        }
-    }
-    
-    /**
-     * Generate convergent quest with LLM selecting 2 chapters from provided options
-     */
-    private suspend fun generateConvergentQuestWithLLMSelection(
-        chapterData: List<ChapterInteractionData>,
-        pastQuests: List<GeneratedQuest>,
-        userId: String
-    ): LLMQuestResponse {
-        // Create context about past quests to avoid repetition
-        val pastQuestContext = if (pastQuests.isNotEmpty()) {
-            "\n\nPrevious questions asked about these topics (avoid similar themes):\n" +
-            pastQuests.take(5).joinToString("\n") { "- ${it.title}: ${it.question}" }
-        } else {
-            ""
-        }
-        
-        // Create chapter options for LLM to choose from
-        val chapterOptions = chapterData.mapIndexed { index, data ->
-            "${index + 1}. Chapter ID: ${data.chapterId} | Title: ${data.chapterTitle} | Subject: ${data.subject} | Interest Score: ${String.format("%.2f", data.interestScore)}\n   Summary: ${data.chapterDescription}"
-        }.joinToString("\n\n")
-        
-        val prompt = """
-            You are a curriculum designer specializing in interdisciplinary studies. Your task is to:
-            1. Choose exactly 2 chapters from the list below that would create the most meaningful cross-subject connection
-            2. Generate a single, thought-provoking CONVERGENT question that connects the core themes across these 2 chapters
-            
-            Available chapters to choose from:
-            $chapterOptions
-            $pastQuestContext
-            
-            Instructions:
-            - Select exactly 2 chapters that offer the best opportunity for interdisciplinary synthesis
-            - Create a question that connects ideas across the selected subjects
-            - Ensure the question is different from any previous questions listed above
-            
-            IMPORTANT: You MUST respond with ONLY valid JSON in this exact format:
-            {
-                "selectedChapterIds": ["chapter_id_1", "chapter_id_2"],
-                "title": "A Creative Title for the Quest",
-                "questionText": "Your generated convergent question connecting the two selected chapters."
-            }
-            
-            Use the exact Chapter IDs from the list above. Do not include any other text, explanations, or formatting. Only return the JSON object. 
-            Do not mention chapter IDs anywhere in the text. Try to come up with an innovative title that can combine the topics creatively.
-        """.trimIndent()
-        
-        return try {
-            withTimeout(300000) { // 5 minute timeout for quest generation
-                coroutineContext.ensureActive()
-                val response = gemmaService.generateResponse(prompt)
-                val responseText = response.getOrThrow()
-                println("QUEST_GEN: Convergent quest with LLM selection RAW response from Gemma: '$responseText'")
-                
-                // Clean response by removing markdown code blocks if present
-                val cleanedResponse = responseText
-                    .trim()
-                    .removePrefix("```json")
-                    .removePrefix("```")
-                    .removeSuffix("```")
-                    .trim()
-                
-                println("QUEST_GEN: Cleaned response: '$cleanedResponse'")
-                gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
-            }
-        } catch (e: TimeoutCancellationException) {
-            println("QUEST_GEN: Convergent quest generation with LLM selection timed out - no quest will be generated")
-            throw e
-        } catch (e: CancellationException) {
-            println("QUEST_GEN: Convergent quest generation with LLM selection cancelled")
-            throw e
-        } catch (e: Exception) {
-            println("QUEST_GEN: Convergent quest generation with LLM selection failed: ${e.message} - no quest will be generated")
-            throw e
         }
     }
     

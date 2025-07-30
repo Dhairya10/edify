@@ -280,7 +280,7 @@ fun ContinueReadingCard(
                         Icon(
                             painter = painterResource(id = getSubjectIcon(subject.name)),
                             contentDescription = subject.name,
-                            tint = getSubjectColor(subject.name),
+                            tint = White,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -476,108 +476,4 @@ fun getSubjectColor(subjectName: String): Color {
         "social science" -> Color(0xFF7ED321)
         else -> SecondaryBlue
     }.copy(alpha = 0.8f)
-}
-
-
-private val morningGreetings = listOf(
-    "Good morning,",
-    "Rise and shine,",
-    "Fresh start ahead,",
-    "Hello, early bird,",
-    "Morning sunshine,",
-    "Ready to seize the day?",
-    "Another beautiful morning,",
-    "Time to make things happen,",
-    "Bright and early today,",
-    "Morning motivation incoming,",
-    "Let's start strong,"
-)
-
-private val afternoonGreetings = listOf(
-    "Good afternoon,",
-    "Keep the energy up,",
-    "Afternoon productivity mode,",
-    "Hope your day's going well,",
-    "Afternoon achiever,",
-    "Steady progress continues,",
-    "Power through the afternoon,",
-    "Making moves this afternoon?",
-    "Afternoon focus time,",
-    "How's the day treating you?",
-)
-
-private val eveningGreetings = listOf(
-    "Good evening,",
-    "Time to wind down and grow,",
-    "Evening reflection time,",
-    "Hope today was fulfilling,",
-    "Perfect time for progress,",
-    "Evening inspiration awaits,",
-    "Peaceful evening ahead,",
-    "Let's make this evening count,",
-)
-
-private val nightGreetings = listOf(
-    "Welcome, night owl,",
-    "Burning the midnight oil?",
-    "Late night dedication,",
-    "Hello there, midnight warrior,",
-    "Night shift in full swing,",
-    "Stars are out, so are you,",
-    "Late night, big dreams,",
-    "When others sleep, you grow,",
-    "Moonlight motivation,",
-    "Night time is your time,",
-    "Embracing the quiet hours,",
-    "After-hours excellence,",
-    "The night is full of potential,"
-)
-
-
-// Weekend-specific greetings
-private val weekendMorningGreetings = listOf(
-    "Weekend warrior mode,",
-    "Weekend goals activated,",
-    "Making weekends count,"
-)
-
-// Special occasion greetings
-private val mondayGreetings = listOf(
-    "Monday momentum,",
-    "Fresh week energy,",
-    "New week, new wins,",
-    "Monday motivation,"
-)
-
-private val fridayGreetings = listOf(
-    "Friday finish strong,",
-    "End the week right,",
-    "Friday focus mode,",
-    "Weekend prep time,"
-)
-
-// Enhanced function with more variety
-private fun getGreeting(): String {
-    val calendar = Calendar.getInstance()
-    val hour = calendar.get(Calendar.HOUR_OF_DAY)
-    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-
-    return when (hour) {
-        in 5..11 -> {
-            val baseGreetings = morningGreetings.toMutableList()
-            
-            // Add day-specific greetings
-            when (dayOfWeek) {
-                Calendar.MONDAY -> baseGreetings.addAll(mondayGreetings)
-                Calendar.FRIDAY -> baseGreetings.addAll(fridayGreetings)
-                Calendar.SATURDAY, Calendar.SUNDAY -> baseGreetings.addAll(weekendMorningGreetings)
-            }
-            
-            baseGreetings.random()
-        }
-        in 12..16 -> afternoonGreetings.random()
-        in 17..20 -> eveningGreetings.random()
-        in 21..23, in 0..4 -> nightGreetings.random()
-        else -> "Welcome,"
-    }
 }

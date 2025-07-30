@@ -2,6 +2,7 @@ package com.edify.learning.di;
 
 import android.content.Context;
 import com.edify.learning.data.service.GemmaService;
+import com.edify.learning.data.service.PromptService;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.Preconditions;
@@ -26,21 +27,25 @@ import javax.inject.Provider;
 public final class DatabaseModule_ProvideGemmaServiceFactory implements Factory<GemmaService> {
   private final Provider<Context> contextProvider;
 
-  public DatabaseModule_ProvideGemmaServiceFactory(Provider<Context> contextProvider) {
+  private final Provider<PromptService> promptServiceProvider;
+
+  public DatabaseModule_ProvideGemmaServiceFactory(Provider<Context> contextProvider,
+      Provider<PromptService> promptServiceProvider) {
     this.contextProvider = contextProvider;
+    this.promptServiceProvider = promptServiceProvider;
   }
 
   @Override
   public GemmaService get() {
-    return provideGemmaService(contextProvider.get());
+    return provideGemmaService(contextProvider.get(), promptServiceProvider.get());
   }
 
-  public static DatabaseModule_ProvideGemmaServiceFactory create(
-      Provider<Context> contextProvider) {
-    return new DatabaseModule_ProvideGemmaServiceFactory(contextProvider);
+  public static DatabaseModule_ProvideGemmaServiceFactory create(Provider<Context> contextProvider,
+      Provider<PromptService> promptServiceProvider) {
+    return new DatabaseModule_ProvideGemmaServiceFactory(contextProvider, promptServiceProvider);
   }
 
-  public static GemmaService provideGemmaService(Context context) {
-    return Preconditions.checkNotNullFromProvides(DatabaseModule.INSTANCE.provideGemmaService(context));
+  public static GemmaService provideGemmaService(Context context, PromptService promptService) {
+    return Preconditions.checkNotNullFromProvides(DatabaseModule.INSTANCE.provideGemmaService(context, promptService));
   }
 }

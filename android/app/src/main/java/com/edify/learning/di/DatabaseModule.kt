@@ -7,6 +7,7 @@ import com.edify.learning.data.database.EdifyDatabase
 import com.edify.learning.data.service.GemmaService
 import com.edify.learning.data.service.QuestService
 import com.edify.learning.data.service.QuestGenerationService
+import com.edify.learning.data.service.PromptService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -74,10 +75,19 @@ object DatabaseModule {
     
     @Provides
     @Singleton
-    fun provideGemmaService(
+    fun providePromptService(
         @ApplicationContext context: Context
+    ): PromptService {
+        return PromptService(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGemmaService(
+        @ApplicationContext context: Context,
+        promptService: PromptService
     ): GemmaService {
-        return GemmaService(context)
+        return GemmaService(context, promptService)
     }
     
     @Provides
@@ -97,7 +107,8 @@ object DatabaseModule {
         noteDao: NoteDao,
         chatDao: ChatDao,
         subjectDao: SubjectDao,
-        gemmaService: GemmaService
+        gemmaService: GemmaService,
+        promptService: PromptService
     ): QuestGenerationService {
         return QuestGenerationService(
             chapterStatsDao,
@@ -106,7 +117,8 @@ object DatabaseModule {
             noteDao,
             chatDao,
             subjectDao,
-            gemmaService
+            gemmaService,
+            promptService
         )
     }
 }
