@@ -15,12 +15,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.edify.learning.R
 import com.edify.learning.data.model.GeneratedQuest
 import com.edify.learning.data.model.PersonalizedChapterQuest
 import com.edify.learning.data.model.QuestState
@@ -28,10 +30,12 @@ import com.edify.learning.presentation.quest.getSubjectIcon
 import com.edify.learning.presentation.quest.getSubjectColor
 import com.edify.learning.ui.theme.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestScreen(
     viewModel: QuestViewModel = hiltViewModel(),
-    onNavigateToQuestDetail: (String) -> Unit = {}
+    onNavigateToQuestDetail: (String) -> Unit = {},
+    onNavigateToLibrary: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
@@ -43,19 +47,41 @@ fun QuestScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
-            .padding(16.dp)
+            .background(Black)
     ) {
+        // Top bar with refresh functionality
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = "Quest",
+                    color = TextPrimary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            actions = {
+                IconButton(
+                    onClick = {
+                        viewModel.refreshQuestData()
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.refresh_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                        contentDescription = "Refresh Quests",
+                        tint = TextPrimary
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = Black
+            ),
+            windowInsets = WindowInsets(0.dp)
+        )
+        
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
         if (uiState.hasQuests) {
-            // Show "Your Quests" header and quest list
-            Text(
-                text = "Your Quests",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-            
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -86,7 +112,7 @@ fun QuestScreen(
             }
         } else {
             // Show empty state when no quests are available
-            EmptyQuestState()
+            EmptyQuestState(onNavigateToLibrary = onNavigateToLibrary)
         }
         
         // Show error if any
@@ -96,17 +122,18 @@ fun QuestScreen(
                     .fillMaxWidth()
                     .padding(top = 16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
+                    containerColor = DarkCard
                 )
             ) {
                 Text(
                     text = error,
                     modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = ErrorColor
                 )
             }
         }
-    }
+        } // Close inner Column with padding
+    } // Close outer Column
 }
 
 @Composable
@@ -124,9 +151,9 @@ fun PersonalizedQuestCard(
     
     // Card styling based on state
     val cardColor = when(quest.state) {
-        QuestState.LOCKED -> Color(0xFFF5F5F5) // Light gray for locked quests
-        QuestState.COMPLETED -> Color(0xFFEDF7ED) // More visible light green tint for completed quests
-        else -> Color.White
+        QuestState.LOCKED -> DarkSurface // Dark gray for locked quests
+        QuestState.COMPLETED -> Color(0xFF1B3B1B) // Dark green tint for completed quests
+        else -> DarkCard
     }
     val isClickable = quest.state != QuestState.LOCKED
     
@@ -154,7 +181,7 @@ fun PersonalizedQuestCard(
             containerColor = cardColor
         ),
         border = if (quest.state == QuestState.LOCKED) {
-            BorderStroke(1.dp, Color(0xFFDDDDDD)) // Light gray border for locked quests
+            BorderStroke(1.dp, TextSecondary.copy(alpha = 0.3f)) // Dark theme border for locked quests
         } else {
             null
         },
@@ -186,64 +213,61 @@ fun PersonalizedQuestCard(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                // Display the question only if quest is unlocked or completed
-                if (quest.state != QuestState.LOCKED) {
-                    // All quests should have questions now due to repository filtering
-                    val questionText = quest.generatedQuestion ?: ""
-                    val displayText = if (questionText.length > 100) {
-                        questionText.take(100) + "..."
-                    } else {
-                        questionText
+                // Display question text or blurred content based on quest state
+                if (quest.state == QuestState.LOCKED) {
+                    // Show blurred content blobs for locked quests
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
+                            .padding(vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // First blob - longer
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.85f)
+                                .height(12.dp)
+                                .background(
+                                    color = Color(0xFF4A5568), // Gray blob color
+                                    shape = RoundedCornerShape(6.dp)
+                                )
+                        )
+                        // Second blob - medium
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.65f)
+                                .height(12.dp)
+                                .background(
+                                    color = Color(0xFF4A5568), // Gray blob color
+                                    shape = RoundedCornerShape(6.dp)
+                                )
+                        )
+                        // Third blob - shorter
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.45f)
+                                .height(12.dp)
+                                .background(
+                                    color = Color(0xFF4A5568), // Gray blob color
+                                    shape = RoundedCornerShape(6.dp)
+                                )
+                        )
                     }
-                    
+                } else {
+                    // Show actual question text for unlocked/completed quests
                     Text(
-                        text = displayText,
+                        text = quest.generatedQuestion?.take(120)?.let { 
+                            if (quest.generatedQuestion!!.length > 120) "$it..." else it 
+                        } ?: "Explore this chapter through personalized questions.",
                         fontSize = 14.sp,
                         color = TextSecondary,
                         lineHeight = 20.sp,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                } else {
-                    // For locked quests, show a completely blurred content area (no visible text)
-                    Box(
                         modifier = Modifier
-                            .height(80.dp)
                             .fillMaxWidth()
-                    ) {
-                        // Blurred content representation - just gray blocks
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.9f)
-                                    .height(12.dp)
-                                    .background(
-                                        color = Color(0xFFEEEEEE),
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.7f)
-                                    .height(12.dp)
-                                    .background(
-                                        color = Color(0xFFEEEEEE),
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.4f)
-                                    .height(12.dp)
-                                    .background(
-                                        color = Color(0xFFEEEEEE),
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
-                            )
-                        }
-                    }
+                            .height(60.dp)
+                            .wrapContentHeight()
+                    )
                 }
             }
             
@@ -260,7 +284,7 @@ fun PersonalizedQuestCard(
                                 onUnlock(quest.chapterId)
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF9C702E) // Orange color
+                                containerColor = Color.White
                             ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(32.dp),
@@ -269,20 +293,25 @@ fun PersonalizedQuestCard(
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "Unlock",
-                                tint = Color.White,
+                                tint = Color.Black,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Unlock",
-                                color = Color.White,
+                                color = Color.Black,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         }
                     }
                     QuestState.COMPLETED -> {
-                        // No icon for completed state - green background is sufficient
+                        Icon(
+                            painter = painterResource(id = R.drawable.task_alt_24dp_6eb48d_fill0_wght400_grad0_opsz24),
+                            contentDescription = "Completed",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                     QuestState.UNLOCKED -> {
                         // No icon for unlocked state - clean design
@@ -294,7 +323,9 @@ fun PersonalizedQuestCard(
 }
 
 @Composable
-fun EmptyQuestState() {
+fun EmptyQuestState(
+    onNavigateToLibrary: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -307,14 +338,16 @@ fun EmptyQuestState() {
             modifier = Modifier
                 .size(120.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                    color = DarkSurface,
                     shape = RoundedCornerShape(60.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "🎯",
-                fontSize = 48.sp
+            Icon(
+                painter = painterResource(id = R.drawable.explore_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                contentDescription = "Explore",
+                tint = Color.Unspecified,
+                modifier = Modifier.size(48.dp)
             )
         }
         
@@ -331,12 +364,40 @@ fun EmptyQuestState() {
         Spacer(modifier = Modifier.height(12.dp))
         
         Text(
-            text = "Engage with your subjects to unlock new Quests. The more you learn, the more challenges you'll discover.",
+            text = "Engage with your subjects to unlock new Quests. The more you learn, the more challenges you'll discover",
             fontSize = 16.sp,
             color = TextSecondary,
             textAlign = TextAlign.Center,
             lineHeight = 24.sp
         )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Explore Library Button
+        Button(
+            onClick = onNavigateToLibrary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = TextPrimary,
+                contentColor = Black
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.book_5_24dp_000000_fill0_wght400_grad0_opsz24),
+                contentDescription = "Book icon",
+                modifier = Modifier.size(20.dp),
+                tint = Color.Unspecified
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Explore Library",
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp
+            )
+        }
     }
 }
 

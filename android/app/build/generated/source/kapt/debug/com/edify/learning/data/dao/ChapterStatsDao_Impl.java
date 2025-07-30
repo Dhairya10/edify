@@ -145,7 +145,7 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
 
   @Override
   public Object insertOrUpdateChapterStats(final ChapterStats chapterStats,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -159,12 +159,12 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object insertOrUpdate(final ChapterStats chapterStats,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -178,12 +178,12 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object deleteChapterStats(final ChapterStats chapterStats,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -197,12 +197,12 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object incrementVisitCount(final String chapterId, final String userId,
-      final long timestamp, final Continuation<? super Unit> arg3) {
+      final long timestamp, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -237,12 +237,12 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           __preparedStmtOfIncrementVisitCount.release(_stmt);
         }
       }
-    }, arg3);
+    }, $completion);
   }
 
   @Override
   public Object incrementNoteCount(final String chapterId, final String userId,
-      final long timestamp, final Continuation<? super Unit> arg3) {
+      final long timestamp, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -275,11 +275,11 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           __preparedStmtOfIncrementNoteCount.release(_stmt);
         }
       }
-    }, arg3);
+    }, $completion);
   }
 
   @Override
-  public Object deleteById(final long id, final Continuation<? super Unit> arg1) {
+  public Object deleteById(final long id, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -300,11 +300,11 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object deleteAll(final Continuation<? super Unit> arg0) {
+  public Object deleteAll(final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -323,11 +323,11 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           __preparedStmtOfDeleteAll.release(_stmt);
         }
       }
-    }, arg0);
+    }, $completion);
   }
 
   @Override
-  public Object getAllStats(final Continuation<? super List<ChapterStats>> arg0) {
+  public Object getAllStats(final Continuation<? super List<ChapterStats>> $completion) {
     final String _sql = "SELECT * FROM chapter_stats ORDER BY lastVisited DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -409,12 +409,12 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           _statement.release();
         }
       }
-    }, arg0);
+    }, $completion);
   }
 
   @Override
   public Object getChapterStatsForUser(final String userId,
-      final Continuation<? super List<ChapterStats>> arg1) {
+      final Continuation<? super List<ChapterStats>> $completion) {
     final String _sql = "SELECT * FROM chapter_stats WHERE userId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -502,12 +502,12 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object getChapterStats(final String chapterId, final String userId,
-      final Continuation<? super ChapterStats> arg2) {
+      final Continuation<? super ChapterStats> $completion) {
     final String _sql = "SELECT * FROM chapter_stats WHERE chapterId = ? AND userId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -601,12 +601,12 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           _statement.release();
         }
       }
-    }, arg2);
+    }, $completion);
   }
 
   @Override
   public Object getChapterStatsByChapter(final String chapterId,
-      final Continuation<? super ChapterStats> arg1) {
+      final Continuation<? super ChapterStats> $completion) {
     final String _sql = "SELECT * FROM chapter_stats WHERE chapterId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -694,7 +694,7 @@ public final class ChapterStatsDao_Impl implements ChapterStatsDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @NonNull

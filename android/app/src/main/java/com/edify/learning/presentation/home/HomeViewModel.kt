@@ -143,6 +143,14 @@ class HomeViewModel @Inject constructor(
         initializeData()
     }
     
+    /**
+     * Refresh the personalized greeting based on current time
+     * Call this when user navigates to home screen
+     */
+    fun refreshGreeting() {
+        loadPersonalizedGreeting()
+    }
+    
     private fun loadPersonalizedGreeting() {
         viewModelScope.launch {
             try {

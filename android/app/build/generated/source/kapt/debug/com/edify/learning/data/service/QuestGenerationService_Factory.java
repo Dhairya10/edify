@@ -41,11 +41,13 @@ public final class QuestGenerationService_Factory implements Factory<QuestGenera
 
   private final Provider<GemmaService> gemmaServiceProvider;
 
+  private final Provider<PromptService> promptServiceProvider;
+
   public QuestGenerationService_Factory(Provider<ChapterStatsDao> chapterStatsDaoProvider,
       Provider<GeneratedQuestDao> generatedQuestDaoProvider,
       Provider<ChapterDao> chapterDaoProvider, Provider<NoteDao> noteDaoProvider,
       Provider<ChatDao> chatDaoProvider, Provider<SubjectDao> subjectDaoProvider,
-      Provider<GemmaService> gemmaServiceProvider) {
+      Provider<GemmaService> gemmaServiceProvider, Provider<PromptService> promptServiceProvider) {
     this.chapterStatsDaoProvider = chapterStatsDaoProvider;
     this.generatedQuestDaoProvider = generatedQuestDaoProvider;
     this.chapterDaoProvider = chapterDaoProvider;
@@ -53,11 +55,12 @@ public final class QuestGenerationService_Factory implements Factory<QuestGenera
     this.chatDaoProvider = chatDaoProvider;
     this.subjectDaoProvider = subjectDaoProvider;
     this.gemmaServiceProvider = gemmaServiceProvider;
+    this.promptServiceProvider = promptServiceProvider;
   }
 
   @Override
   public QuestGenerationService get() {
-    return newInstance(chapterStatsDaoProvider.get(), generatedQuestDaoProvider.get(), chapterDaoProvider.get(), noteDaoProvider.get(), chatDaoProvider.get(), subjectDaoProvider.get(), gemmaServiceProvider.get());
+    return newInstance(chapterStatsDaoProvider.get(), generatedQuestDaoProvider.get(), chapterDaoProvider.get(), noteDaoProvider.get(), chatDaoProvider.get(), subjectDaoProvider.get(), gemmaServiceProvider.get(), promptServiceProvider.get());
   }
 
   public static QuestGenerationService_Factory create(
@@ -65,13 +68,13 @@ public final class QuestGenerationService_Factory implements Factory<QuestGenera
       Provider<GeneratedQuestDao> generatedQuestDaoProvider,
       Provider<ChapterDao> chapterDaoProvider, Provider<NoteDao> noteDaoProvider,
       Provider<ChatDao> chatDaoProvider, Provider<SubjectDao> subjectDaoProvider,
-      Provider<GemmaService> gemmaServiceProvider) {
-    return new QuestGenerationService_Factory(chapterStatsDaoProvider, generatedQuestDaoProvider, chapterDaoProvider, noteDaoProvider, chatDaoProvider, subjectDaoProvider, gemmaServiceProvider);
+      Provider<GemmaService> gemmaServiceProvider, Provider<PromptService> promptServiceProvider) {
+    return new QuestGenerationService_Factory(chapterStatsDaoProvider, generatedQuestDaoProvider, chapterDaoProvider, noteDaoProvider, chatDaoProvider, subjectDaoProvider, gemmaServiceProvider, promptServiceProvider);
   }
 
   public static QuestGenerationService newInstance(ChapterStatsDao chapterStatsDao,
       GeneratedQuestDao generatedQuestDao, ChapterDao chapterDao, NoteDao noteDao, ChatDao chatDao,
-      SubjectDao subjectDao, GemmaService gemmaService) {
-    return new QuestGenerationService(chapterStatsDao, generatedQuestDao, chapterDao, noteDao, chatDao, subjectDao, gemmaService);
+      SubjectDao subjectDao, GemmaService gemmaService, PromptService promptService) {
+    return new QuestGenerationService(chapterStatsDao, generatedQuestDao, chapterDao, noteDao, chatDao, subjectDao, gemmaService, promptService);
   }
 }

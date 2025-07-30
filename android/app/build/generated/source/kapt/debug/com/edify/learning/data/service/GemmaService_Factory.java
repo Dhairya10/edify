@@ -24,20 +24,25 @@ import javax.inject.Provider;
 public final class GemmaService_Factory implements Factory<GemmaService> {
   private final Provider<Context> contextProvider;
 
-  public GemmaService_Factory(Provider<Context> contextProvider) {
+  private final Provider<PromptService> promptServiceProvider;
+
+  public GemmaService_Factory(Provider<Context> contextProvider,
+      Provider<PromptService> promptServiceProvider) {
     this.contextProvider = contextProvider;
+    this.promptServiceProvider = promptServiceProvider;
   }
 
   @Override
   public GemmaService get() {
-    return newInstance(contextProvider.get());
+    return newInstance(contextProvider.get(), promptServiceProvider.get());
   }
 
-  public static GemmaService_Factory create(Provider<Context> contextProvider) {
-    return new GemmaService_Factory(contextProvider);
+  public static GemmaService_Factory create(Provider<Context> contextProvider,
+      Provider<PromptService> promptServiceProvider) {
+    return new GemmaService_Factory(contextProvider, promptServiceProvider);
   }
 
-  public static GemmaService newInstance(Context context) {
-    return new GemmaService(context);
+  public static GemmaService newInstance(Context context, PromptService promptService) {
+    return new GemmaService(context, promptService);
   }
 }

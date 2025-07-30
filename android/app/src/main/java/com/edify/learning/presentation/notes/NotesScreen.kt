@@ -33,7 +33,9 @@ import com.edify.learning.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotesScreen() {
+fun NotesScreen(
+    onNavigateToLibrary: () -> Unit = {}
+) {
     val viewModel: NotesViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val selectedSubjectFilter by viewModel.selectedSubjectFilter.collectAsState()
@@ -44,7 +46,7 @@ fun NotesScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Black)
     ) {
         // Top App Bar
         CenterAlignedTopAppBar(
@@ -55,8 +57,21 @@ fun NotesScreen() {
                     color = TextPrimary
                 )
             },
+            actions = {
+                IconButton(
+                    onClick = {
+                        viewModel.refreshNotes()
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.refresh_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                        contentDescription = "Refresh Notes",
+                        tint = TextPrimary
+                    )
+                }
+            },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = DarkBackground,
+                containerColor = Black,
                 titleContentColor = TextPrimary
             ),
             windowInsets = WindowInsets(0.dp)
@@ -109,13 +124,14 @@ fun NotesScreen() {
                     uiState.displayNotes.isEmpty() -> {
                         EmptySubjectNotesState(
                             selectedFilter = selectedSubjectFilter,
+                            onNavigateToLibrary = onNavigateToLibrary,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
                     else -> {
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(bottom = 16.dp)
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
                         ) {
                             items(uiState.displayNotes) { noteWithSubject ->
                                 ImprovedNoteCard(
@@ -201,7 +217,7 @@ fun ImprovedNoteCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight()
+            .height(140.dp)  // Fixed height for all cards
             .clickable { onNoteClick(noteWithSubject) },
         colors = CardDefaults.cardColors(containerColor = DarkCard),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -210,8 +226,9 @@ fun ImprovedNoteCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(16.dp)
+                .fillMaxHeight()  // Fill the fixed card height
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween  // Distribute content evenly
         ) {
             // Note title at the top
             Text(
@@ -310,6 +327,7 @@ fun ImprovedNoteCard(
 @Composable
 fun EmptySubjectNotesState(
     selectedFilter: String?,
+    onNavigateToLibrary: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -361,7 +379,7 @@ fun EmptySubjectNotesState(
         
         // Explore Library Button
         Button(
-            onClick = { /* TODO: Navigate to library */ },
+            onClick = onNavigateToLibrary,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),

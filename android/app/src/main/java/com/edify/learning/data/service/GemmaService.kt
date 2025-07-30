@@ -25,7 +25,8 @@ import javax.inject.Singleton
 
 @Singleton
 class GemmaService @Inject constructor(
-    private val context: Context
+    private val context: Context,
+    private val promptService: PromptService
 ) {
     
     private var llmInference: LlmInference? = null
@@ -305,14 +306,11 @@ class GemmaService @Inject constructor(
                 }
             }
             
-            // Use streaming approach and collect full response
-            val fullResponse = StringBuilder()
-            generateResponseStream(prompt).collect { chunk ->
-                fullResponse.append(chunk)
-            }
+            // Use direct response generation
+            val inference = llmInference ?: throw IllegalStateException("LLM inference not initialized")
+            val response = inference.generateResponse(prompt)
             
-            val response = fullResponse.toString()
-            if (response.isNotBlank()) {
+            if (response != null && response.isNotBlank()) {
                 Result.success(response)
             } else {
                 Result.failure(IllegalStateException("Generated empty response"))
@@ -329,7 +327,7 @@ class GemmaService @Inject constructor(
         android.util.Log.w(TAG, "Image inference temporarily disabled due to MediaPipe framework issues")
         
         // Fallback to enhanced text-based approach
-        val imageContextPrompt = createImageContextPrompt(prompt, image)
+        val imageContextPrompt = promptService.getFormattedPrompt("image_context", "originalPrompt" to prompt)
         
         return@withContext generateResponse(imageContextPrompt).fold(
             onSuccess = { response ->
@@ -413,65 +411,15 @@ class GemmaService @Inject constructor(
                 onFailure = { error ->
                     android.util.Log.w(TAG, "Text-based fallback also failed: ${error.message}")
                     Result.success(getMockImageResponse(prompt))
-                }
-            )
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Multimodal response generation error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
         }
     }
     */
-    
-    private fun createImageContextPrompt(originalPrompt: String, image: Bitmap): String {
-        // Analyze basic image properties
-        val imageInfo = "Image dimensions: ${image.width}x${image.height} pixels"
-        val aspectRatio = String.format("%.2f", image.width.toFloat() / image.height.toFloat())
-        val isLandscape = image.width > image.height
-        val isPortrait = image.height > image.width
-        val isSquare = Math.abs(image.width - image.height) < 50
-        
-        // Determine likely image type based on dimensions and user prompt
-        val likelyContent = when {
-            originalPrompt.contains("diagram", ignoreCase = true) -> "diagram or schematic"
-            originalPrompt.contains("chart", ignoreCase = true) -> "chart or graph"
-            originalPrompt.contains("equation", ignoreCase = true) -> "mathematical equation or formula"
-            originalPrompt.contains("text", ignoreCase = true) -> "text or document"
-            originalPrompt.contains("explain", ignoreCase = true) -> "educational content"
-            isLandscape && image.width > 800 -> "screenshot or document"
-            isPortrait && image.height > 1000 -> "mobile screenshot or document"
-            else -> "image content"
-        }
-        
-        return """
-            I can see you've shared an image with the following properties:
-            - Dimensions: ${image.width}x${image.height} pixels
-            - Aspect ratio: $aspectRatio
-            - Likely content type: $likelyContent
-            
-            Your question: "$originalPrompt"
-            
-            ${getContextualResponse(originalPrompt, likelyContent)}
-            
-            While I can't see the actual visual details, I can provide guidance based on your question and the image characteristics. Feel free to describe specific elements you see for more targeted help.
-        """.trimIndent()
-    }
-    
-    private fun getContextualResponse(prompt: String, likelyContent: String): String {
-        return when {
-            prompt.contains("explain", ignoreCase = true) -> {
-                "I'd be happy to help explain the $likelyContent. While I can see you've shared an image, I can provide better explanations if you describe the key elements you'd like me to focus on."
-            }
-            prompt.contains("solve", ignoreCase = true) || prompt.contains("calculate", ignoreCase = true) -> {
-                "I can help you solve problems! If this image contains equations, formulas, or numerical data, please type out the key information and I'll guide you through the solution step by step."
-            }
-            prompt.contains("diagram", ignoreCase = true) -> {
-                "Diagrams are great learning tools! I can help explain concepts, processes, or relationships. Describe the main components or labels you see, and I'll provide detailed explanations."
-            }
-            prompt.contains("what", ignoreCase = true) -> {
-                "I can help identify and explain concepts! Tell me what specific elements or text you see in the image, and I'll provide comprehensive information about them."
-            }
-            else -> {
-                "I'm ready to help with your $likelyContent! Describe the key details you'd like assistance with, and I'll provide thorough explanations and guidance."
-            }
-        }
-    }
     
     /**
      * Provides a mock response when the Gemma model is unavailable
@@ -584,34 +532,12 @@ class GemmaService @Inject constructor(
         question: String,
         isExplanation: Boolean = false
     ): String {
-        return if (isExplanation) {
-            """
-            You are a concise educational AI tutor. Explain clearly and briefly for mobile learning.
-            
-            Context: $context
-            
-            Explain: $question
-            
-            Requirements:
-            - Keep response under 150 words
-            - Use simple, clear language
-            - Focus on key concepts only
-            - Use bullet points if helpful
-            """.trimIndent()
-        } else {
-            """
-            You are a concise educational AI tutor. Answer briefly and clearly for mobile learning.
-            
-            Context: $context
-            Question: $question
-            
-            Requirements:
-            - Keep response under 100 words
-            - Be direct and specific
-            - Focus on the exact question asked
-            - Use simple language suitable for students
-            """.trimIndent()
-        }
+        val promptKey = if (isExplanation) "educational_explanation" else "educational_question"
+        return promptService.getFormattedPrompt(
+            promptKey,
+            "context" to context,
+            "question" to question
+        )
     }
     
     /**
@@ -654,28 +580,15 @@ class GemmaService @Inject constructor(
     }
     
     private fun createTranslationPrompt(text: String, targetLanguage: String): String {
-        return """
-        Translate the following English text to $targetLanguage. Provide only the $targetLanguage translation without any additional text or explanations.
-        
-        English text: $text
-        
-        $targetLanguage translation:
-        """.trimIndent()
+        return promptService.getFormattedPrompt(
+            "translation",
+            "targetLanguage" to targetLanguage,
+            "text" to text
+        )
     }
 
     fun createSummaryPrompt(content: String): String {
-        return """
-        Create a brief summary for mobile learning. Be concise and focused.
-        
-        Content: $content
-        
-        Requirements:
-        - Maximum 80 words
-        - Use bullet points for key concepts
-        - Include only essential information
-        - Use simple, clear language
-        - Focus on what students need to remember
-        """.trimIndent()
+        return promptService.getFormattedPrompt("summary", "content" to content)
     }
     
     fun dispose() {

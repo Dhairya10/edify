@@ -150,7 +150,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
+                    .height(80.dp)
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)
             ) {
