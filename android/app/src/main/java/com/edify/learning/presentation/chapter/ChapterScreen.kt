@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import android.widget.Toast
 import com.edify.learning.data.model.ChapterContent
 import com.edify.learning.data.util.ContentParser
-import com.edify.learning.presentation.components.MarkdownRenderer
+import com.edify.learning.presentation.components.HtmlRenderer
 import com.edify.learning.presentation.components.ImageViewer
 import com.edify.learning.presentation.components.TranslationDialog
 import com.edify.learning.data.service.GemmaService
@@ -267,23 +267,7 @@ fun ChapterScreen(
                                     .padding(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                item {
-                                    // Chapter Header
-                                    Text(
-                                        text = chapter.title,
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        color = TextPrimary,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(bottom = 8.dp)
-                                    )
-
-                                    Text(
-                                        text = chapter.description,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = TextSecondary,
-                                        modifier = Modifier.padding(bottom = 16.dp)
-                                    )
-                                }
+                                // Removed duplicate chapter header and description since HTML content already contains proper headings
 
                                 item {
                                     // Display chapter content using MarkdownRenderer
@@ -292,14 +276,9 @@ fun ChapterScreen(
                                     }
 
                                     if (parsedContent != null) {
-                                        MarkdownRenderer(
+                                        HtmlRenderer(
                                             content = parsedContent,
-                                            baseImagePath = "${context.filesDir}/chapters/${chapter.id}/",
                                             modifier = Modifier.fillMaxWidth(),
-                                            onImageClick = { imagePath ->
-                                                selectedImagePath = imagePath
-                                                showImageViewer = true
-                                            },
                                             onParagraphSelected = { selectedText ->
                                                 if (isTranslationSelectionMode) {
                                                     if (selectedText.length <= 500) {

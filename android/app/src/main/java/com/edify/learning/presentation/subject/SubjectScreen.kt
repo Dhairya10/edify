@@ -328,11 +328,12 @@ fun ChapterCard(
                                 val summary = summaryObject?.optString("summary")
                                 
                                 if (!summary.isNullOrBlank()) {
-                                    // Extract first 100 characters with ellipsis
-                                    if (summary.length > 100) {
-                                        summary.substring(0, 100) + "..."
+                                    // Remove HTML tags and extract first 100 characters
+                                    val cleanSummary = summary.replace(Regex("<[^>]*>"), "").trim()
+                                    if (cleanSummary.length > 100) {
+                                        cleanSummary.substring(0, 100) + "..."
                                     } else {
-                                        summary
+                                        cleanSummary
                                     }
                                 } else {
                                     chapter.description

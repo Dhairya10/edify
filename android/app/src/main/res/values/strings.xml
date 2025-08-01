@@ -21,7 +21,6 @@
     <string name="mathematics">Mathematics</string>
     <string name="science">Science</string>
     <string name="english">English</string>
-    <string name="social_science">Social Science</string>
     <string name="chapter">Chapter</string>
     <string name="estimated_reading_time">Estimated reading time: %d minutes</string>
     <string name="progress_percentage">%d%% Complete</string>

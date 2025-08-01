@@ -33,7 +33,7 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val isEnabled by remember(uiState.currentStep, uiState.name, uiState.selectedLanguage, uiState.selectedClass, uiState.isLoading) { 
+    val isEnabled by remember(uiState.currentStep, uiState.name, uiState.selectedLanguage, uiState.isLoading) { 
         derivedStateOf {
             viewModel.canProceedFromCurrentStep() && !uiState.isLoading
         }
@@ -83,10 +83,6 @@ fun OnboardingScreen(
                 1 -> LanguageStep(
                     selectedLanguage = uiState.selectedLanguage,
                     onLanguageSelect = viewModel::updateLanguage
-                )
-                2 -> ClassStep(
-                    selectedClass = uiState.selectedClass,
-                    onClassSelect = viewModel::updateClass
                 )
             }
 
@@ -359,81 +355,6 @@ private fun LanguageCard(
     }
 }
 
-@Composable
-private fun ClassStep(
-    selectedClass: Int,
-    onClassSelect: (Int) -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        // Title
-        Text(
-            text = "Which class are you in?",
-            color = Color.White,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Subtitle
-        Text(
-            text = "This helps us personalize your subjects",
-            color = Color.Gray,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center
-        )
-        
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        // Class grid
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(OnboardingConstants.CLASS_RANGE.toList()) { classLevel ->
-                ClassCard(
-                    classLevel = classLevel,
-                    isSelected = selectedClass == classLevel,
-                    onSelect = { onClassSelect(classLevel) }
-                )
-            }
-        }
-    }
-}
 
-@Composable
-private fun ClassCard(
-    classLevel: Int,
-    isSelected: Boolean,
-    onSelect: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .clickable { onSelect() },
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) Color.White else Color.Gray.copy(alpha = 0.2f)
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = classLevel.toString(),
-                color = if (isSelected) Color.Black else Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
+
+

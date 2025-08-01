@@ -78,7 +78,6 @@ string revision
 string science
 string search_subjects
 string send_message
-string social_science
 string type_message
 string welcome_back
 string your_subjects

@@ -51,7 +51,6 @@ public final class GemmaService {
     
     /**
      * Provides a mock response when the Gemma model is unavailable
-     * This creates a more engaging user experience than just showing error messages
      */
     private final java.lang.String getMockResponse(java.lang.String prompt) {
         return null;

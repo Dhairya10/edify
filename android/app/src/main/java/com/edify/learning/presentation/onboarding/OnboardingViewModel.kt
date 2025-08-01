@@ -28,9 +28,7 @@ class OnboardingViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(selectedLanguage = language)
     }
     
-    fun updateClass(classLevel: Int) {
-        _uiState.value = _uiState.value.copy(selectedClass = classLevel)
-    }
+
     
     fun nextStep() {
         val currentStep = _uiState.value.currentStep
@@ -50,7 +48,6 @@ class OnboardingViewModel @Inject constructor(
         return when (_uiState.value.currentStep) {
             0 -> isNameValid(_uiState.value.name)
             1 -> _uiState.value.selectedLanguage.isNotEmpty()
-            2 -> _uiState.value.selectedClass in OnboardingConstants.CLASS_RANGE
             else -> false
         }
     }
@@ -80,7 +77,7 @@ class OnboardingViewModel @Inject constructor(
                     userId = userId,
                     name = _uiState.value.name.trim(),
                     languagePreference = _uiState.value.selectedLanguage,
-                    classLevel = _uiState.value.selectedClass,
+
                     hasCompletedOnboarding = true
                 )
                 

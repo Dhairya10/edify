@@ -29,9 +29,7 @@ class UserProfileRepository @Inject constructor(
         return getCurrentUser()?.languagePreference ?: "English"
     }
     
-    suspend fun getUserClass(): Int {
-        return getCurrentUser()?.classLevel ?: 1
-    }
+
     
     fun getCurrentUserFlow(): Flow<UserProfile?> = flow {
         emit(getCurrentUser())

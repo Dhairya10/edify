@@ -93,6 +93,7 @@ MERGED from [io.github.aakira:napier-android-debug:1.4.1] /Users/marrow/.gradle/
 MERGED from [androidx.annotation:annotation-experimental:1.4.0] /Users/marrow/.gradle/caches/8.12/transforms/f73bdec6d64c59fc0c3a4ed87e713172/transformed/annotation-experimental-1.4.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/marrow/.gradle/caches/8.12/transforms/06084bac61c3c25ef7b726fd1b7482f8/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [com.google.mediapipe:tasks-genai:0.10.24] /Users/marrow/.gradle/caches/8.12/transforms/fc1b68e4b52e192bc070c589556965ea/transformed/tasks-genai-0.10.24/AndroidManifest.xml:2:1-26:12
+MERGED from [com.google.mediapipe:tasks-vision:0.20230731] /Users/marrow/.gradle/caches/8.12/transforms/41557d4195bc064c294a5cd65bc5f93a/transformed/tasks-vision-0.20230731/AndroidManifest.xml:2:1-9:12
 MERGED from [androidx.cardview:cardview:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/40c9a093c889a8e2e95c2f3da8f2f256/transformed/cardview-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/marrow/.gradle/caches/8.12/transforms/b194bfb0f4adf39f97163e4d5fe7f505/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/04c4be4d1248b305b42e0388a2182612/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
@@ -100,9 +101,14 @@ MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/marrow/.gradle/c
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/marrow/.gradle/caches/8.12/transforms/2188c11bd39dd9854ed227c1d5addb20/transformed/profileinstaller-1.3.1/AndroidManifest.xml:17:1-55:12
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/marrow/.gradle/caches/8.12/transforms/9f92ace3f512164e005ba339aa2fdd76/transformed/startup-runtime-1.1.1/AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/e5dd861cfa69606c687ffa9fa5e06b4c/transformed/tracing-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [com.google.mediapipe:tasks-core:0.20230731] /Users/marrow/.gradle/caches/8.12/transforms/aa6a003f92cd7d0e03ea1dd10d6deaee/transformed/tasks-core-0.20230731/AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:15:1-38:12
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:15:1-41:12
+MERGED from [com.google.android.datatransport:transport-api:3.0.0] /Users/marrow/.gradle/caches/8.12/transforms/70b3c1a189192f49b184a0ce4d66b956/transformed/transport-api-3.0.0/AndroidManifest.xml:15:1-22:12
 MERGED from [androidx.documentfile:documentfile:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/326b5d7946d34597062caac478b09ca1/transformed/documentfile-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/c7e95a0c3cc6fed376fb2dd1b5981a6a/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.print:print:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/a42f77d61c79315f535efa52d03ac9c8/transformed/print-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.firebase:firebase-encoders-json:18.0.0] /Users/marrow/.gradle/caches/8.12/transforms/68d8339ff041638b53ce366d4cc141c7/transformed/firebase-encoders-json-18.0.0/AndroidManifest.xml:15:1-23:12
 MERGED from [androidx.exifinterface:exifinterface:1.3.6] /Users/marrow/.gradle/caches/8.12/transforms/a6793b12bc619dcfa9efc25d1483f633/transformed/exifinterface-1.3.6/AndroidManifest.xml:17:1-24:12
 MERGED from [com.google.dagger:dagger-lint-aar:2.48] /Users/marrow/.gradle/caches/8.12/transforms/0b8b19c3c7d5e294bdc6938614e585e2/transformed/dagger-lint-aar-2.48/AndroidManifest.xml:16:1-19:12
 	package
@@ -117,6 +123,8 @@ MERGED from [com.google.dagger:dagger-lint-aar:2.48] /Users/marrow/.gradle/cache
 		ADDED from /Users/marrow/Documents/Alpha/edify/android/app/src/main/AndroidManifest.xml:2:11-69
 uses-permission#android.permission.INTERNET
 ADDED from /Users/marrow/Documents/Alpha/edify/android/app/src/main/AndroidManifest.xml:5:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:26:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:26:5-67
 	android:name
 		ADDED from /Users/marrow/Documents/Alpha/edify/android/app/src/main/AndroidManifest.xml:5:22-64
 uses-permission#android.permission.READ_EXTERNAL_STORAGE
@@ -164,6 +172,10 @@ MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/marrow/.gr
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/marrow/.gradle/caches/8.12/transforms/2188c11bd39dd9854ed227c1d5addb20/transformed/profileinstaller-1.3.1/AndroidManifest.xml:23:5-53:19
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/marrow/.gradle/caches/8.12/transforms/9f92ace3f512164e005ba339aa2fdd76/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/marrow/.gradle/caches/8.12/transforms/9f92ace3f512164e005ba339aa2fdd76/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:28:5-36:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:28:5-36:19
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:25:5-39:19
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:25:5-39:19
 	android:extractNativeLibs
 		INJECTED from /Users/marrow/Documents/Alpha/edify/android/app/src/main/AndroidManifest.xml
 	android:appComponentFactory
@@ -406,6 +418,8 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/marr
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/marrow/.gradle/caches/8.12/transforms/06084bac61c3c25ef7b726fd1b7482f8/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [com.google.mediapipe:tasks-genai:0.10.24] /Users/marrow/.gradle/caches/8.12/transforms/fc1b68e4b52e192bc070c589556965ea/transformed/tasks-genai-0.10.24/AndroidManifest.xml:5:5-7:41
 MERGED from [com.google.mediapipe:tasks-genai:0.10.24] /Users/marrow/.gradle/caches/8.12/transforms/fc1b68e4b52e192bc070c589556965ea/transformed/tasks-genai-0.10.24/AndroidManifest.xml:5:5-7:41
+MERGED from [com.google.mediapipe:tasks-vision:0.20230731] /Users/marrow/.gradle/caches/8.12/transforms/41557d4195bc064c294a5cd65bc5f93a/transformed/tasks-vision-0.20230731/AndroidManifest.xml:5:5-7:41
+MERGED from [com.google.mediapipe:tasks-vision:0.20230731] /Users/marrow/.gradle/caches/8.12/transforms/41557d4195bc064c294a5cd65bc5f93a/transformed/tasks-vision-0.20230731/AndroidManifest.xml:5:5-7:41
 MERGED from [androidx.cardview:cardview:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/40c9a093c889a8e2e95c2f3da8f2f256/transformed/cardview-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.cardview:cardview:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/40c9a093c889a8e2e95c2f3da8f2f256/transformed/cardview-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/marrow/.gradle/caches/8.12/transforms/b194bfb0f4adf39f97163e4d5fe7f505/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
@@ -420,12 +434,22 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/marrow/.gradle/cache
 MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/marrow/.gradle/caches/8.12/transforms/9f92ace3f512164e005ba339aa2fdd76/transformed/startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41
 MERGED from [androidx.tracing:tracing:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/e5dd861cfa69606c687ffa9fa5e06b4c/transformed/tracing-1.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.tracing:tracing:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/e5dd861cfa69606c687ffa9fa5e06b4c/transformed/tracing-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [com.google.mediapipe:tasks-core:0.20230731] /Users/marrow/.gradle/caches/8.12/transforms/aa6a003f92cd7d0e03ea1dd10d6deaee/transformed/tasks-core-0.20230731/AndroidManifest.xml:5:5-7:41
+MERGED from [com.google.mediapipe:tasks-core:0.20230731] /Users/marrow/.gradle/caches/8.12/transforms/aa6a003f92cd7d0e03ea1dd10d6deaee/transformed/tasks-core-0.20230731/AndroidManifest.xml:5:5-7:41
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-api:3.0.0] /Users/marrow/.gradle/caches/8.12/transforms/70b3c1a189192f49b184a0ce4d66b956/transformed/transport-api-3.0.0/AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-api:3.0.0] /Users/marrow/.gradle/caches/8.12/transforms/70b3c1a189192f49b184a0ce4d66b956/transformed/transport-api-3.0.0/AndroidManifest.xml:18:5-20:41
 MERGED from [androidx.documentfile:documentfile:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/326b5d7946d34597062caac478b09ca1/transformed/documentfile-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.documentfile:documentfile:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/326b5d7946d34597062caac478b09ca1/transformed/documentfile-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/c7e95a0c3cc6fed376fb2dd1b5981a6a/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/c7e95a0c3cc6fed376fb2dd1b5981a6a/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.print:print:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/a42f77d61c79315f535efa52d03ac9c8/transformed/print-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.print:print:1.0.0] /Users/marrow/.gradle/caches/8.12/transforms/a42f77d61c79315f535efa52d03ac9c8/transformed/print-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-encoders-json:18.0.0] /Users/marrow/.gradle/caches/8.12/transforms/68d8339ff041638b53ce366d4cc141c7/transformed/firebase-encoders-json-18.0.0/AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.firebase:firebase-encoders-json:18.0.0] /Users/marrow/.gradle/caches/8.12/transforms/68d8339ff041638b53ce366d4cc141c7/transformed/firebase-encoders-json-18.0.0/AndroidManifest.xml:19:5-21:41
 MERGED from [androidx.exifinterface:exifinterface:1.3.6] /Users/marrow/.gradle/caches/8.12/transforms/a6793b12bc619dcfa9efc25d1483f633/transformed/exifinterface-1.3.6/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.exifinterface:exifinterface:1.3.6] /Users/marrow/.gradle/caches/8.12/transforms/a6793b12bc619dcfa9efc25d1483f633/transformed/exifinterface-1.3.6/AndroidManifest.xml:20:5-22:41
 MERGED from [com.google.dagger:dagger-lint-aar:2.48] /Users/marrow/.gradle/caches/8.12/transforms/0b8b19c3c7d5e294bdc6938614e585e2/transformed/dagger-lint-aar-2.48/AndroidManifest.xml:18:3-42
@@ -564,3 +588,37 @@ action#androidx.profileinstaller.action.BENCHMARK_OPERATION
 ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/marrow/.gradle/caches/8.12/transforms/2188c11bd39dd9854ed227c1d5addb20/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
 	android:name
 		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/marrow/.gradle/caches/8.12/transforms/2188c11bd39dd9854ed227c1d5addb20/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:25:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:22:5-79
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:25:22-76
+service#com.google.android.datatransport.runtime.backends.TransportBackendDiscovery
+ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:29:9-35:19
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:36:9-38:40
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:36:9-38:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:31:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:30:13-103
+meta-data#backend:com.google.android.datatransport.cct.CctBackendFactory
+ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:32:13-34:39
+	android:value
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:34:17-36
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/ebe84f2c46eddf2dc8846845c07f0c9f/transformed/transport-backend-cct-3.1.0/AndroidManifest.xml:33:17-94
+service#com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
+ADDED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:26:9-30:19
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:28:13-37
+	android:permission
+		ADDED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:29:13-69
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:27:13-117
+receiver#com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
+ADDED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:32:9-34:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:34:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:3.1.0] /Users/marrow/.gradle/caches/8.12/transforms/739b010bcd6862954f420ad82761aee2/transformed/transport-runtime-3.1.0/AndroidManifest.xml:33:13-132
