@@ -38,7 +38,7 @@ class GemmaService @Inject constructor(
     companion object {
         // Custom Gemma model file used in this project
         private const val MODEL_FILENAME = "gemma-3n-E2B-it-int4.task" // Our specific model (smaller, faster)
-        private const val MAX_TOKENS = 1024
+        private const val MAX_TOKENS = 32000 // Gemma 3N supports up to 32k tokens
         private const val TOP_K = 64
         private const val TEMPERATURE = 0.7f
         private const val RANDOM_SEED = 42

@@ -195,12 +195,12 @@ private fun NameStep(
         Spacer(modifier = Modifier.height(8.dp))
         
         // Subtitle
-        Text(
-            text = "Let's get your profile set up",
-            color = Color.Gray,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center
-        )
+//        Text(
+//            text = "Let's get your profile set up",
+//            color = Color.Gray,
+//            fontSize = 16.sp,
+//            textAlign = TextAlign.Center
+//        )
         
         Spacer(modifier = Modifier.height(48.dp))
         
@@ -288,7 +288,7 @@ private fun LanguageStep(
         
         // Subtitle
         Text(
-            text = "Choose your preferred language for the app",
+            text = "Select your mother tongue",
             color = Color.Gray,
             fontSize = 16.sp,
             textAlign = TextAlign.Center

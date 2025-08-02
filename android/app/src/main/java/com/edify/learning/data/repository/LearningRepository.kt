@@ -23,6 +23,7 @@ class LearningRepository @Inject constructor(
     private val noteDao: NoteDao,
     private val chatDao: ChatDao,
     private val userResponseDao: UserResponseDao,
+    private val revisionResponseDao: RevisionResponseDao,
     private val chapterStatsDao: ChapterStatsDao,
     private val generatedQuestDao: GeneratedQuestDao,
     private val gemmaService: GemmaService,
@@ -484,6 +485,180 @@ class LearningRepository @Inject constructor(
             val newStats = ChapterStats(
                 chapterId = chapterId,
                 userId = userId,
+                visitCount = 1,
+                lastVisited = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(newStats)
+        }
+    }
+    
+    // Revision operations
+    fun getRevisionQuestionsForChapter(chapterId: String): List<RevisionQuestion> {
+        return ContentLoader.loadRevisionQuestionsForChapter(context, chapterId)
+    }
+    
+    suspend fun getRevisionDataForSubject(subjectId: String): List<ChapterRevisionData> {
+        return ContentLoader.loadRevisionDataForSubject(context, subjectId)
+    }
+    
+    fun getRevisionResponsesForChapter(chapterId: String): Flow<List<RevisionResponse>> {
+        return revisionResponseDao.getRevisionResponsesForChapter(chapterId)
+    }
+    
+    suspend fun getRevisionResponse(chapterId: String, questionIndex: Int): RevisionResponse? {
+        return revisionResponseDao.getRevisionResponse(chapterId, questionIndex)
+    }
+    
+    suspend fun saveRevisionResponse(response: RevisionResponse): Long {
+        return revisionResponseDao.insertRevisionResponse(response)
+    }
+    
+    suspend fun updateRevisionResponse(response: RevisionResponse) {
+        revisionResponseDao.updateRevisionResponse(response)
+    }
+    
+    suspend fun submitRevisionResponseForReview(
+        chapterId: String,
+        questionIndex: Int,
+        userAnswer: String,
+        imageUri: String? = null
+    ): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Get the question and reference answer
+                val revisionQuestions = getRevisionQuestionsForChapter(chapterId)
+                if (questionIndex >= revisionQuestions.size) {
+                    return@withContext Result.failure(Exception("Question not found"))
+                }
+                
+                val question = revisionQuestions[questionIndex]
+                val referenceAnswer = question.answer
+                
+                // Create prompt for Gemma to review the answer
+                val reviewPrompt = createAnswerReviewPrompt(
+                    question = question.question,
+                    referenceAnswer = referenceAnswer,
+                    userAnswer = userAnswer
+                )
+                
+                // Get review from Gemma
+                val reviewResult = if (imageUri != null) {
+                    // Load image and get review with image
+                    val bitmap = ContentLoader.loadImageFromUri(context, imageUri)
+                    if (bitmap != null) {
+                        gemmaService.generateResponseWithImage(reviewPrompt, bitmap)
+                    } else {
+                        gemmaService.generateResponse(reviewPrompt)
+                    }
+                } else {
+                    gemmaService.generateResponse(reviewPrompt)
+                }
+                
+                reviewResult.fold(
+                    onSuccess = { feedback ->
+                        // Parse feedback category from response
+                        val category = parseFeedbackCategory(feedback)
+                        
+                        // Save or update revision response
+                        val existingResponse = getRevisionResponse(chapterId, questionIndex)
+                        val revisionResponse = if (existingResponse != null) {
+                            existingResponse.copy(
+                                userAnswer = userAnswer,
+                                imageUri = imageUri,
+                                gemmaFeedback = feedback,
+                                feedbackCategory = category.name,
+                                isSubmitted = true,
+                                updatedAt = System.currentTimeMillis()
+                            )
+                        } else {
+                            RevisionResponse(
+                                chapterId = chapterId,
+                                questionIndex = questionIndex,
+                                question = question.question,
+                                userAnswer = userAnswer,
+                                imageUri = imageUri,
+                                gemmaFeedback = feedback,
+                                feedbackCategory = category.name,
+                                isSubmitted = true
+                            )
+                        }
+                        
+                        if (existingResponse != null) {
+                            updateRevisionResponse(revisionResponse)
+                        } else {
+                            saveRevisionResponse(revisionResponse)
+                        }
+                        
+                        // Update chapter stats for quest generation
+                        updateChapterStatsForRevisionResponse(revisionResponse)
+                        
+                        Result.success(feedback)
+                    },
+                    onFailure = { error ->
+                        Result.failure(error)
+                    }
+                )
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+    
+    private fun createAnswerReviewPrompt(
+        question: String,
+        referenceAnswer: String,
+        userAnswer: String
+    ): String {
+        return """
+            Please review this student's answer and provide feedback.
+            
+            Question: $question
+            
+            Reference Answer: $referenceAnswer
+            
+            Student's Answer: $userAnswer
+            
+            Please provide constructive feedback and categorize the answer as one of:
+            - "Excellent" - if the answer is comprehensive, accurate, and well-explained
+            - "Good Job" - if the answer is mostly correct with minor gaps or could be improved
+            - "Needs Improvement" - if the answer has significant gaps, inaccuracies, or needs major revision
+            
+            Start your response with the category in brackets, for example: [Excellent] or [Good Job] or [Needs Improvement]
+            
+            Then provide specific, encouraging feedback that helps the student understand what they did well and how they can improve.
+        """.trimIndent()
+    }
+    
+    private fun parseFeedbackCategory(feedback: String): FeedbackCategory {
+        return when {
+            feedback.contains("[Excellent]", ignoreCase = true) -> FeedbackCategory.EXCELLENT
+            feedback.contains("[Good Job]", ignoreCase = true) -> FeedbackCategory.GOOD_JOB
+            feedback.contains("[Needs Improvement]", ignoreCase = true) -> FeedbackCategory.NEEDS_IMPROVEMENT
+            else -> FeedbackCategory.NEEDS_IMPROVEMENT // Default fallback
+        }
+    }
+    
+    private suspend fun updateChapterStatsForRevisionResponse(response: RevisionResponse, userId: String = "default_user") {
+        val existingStats = chapterStatsDao.getChapterStats(response.chapterId, userId)
+        val revisionEntry = RevisionEntry(
+            questionId = "${response.chapterId}_${response.questionIndex}",
+            userAnswer = response.userAnswer ?: "",
+            timestamp = response.updatedAt
+        )
+        
+        if (existingStats != null) {
+            val updatedRevisionHistory = existingStats.revisionHistory + revisionEntry
+            val updatedStats = existingStats.copy(
+                revisionHistory = updatedRevisionHistory,
+                lastVisited = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis()
+            )
+            chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
+        } else {
+            val newStats = ChapterStats(
+                chapterId = response.chapterId,
+                userId = userId,
+                revisionHistory = listOf(revisionEntry),
                 visitCount = 1,
                 lastVisited = System.currentTimeMillis()
             )

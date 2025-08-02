@@ -3,11 +3,13 @@ package com.edify.learning.di
 import android.content.Context
 import androidx.room.Room
 import com.edify.learning.data.dao.*
+import com.edify.learning.data.database.TranslatedChapterDao
 import com.edify.learning.data.database.EdifyDatabase
 import com.edify.learning.data.service.GemmaService
 import com.edify.learning.data.service.QuestService
 import com.edify.learning.data.service.QuestGenerationService
 import com.edify.learning.data.service.PromptService
+import com.edify.learning.data.service.TranslationCacheService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -59,6 +61,11 @@ object DatabaseModule {
     }
     
     @Provides
+    fun provideRevisionResponseDao(database: EdifyDatabase): RevisionResponseDao {
+        return database.revisionResponseDao()
+    }
+    
+    @Provides
     fun provideChapterStatsDao(database: EdifyDatabase): ChapterStatsDao {
         return database.chapterStatsDao()
     }
@@ -71,6 +78,11 @@ object DatabaseModule {
     @Provides
     fun provideGeneratedQuestDao(database: EdifyDatabase): GeneratedQuestDao {
         return database.generatedQuestDao()
+    }
+    
+    @Provides
+    fun provideTranslatedChapterDao(database: EdifyDatabase): TranslatedChapterDao {
+        return database.translatedChapterDao()
     }
     
     @Provides
@@ -120,5 +132,13 @@ object DatabaseModule {
             gemmaService,
             promptService
         )
+    }
+    
+    @Provides
+    @Singleton
+    fun provideTranslationCacheService(
+        translatedChapterDao: TranslatedChapterDao
+    ): TranslationCacheService {
+        return TranslationCacheService(translatedChapterDao)
     }
 }

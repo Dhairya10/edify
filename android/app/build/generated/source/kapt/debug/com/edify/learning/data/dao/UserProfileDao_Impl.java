@@ -103,7 +103,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
 
   @Override
   public Object insertOrUpdateUserProfile(final UserProfile userProfile,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -117,12 +117,12 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object insertOrUpdate(final UserProfile userProfile,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -136,11 +136,11 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteById(final String id, final Continuation<? super Unit> $completion) {
+  public Object deleteById(final String id, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -165,12 +165,12 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object updatePersonalizationStatus(final String userId, final boolean hasUnlocked,
-      final long timestamp, final Continuation<? super Unit> $completion) {
+      final long timestamp, final Continuation<? super Unit> arg3) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -200,12 +200,12 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __preparedStmtOfUpdatePersonalizationStatus.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg3);
   }
 
   @Override
   public Object updateOnboardingInfo(final String userId, final String name, final String language,
-      final boolean completed, final long timestamp, final Continuation<? super Unit> $completion) {
+      final boolean completed, final long timestamp, final Continuation<? super Unit> arg5) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -247,11 +247,11 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __preparedStmtOfUpdateOnboardingInfo.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg5);
   }
 
   @Override
-  public Object getAllProfiles(final Continuation<? super List<UserProfile>> $completion) {
+  public Object getAllProfiles(final Continuation<? super List<UserProfile>> arg0) {
     final String _sql = "SELECT * FROM user_profile ORDER BY createdAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -310,12 +310,11 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
-  public Object getUserProfile(final String userId,
-      final Continuation<? super UserProfile> $completion) {
+  public Object getUserProfile(final String userId, final Continuation<? super UserProfile> arg1) {
     final String _sql = "SELECT * FROM user_profile WHERE userId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -380,7 +379,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @NonNull

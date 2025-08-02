@@ -11,10 +11,12 @@ import com.edify.learning.data.dao.ChapterStatsDao;
 import com.edify.learning.data.dao.ChatDao;
 import com.edify.learning.data.dao.GeneratedQuestDao;
 import com.edify.learning.data.dao.NoteDao;
+import com.edify.learning.data.dao.RevisionResponseDao;
 import com.edify.learning.data.dao.SubjectDao;
 import com.edify.learning.data.dao.UserProfileDao;
 import com.edify.learning.data.dao.UserResponseDao;
 import com.edify.learning.data.database.EdifyDatabase;
+import com.edify.learning.data.database.TranslatedChapterDao;
 import com.edify.learning.data.repository.LearningRepository;
 import com.edify.learning.data.repository.QuestRepository;
 import com.edify.learning.data.repository.UserProfileRepository;
@@ -22,6 +24,7 @@ import com.edify.learning.data.service.ChatResponseService;
 import com.edify.learning.data.service.GemmaService;
 import com.edify.learning.data.service.PromptService;
 import com.edify.learning.data.service.QuestGenerationService;
+import com.edify.learning.data.service.TranslationCacheService;
 import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.di.DatabaseModule_ProvideChapterDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideChapterStatsDaoFactory;
@@ -32,7 +35,10 @@ import com.edify.learning.di.DatabaseModule_ProvideGeneratedQuestDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideNoteDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvidePromptServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideQuestGenerationServiceFactory;
+import com.edify.learning.di.DatabaseModule_ProvideRevisionResponseDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideSubjectDaoFactory;
+import com.edify.learning.di.DatabaseModule_ProvideTranslatedChapterDaoFactory;
+import com.edify.learning.di.DatabaseModule_ProvideTranslationCacheServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideUserProfileDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideUserResponseDaoFactory;
 import com.edify.learning.domain.service.QuestScoringService;
@@ -563,7 +569,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
           return (T) new SubjectViewModel(singletonCImpl.learningRepositoryProvider.get());
 
           case 11: // com.edify.learning.presentation.components.TranslationViewModel 
-          return (T) new TranslationViewModel(singletonCImpl.provideGemmaServiceProvider.get());
+          return (T) new TranslationViewModel(singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideTranslationCacheServiceProvider.get());
 
           default: throw new AssertionError(id);
         }
@@ -662,6 +668,8 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private Provider<QuestScoringService> questScoringServiceProvider;
 
+    private Provider<TranslationCacheService> provideTranslationCacheServiceProvider;
+
     private SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
       this.applicationContextModule = applicationContextModuleParam;
       initialize(applicationContextModuleParam);
@@ -688,6 +696,10 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       return DatabaseModule_ProvideUserResponseDaoFactory.provideUserResponseDao(provideEdifyDatabaseProvider.get());
     }
 
+    private RevisionResponseDao revisionResponseDao() {
+      return DatabaseModule_ProvideRevisionResponseDaoFactory.provideRevisionResponseDao(provideEdifyDatabaseProvider.get());
+    }
+
     private ChapterStatsDao chapterStatsDao() {
       return DatabaseModule_ProvideChapterStatsDaoFactory.provideChapterStatsDao(provideEdifyDatabaseProvider.get());
     }
@@ -698,6 +710,10 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private UserProfileDao userProfileDao() {
       return DatabaseModule_ProvideUserProfileDaoFactory.provideUserProfileDao(provideEdifyDatabaseProvider.get());
+    }
+
+    private TranslatedChapterDao translatedChapterDao() {
+      return DatabaseModule_ProvideTranslatedChapterDaoFactory.provideTranslatedChapterDao(provideEdifyDatabaseProvider.get());
     }
 
     @SuppressWarnings("unchecked")
@@ -711,6 +727,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       this.userProfileRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<UserProfileRepository>(singletonCImpl, 6));
       this.chatResponseServiceProvider = DoubleCheck.provider(new SwitchingProvider<ChatResponseService>(singletonCImpl, 7));
       this.questScoringServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestScoringService>(singletonCImpl, 8));
+      this.provideTranslationCacheServiceProvider = DoubleCheck.provider(new SwitchingProvider<TranslationCacheService>(singletonCImpl, 9));
     }
 
     @Override
@@ -747,7 +764,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       public T get() {
         switch (id) {
           case 0: // com.edify.learning.data.repository.LearningRepository 
-          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
+          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.revisionResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
           case 1: // com.edify.learning.data.database.EdifyDatabase 
           return (T) DatabaseModule_ProvideEdifyDatabaseFactory.provideEdifyDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
@@ -772,6 +789,9 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
           case 8: // com.edify.learning.domain.service.QuestScoringService 
           return (T) new QuestScoringService(singletonCImpl.chapterStatsDao());
+
+          case 9: // com.edify.learning.data.service.TranslationCacheService 
+          return (T) DatabaseModule_ProvideTranslationCacheServiceFactory.provideTranslationCacheService(singletonCImpl.translatedChapterDao());
 
           default: throw new AssertionError(id);
         }

@@ -16,7 +16,7 @@ public final class GemmaService {
     private volatile boolean isGenerating = false;
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.String MODEL_FILENAME = "gemma-3n-E2B-it-int4.task";
-    private static final int MAX_TOKENS = 1024;
+    private static final int MAX_TOKENS = 32000;
     private static final int TOP_K = 64;
     private static final float TEMPERATURE = 0.7F;
     private static final int RANDOM_SEED = 42;

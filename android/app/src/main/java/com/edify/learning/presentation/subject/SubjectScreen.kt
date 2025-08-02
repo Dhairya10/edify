@@ -35,6 +35,10 @@ import coil.compose.AsyncImage
 import com.edify.learning.data.model.Chapter
 import com.edify.learning.data.model.Exercise
 import com.edify.learning.data.model.UserResponse
+import com.edify.learning.data.model.RevisionResponse
+import com.edify.learning.data.model.RevisionQuestion
+import com.edify.learning.data.model.ChapterRevisionData
+import com.edify.learning.data.model.FeedbackCategory
 import com.edify.learning.ui.theme.*
 import java.io.File
 import java.io.FileOutputStream
@@ -83,7 +87,12 @@ fun SubjectScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Mode Toggle removed - showing only chapters
+            // Mode Toggle
+            ModeToggle(
+                selectedMode = selectedMode,
+                onModeChanged = viewModel::onModeChanged,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
             
             // Loading State
             if (uiState.isLoading) {
@@ -111,12 +120,24 @@ fun SubjectScreen(
                 }
             }
             
-            // Always show Learning mode content in the UI
-            // Revision mode removed from UI but code remains intact
-            LearningModeContent(
-                chapters = uiState.chapters,
-                onChapterClick = onNavigateToChapter
-            )
+            // Content based on selected mode
+            when (selectedMode) {
+                SubjectMode.LEARNING -> {
+                    LearningModeContent(
+                        chapters = uiState.chapters,
+                        onChapterClick = onNavigateToChapter
+                    )
+                }
+                SubjectMode.REVISION -> {
+                    RevisionModeContent(
+                        revisionData = uiState.revisionData,
+                        revisionResponses = uiState.revisionResponses,
+                        isSubmittingAnswer = uiState.isSubmittingAnswer,
+                        onResponseChanged = viewModel::updateRevisionResponse,
+                        onSubmitAnswer = viewModel::submitRevisionResponseForReview
+                    )
+                }
+            }
         }
     }
 }
@@ -127,8 +148,7 @@ fun ModeToggle(
     onModeChanged: (SubjectMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Only showing Learning mode tab, Revision mode hidden from UI
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
@@ -138,10 +158,16 @@ fun ModeToggle(
             .padding(4.dp),
     ) {
         ModeToggleButton(
-            text = "Learning",
-            isSelected = true,  // Always selected as it's the only option
+            text = "Learn",
+            isSelected = selectedMode == SubjectMode.LEARNING,
             onClick = { onModeChanged(SubjectMode.LEARNING) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.weight(1f)
+        )
+        ModeToggleButton(
+            text = "Revise",
+            isSelected = selectedMode == SubjectMode.REVISION,
+            onClick = { onModeChanged(SubjectMode.REVISION) },
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -199,24 +225,26 @@ fun LearningModeContent(
 
 @Composable
 fun RevisionModeContent(
-    exercises: List<ChapterExercises>,
-    userResponses: Map<String, UserResponse>,
-    onResponseChanged: (String, Int, UserResponse) -> Unit
+    revisionData: List<ChapterRevisionData>,
+    revisionResponses: Map<String, RevisionResponse>,
+    isSubmittingAnswer: Boolean,
+    onResponseChanged: (String, Int, String, String?) -> Unit,
+    onSubmitAnswer: (String, Int, String, String?) -> Unit
 ) {
-    var selectedExercise by remember { mutableStateOf<Triple<ChapterExercises, Int, Exercise>?>(null) }
+    var selectedQuestion by remember { mutableStateOf<Triple<ChapterRevisionData, Int, RevisionQuestion>?>(null) }
     var expandedChapters by remember { mutableStateOf(setOf<String>()) }
     
     Column {
         // Header
         Text(
-            text = "Exercises",
+            text = "Revision Questions",
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
         )
         
-        if (exercises.isEmpty()) {
+        if (revisionData.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -225,12 +253,12 @@ fun RevisionModeContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "📚 No Exercises Available",
+                        text = "📚 No Revision Questions Available",
                         style = MaterialTheme.typography.titleMedium,
                         color = TextSecondary
                     )
                     Text(
-                        text = "Exercises will appear here when available",
+                        text = "Revision questions will appear here when available",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary
                     )
@@ -240,11 +268,11 @@ fun RevisionModeContent(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                exercises.forEach { chapterExercises ->
+                revisionData.forEach { chapterData ->
                     item {
-                        CollapsibleChapterCard(
-                            chapterExercises = chapterExercises,
-                            isExpanded = expandedChapters.contains(chapterExercises.chapterId),
+                        RevisionChapterCard(
+                            chapterData = chapterData,
+                            isExpanded = expandedChapters.contains(chapterData.chapterId),
                             onToggleExpanded = { chapterId ->
                                 expandedChapters = if (expandedChapters.contains(chapterId)) {
                                     expandedChapters - chapterId
@@ -252,9 +280,9 @@ fun RevisionModeContent(
                                     expandedChapters + chapterId
                                 }
                             },
-                            userResponses = userResponses,
-                            onExerciseClick = { exercise, exerciseIndex ->
-                                selectedExercise = Triple(chapterExercises, exerciseIndex, exercise)
+                            revisionResponses = revisionResponses,
+                            onQuestionClick = { question, questionIndex ->
+                                selectedQuestion = Triple(chapterData, questionIndex, question)
                             }
                         )
                     }
@@ -263,19 +291,23 @@ fun RevisionModeContent(
         }
     }
     
-    // Exercise Modal
-    selectedExercise?.let { (chapterExercises, exerciseIndex, exercise) ->
-        val responseKey = "${chapterExercises.chapterId}_$exerciseIndex"
-        val userResponse = userResponses[responseKey]
+    // Revision Question Modal
+    selectedQuestion?.let { (chapterData, questionIndex, question) ->
+        val responseKey = "${chapterData.chapterId}_${questionIndex}"
+        val revisionResponse = revisionResponses[responseKey]
         
-        ExerciseModal(
-            exercise = exercise,
-            exerciseIndex = exerciseIndex,
-            chapterTitle = chapterExercises.chapterTitle,
-            userResponse = userResponse,
-            onDismiss = { selectedExercise = null },
-            onResponseChanged = { response ->
-                onResponseChanged(chapterExercises.chapterId, exerciseIndex, response)
+        RevisionQuestionModal(
+            question = question,
+            questionIndex = questionIndex,
+            chapterTitle = chapterData.chapterTitle,
+            revisionResponse = revisionResponse,
+            isSubmittingAnswer = isSubmittingAnswer,
+            onDismiss = { selectedQuestion = null },
+            onResponseChanged = { userAnswer, imageUri ->
+                onResponseChanged(chapterData.chapterId, questionIndex, userAnswer, imageUri)
+            },
+            onSubmitAnswer = { userAnswer, imageUri ->
+                onSubmitAnswer(chapterData.chapterId, questionIndex, userAnswer, imageUri)
             }
         )
     }
@@ -940,6 +972,494 @@ fun RevisionCard(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = White.copy(alpha = 0.9f)
+            )
+        }
+    }
+}
+
+@Composable
+fun RevisionChapterCard(
+    chapterData: ChapterRevisionData,
+    isExpanded: Boolean,
+    onToggleExpanded: (String) -> Unit,
+    revisionResponses: Map<String, RevisionResponse>,
+    onQuestionClick: (RevisionQuestion, Int) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceColor),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Chapter Header - Clickable to expand/collapse
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleExpanded(chapterData.chapterId) }
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = chapterData.chapterTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${chapterData.questions.size} questions",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
+                
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = TextPrimary
+                )
+            }
+            
+            // Question List - Only shown when expanded
+            if (isExpanded) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    chapterData.questions.forEachIndexed { questionIndex, question ->
+                        val responseKey = "${chapterData.chapterId}_$questionIndex"
+                        val revisionResponse = revisionResponses[responseKey]
+                        val isCompleted = revisionResponse?.isSubmitted == true
+                        
+                        RevisionQuestionCard(
+                            question = question,
+                            questionIndex = questionIndex,
+                            isCompleted = isCompleted,
+                            revisionResponse = revisionResponse,
+                            onClick = { onQuestionClick(question, questionIndex) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RevisionQuestionCard(
+    question: RevisionQuestion,
+    questionIndex: Int,
+    isCompleted: Boolean,
+    revisionResponse: RevisionResponse?,
+    onClick: () -> Unit
+) {
+    val feedbackCategory = revisionResponse?.feedbackCategory?.let { 
+        FeedbackCategory.valueOf(it) 
+    }
+    
+    val cardColor = when {
+        !isCompleted -> DarkCard
+        feedbackCategory == FeedbackCategory.EXCELLENT -> SuccessColor.copy(alpha = 0.2f)
+        feedbackCategory == FeedbackCategory.GOOD_JOB -> SecondaryBlue.copy(alpha = 0.2f)
+        feedbackCategory == FeedbackCategory.NEEDS_IMPROVEMENT -> ErrorColor.copy(alpha = 0.2f)
+        else -> DarkCard
+    }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Question ${questionIndex + 1}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = SecondaryBlue,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    
+                    if (isCompleted && feedbackCategory != null) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "• ${feedbackCategory.displayName}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = when (feedbackCategory) {
+                                FeedbackCategory.EXCELLENT -> SuccessColor
+                                FeedbackCategory.GOOD_JOB -> SecondaryBlue
+                                FeedbackCategory.NEEDS_IMPROVEMENT -> ErrorColor
+                            },
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                
+                Text(
+                    text = question.question.take(100) + if (question.question.length > 100) "..." else "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextPrimary,
+                    maxLines = 2
+                )
+            }
+            
+            if (isCompleted) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Completed",
+                    tint = when (feedbackCategory) {
+                        FeedbackCategory.EXCELLENT -> SuccessColor
+                        FeedbackCategory.GOOD_JOB -> SecondaryBlue
+                        FeedbackCategory.NEEDS_IMPROVEMENT -> ErrorColor
+                        else -> SuccessColor
+                    },
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RevisionQuestionModal(
+    question: RevisionQuestion,
+    questionIndex: Int,
+    chapterTitle: String,
+    revisionResponse: RevisionResponse?,
+    isSubmittingAnswer: Boolean,
+    onDismiss: () -> Unit,
+    onResponseChanged: (String, String?) -> Unit,
+    onSubmitAnswer: (String, String?) -> Unit
+) {
+    val context = LocalContext.current
+    var userAnswer by remember(revisionResponse) { 
+        mutableStateOf(revisionResponse?.userAnswer ?: "")
+    }
+    var imageUri by remember(revisionResponse) {
+        mutableStateOf(revisionResponse?.imageUri?.let { Uri.parse(it) })
+    }
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Save image to internal storage
+            try {
+                val inputStream = context.contentResolver.openInputStream(it)
+                val fileName = "revision_${System.currentTimeMillis()}.jpg"
+                val file = File(context.filesDir, fileName)
+                val outputStream = FileOutputStream(file)
+                
+                inputStream?.use { input ->
+                    outputStream.use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                val savedUri = Uri.fromFile(file)
+                imageUri = savedUri
+                onResponseChanged(userAnswer, savedUri.toString())
+                
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    Dialog(
+        onDismissRequest = { /* Do nothing - only close with X button */ },
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .heightIn(max = 700.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxHeight()
+            ) {
+                // Header with close button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Question ${questionIndex + 1}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = chapterTitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary
+                        )
+                    }
+                    
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = TextSecondary
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Main content - scrollable
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            // Question text
+                            Text(
+                                text = question.question,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = TextPrimary,
+                                lineHeight = 24.sp
+                            )
+                        }
+
+                        item {
+                            // Text response input with character counter
+                            Column {
+                                OutlinedTextField(
+                                    value = userAnswer,
+                                    onValueChange = { newText ->
+                                        if (newText.length <= 5000) {
+                                            userAnswer = newText
+                                            onResponseChanged(newText, imageUri?.toString())
+                                        }
+                                    },
+                                    label = { Text("Your answer") },
+                                    placeholder = { Text("Type your answer here...") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 200.dp),
+                                    minLines = 6,
+                                    maxLines = 12,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = TextSecondary,
+                                        unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f),
+                                        focusedTextColor = TextPrimary,
+                                        unfocusedTextColor = TextPrimary,
+                                        cursorColor = TextPrimary,
+                                        focusedContainerColor = DarkCard,
+                                        unfocusedContainerColor = DarkCard,
+                                        focusedLabelColor = TextPrimary,
+                                        unfocusedLabelColor = TextSecondary
+                                    )
+                                )
+                                // Character counter
+                                Text(
+                                    text = "${userAnswer.length}/5000",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (userAnswer.length > 4500) ErrorColor else TextSecondary,
+                                    modifier = Modifier.align(Alignment.End)
+                                )
+                            }
+                        }
+
+                        item {
+                            // Image upload section
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedButton(
+                                    onClick = { imagePickerLauncher.launch("image/*") },
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = PrimaryBlue
+                                    )
+                                ) {
+                                    Icon(
+                                        Icons.Default.Add,
+                                        contentDescription = "Upload image",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Upload Image")
+                                }
+                            }
+                        }
+
+                        // Show uploaded image
+                        imageUri?.let { uri ->
+                            item {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 200.dp),
+                                    colors = CardDefaults.cardColors(containerColor = DarkCard),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    AsyncImage(
+                                        model = uri,
+                                        contentDescription = "Uploaded response image",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                        }
+                        
+                        // Show feedback if submitted
+                        if (revisionResponse?.isSubmitted == true && revisionResponse.gemmaFeedback != null) {
+                            item {
+                                FeedbackCard(
+                                    feedback = revisionResponse.gemmaFeedback,
+                                    category = revisionResponse.feedbackCategory?.let { 
+                                        FeedbackCategory.valueOf(it) 
+                                    } ?: FeedbackCategory.NEEDS_IMPROVEMENT
+                                )
+                            }
+                        }
+                        
+                        // Submit button
+                        item {
+                            val canSubmit = userAnswer.isNotBlank() && !isSubmittingAnswer
+                            val isAlreadySubmitted = revisionResponse?.isSubmitted == true
+                            
+                            Button(
+                                onClick = { 
+                                    if (canSubmit) {
+                                        onSubmitAnswer(userAnswer, imageUri?.toString())
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = canSubmit && !isAlreadySubmitted,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isAlreadySubmitted) SuccessColor else PrimaryBlue,
+                                    disabledContainerColor = BackgroundGray
+                                )
+                            ) {
+                                if (isSubmittingAnswer) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        color = White
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Getting Feedback...")
+                                } else if (isAlreadySubmitted) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = "Submitted",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Submitted")
+                                } else {
+                                    Text("Submit for Review")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FeedbackCard(
+    feedback: String,
+    category: FeedbackCategory
+) {
+    val categoryColor = when (category) {
+        FeedbackCategory.EXCELLENT -> SuccessColor
+        FeedbackCategory.GOOD_JOB -> SecondaryBlue
+        FeedbackCategory.NEEDS_IMPROVEMENT -> ErrorColor
+    }
+    
+    val categoryIcon = when (category) {
+        FeedbackCategory.EXCELLENT -> "🌟"
+        FeedbackCategory.GOOD_JOB -> "👍"
+        FeedbackCategory.NEEDS_IMPROVEMENT -> "💪"
+    }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = categoryColor.copy(alpha = 0.1f)
+        ),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Text(
+                    text = categoryIcon,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = category.displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = categoryColor,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            // Clean up feedback text by removing category markers
+            val cleanFeedback = feedback
+                .replace(Regex("\\[.*?\\]"), "")
+                .trim()
+            
+            Text(
+                text = cleanFeedback,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextPrimary,
+                lineHeight = 20.sp
             )
         }
     }

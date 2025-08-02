@@ -33,12 +33,13 @@ import com.edify.learning.data.model.ChapterContent
 import com.edify.learning.data.util.ContentParser
 import com.edify.learning.presentation.components.HtmlRenderer
 import com.edify.learning.presentation.components.ImageViewer
-import com.edify.learning.presentation.components.TranslationDialog
 import com.edify.learning.data.service.GemmaService
+import com.edify.learning.data.service.TranslationCacheService
 import com.edify.learning.ui.theme.*
 import java.io.File
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
+import org.jsoup.Jsoup
 
 @Composable
 fun AddNoteDialog(
@@ -126,24 +127,24 @@ fun ChapterScreen(
     onNavigateBack: () -> Unit,
     onNavigateToNotes: (String) -> Unit,
     onNavigateToChat: (String, String?) -> Unit,
-    gemmaService: GemmaService
+    gemmaService: GemmaService,
+    translationCacheService: TranslationCacheService
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val userLanguagePreference by viewModel.userLanguagePreference.collectAsState()
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     
     var showAddNoteDialog by remember { mutableStateOf(false) }
     var showImageViewer by remember { mutableStateOf(false) }
     var selectedImagePath by remember { mutableStateOf("") }
     
     // Translation states
-    var showTranslationDialog by remember { mutableStateOf(false) }
-    var originalParagraph by remember { mutableStateOf("") }
-    var translatedParagraph by remember { mutableStateOf("") }
+    var isTranslated by remember { mutableStateOf(false) }
     var isTranslating by remember { mutableStateOf(false) }
-    var isTranslationSelectionMode by remember { mutableStateOf(false) }
-
+    var translatedContent by remember { mutableStateOf("") }
+    var originalContent by remember { mutableStateOf("") }
+    
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -165,18 +166,136 @@ fun ChapterScreen(
                     }
                 },
                 actions = {
-                    // Translate button
-                    IconButton(
-                        onClick = {
-                            isTranslationSelectionMode = !isTranslationSelectionMode
+                    // Translate button - only show if user's language is not English
+                    if (userLanguagePreference.lowercase() != "english") {
+                        IconButton(
+                            onClick = {
+                                if (!isTranslating) {
+                                    uiState.chapter?.let { chapter ->
+                                        val parsedContent = ContentParser.parseChapterContent(chapter.content)
+                                        parsedContent?.htmlContent?.let { htmlContent ->
+                                            if (!isTranslated) {
+                                                // Store original content and start translation
+                                                originalContent = htmlContent
+                                                isTranslating = true
+                                                
+                                                coroutineScope.launch {
+                                                    try {
+                                                        // First, check if we have a cached translation
+                                                        val cachedTranslation = translationCacheService.getCachedTranslation(
+                                                            chapterId = chapter.id,
+                                                            language = userLanguagePreference,
+                                                            originalContent = htmlContent
+                                                        )
+                                                        
+                                                        if (cachedTranslation != null) {
+                                                            // Use cached translation
+                                                            translatedContent = cachedTranslation
+                                                            isTranslated = true
+                                                            isTranslating = false
+                                                            
+                                                            Toast.makeText(
+                                                                context,
+                                                                "Loaded cached translation",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        } else {
+                                                            // No cache available, perform fresh translation
+                                                            val maxChunkSize = 25000 // Conservative limit for 32k tokens (~30k chars)
+                                                            
+                                                            if (htmlContent.length <= maxChunkSize) {
+                                                                // Content fits in single request - translate directly
+                                                                gemmaService.translateText(htmlContent, userLanguagePreference).fold(
+                                                                    onSuccess = { translation ->
+                                                                        translatedContent = translation
+                                                                        isTranslated = true
+                                                                        isTranslating = false
+                                                                        
+                                                                        // Cache the translation for future use
+                                                                        coroutineScope.launch {
+                                                                            translationCacheService.cacheTranslation(
+                                                                                chapterId = chapter.id,
+                                                                                language = userLanguagePreference,
+                                                                                originalContent = htmlContent,
+                                                                                translatedContent = translation
+                                                                            )
+                                                                        }
+                                                                    },
+                                                                    onFailure = { error ->
+                                                                        isTranslating = false
+                                                                        Toast.makeText(
+                                                                            context,
+                                                                            "Translation failed: ${error.message}",
+                                                                            Toast.LENGTH_SHORT
+                                                                        ).show()
+                                                                    }
+                                                                )
+                                                            } else {
+                                                                // Content is very long, translate in chunks but display all at once
+                                                                val chunks = splitHtmlIntoChunks(htmlContent, maxChunkSize)
+                                                                val translatedChunks = mutableListOf<String>()
+                                                                
+                                                                for (chunk in chunks) {
+                                                                    gemmaService.translateText(chunk, userLanguagePreference).fold(
+                                                                        onSuccess = { translation ->
+                                                                            translatedChunks.add(translation)
+                                                                        },
+                                                                        onFailure = { error ->
+                                                                            // If any chunk fails, show error and stop
+                                                                            isTranslating = false
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "Translation failed: ${error.message}",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                            return@launch
+                                                                        }
+                                                                    )
+                                                                }
+                                                                
+                                                                // Display complete translated content at once
+                                                                val fullTranslation = translatedChunks.joinToString("")
+                                                                translatedContent = fullTranslation
+                                                                isTranslated = true
+                                                                isTranslating = false
+                                                                
+                                                                // Cache the complete translation
+                                                                coroutineScope.launch {
+                                                                    translationCacheService.cacheTranslation(
+                                                                        chapterId = chapter.id,
+                                                                        language = userLanguagePreference,
+                                                                        originalContent = htmlContent,
+                                                                        translatedContent = fullTranslation
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        isTranslating = false
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Translation error: ${e.message}",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                            } else {
+                                                // Switch back to original content
+                                                isTranslated = false
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = !isTranslating
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.translate_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                                contentDescription = if (isTranslated) "Show Original" else "Translate",
+                                tint = if (isTranslated) SecondaryBlue else TextPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.translate_24dp_ffffff_fill0_wght400_grad0_opsz24),
-                            contentDescription = "Translate",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
                     }
                     
                     // Gemma chat button
@@ -202,32 +321,30 @@ fun ChapterScreen(
             )
         },
         floatingActionButton = {
-            if (!isTranslationSelectionMode) {
-                FloatingActionButton(
-                    onClick = { showAddNoteDialog = true },
-                    containerColor = SecondaryBlue,
-                    contentColor = Color.Black,
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = CircleShape,
-                            ambientColor = Color.Black.copy(alpha = 0.4f),
-                            spotColor = Color.Black.copy(alpha = 0.4f)
-                        )
-                        .border(
-                            width = 4.dp,
-                            color = Color.Black.copy(alpha = 0.6f),
-                            shape = CircleShape
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Note",
-                        modifier = Modifier.size(32.dp)
+            FloatingActionButton(
+                onClick = { showAddNoteDialog = true },
+                containerColor = SecondaryBlue,
+                contentColor = Color.Black,
+                shape = CircleShape,
+                modifier = Modifier
+                    .size(64.dp)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = CircleShape,
+                        ambientColor = Color.Black.copy(alpha = 0.4f),
+                        spotColor = Color.Black.copy(alpha = 0.4f)
                     )
-                }
+                    .border(
+                        width = 4.dp,
+                        color = Color.Black.copy(alpha = 0.6f),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Note",
+                    modifier = Modifier.size(32.dp)
+                )
             }
         },
         containerColor = DarkBackground
@@ -259,6 +376,67 @@ fun ChapterScreen(
                                 color = SecondaryBlue,
                                 trackColor = DarkCard
                             )
+                            
+                            // Translation status bar
+                            if (isTranslating) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = SecondaryBlue,
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = "Translating to $userLanguagePreference...",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary
+                                        )
+                                    }
+                                }
+                            } else if (isTranslated) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    colors = CardDefaults.cardColors(containerColor = SecondaryBlue.copy(alpha = 0.1f)),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.translate_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                                            contentDescription = "Translated",
+                                            tint = SecondaryBlue,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = "Content translated to $userLanguagePreference",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = SecondaryBlue,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
 
                             // Content
                             LazyColumn(
@@ -270,66 +448,34 @@ fun ChapterScreen(
                                 // Removed duplicate chapter header and description since HTML content already contains proper headings
 
                                 item {
-                                    // Display chapter content using MarkdownRenderer
-                                    val parsedContent = remember(chapter.content) {
-                                        ContentParser.parseChapterContent(chapter.content)
+                                    // Display chapter content using HtmlRenderer
+                                    val parsedContent = remember(chapter.content, isTranslated, translatedContent) {
+                                        if (isTranslated && translatedContent.isNotEmpty()) {
+                                            // Create a new ChapterContent with translated HTML
+                                            ContentParser.parseChapterContent(chapter.content)?.copy(
+                                                htmlContent = translatedContent
+                                            )
+                                        } else {
+                                            ContentParser.parseChapterContent(chapter.content)
+                                        }
                                     }
 
                                     if (parsedContent != null) {
                                         HtmlRenderer(
                                             content = parsedContent,
                                             modifier = Modifier.fillMaxWidth(),
-                                            onParagraphSelected = { selectedText ->
-                                                if (isTranslationSelectionMode) {
-                                                    if (selectedText.length <= 500) {
-                                                        originalParagraph = selectedText
-                                                        isTranslating = true
-                                                        showTranslationDialog = true
-                                                        isTranslationSelectionMode = false
-                                                        
-                                                        coroutineScope.launch {
-                                                            try {
-                                                                gemmaService.translateText(selectedText, userLanguagePreference).fold(
-                                                                    onSuccess = { translation ->
-                                                                        translatedParagraph = translation
-                                                                        isTranslating = false
-                                                                    },
-                                                                    onFailure = { error ->
-                                                                        isTranslating = false
-                                                                        translatedParagraph = "Translation failed: ${error.message}"
-                                                                        Toast.makeText(
-                                                                            context,
-                                                                            "Translation failed. Please try again.",
-                                                                            Toast.LENGTH_SHORT
-                                                                        ).show()
-                                                                    }
-                                                                )
-                                                            } catch (e: Exception) {
-                                                                isTranslating = false
-                                                                translatedParagraph = "Translation error occurred"
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    "Translation error. Please try again.",
-                                                                    Toast.LENGTH_SHORT
-                                                                ).show()
-                                                            }
-                                                        }
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Please select text with 500 characters or less for translation.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
+                                            onParagraphSelected = { /* No longer needed */ },
+                                            onTextSelected = { selectedText ->
+                                                onNavigateToChat(chapter.id, selectedText)
                                             },
-                                            isSelectionMode = isTranslationSelectionMode
+                                            isSelectionMode = false
                                         )
                                     } else {
                                         Text(
-                                            text = chapter.content,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.fillMaxWidth()
+                                            text = "Unable to load chapter content",
+                                            color = TextSecondary,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            modifier = Modifier.padding(16.dp)
                                         )
                                     }
                                 }
@@ -355,144 +501,106 @@ fun ChapterScreen(
                 }
             }
 
-            // Error State
-            uiState.error?.let { error ->
-                LaunchedEffect(error) {
-                    // Show snackbar or handle error
-                    viewModel.clearError()
-                }
-            }
-
-            // Translation Selection Mode Overlay
-            if (isTranslationSelectionMode) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
-                )
-                
-                // FAB positioned above instruction panel
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.BottomEnd
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        // FAB above instruction panel with better spacing
-                        Box(
-                            modifier = Modifier
-                                .padding(bottom = 24.dp)
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.7f),
-                                    shape = CircleShape
-                                )
-                                .padding(4.dp)
-                        ) {
-                            FloatingActionButton(
-                                onClick = { showAddNoteDialog = true },
-                                containerColor = SecondaryBlue,
-                                contentColor = Color.Black,
-                                shape = CircleShape,
-                                modifier = Modifier
-                                    .size(84.dp)
-                                    .shadow(
-                                        elevation = 12.dp,
-                                        shape = CircleShape,
-                                        ambientColor = Color.Black.copy(alpha = 0.5f),
-                                        spotColor = Color.Black.copy(alpha = 0.5f)
-                                    )
-                                    .border(
-                                        width = 2.dp,
-                                        color = Color.Black.copy(alpha = 0.8f),
-                                        shape = CircleShape
-                                    )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Add Note",
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
-                        
-                        // Bottom instruction panel
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Tap any paragraph to translate",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                
-                                Spacer(modifier = Modifier.height(12.dp))
-                                
-                                Button(
-                                    onClick = { isTranslationSelectionMode = false },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.Transparent,
-                                        contentColor = SecondaryBlue
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = "Cancel",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
+            // Add Note Dialog
+            if (showAddNoteDialog) {
+                AddNoteDialog(
+                    onDismiss = { showAddNoteDialog = false },
+                    onAddNote = { title: String, content: String ->
+                        viewModel.onAddNote(title, content)
+                        showAddNoteDialog = false
                     }
-                }
+                )
             }
 
-        // Add Note Dialog
-        if (showAddNoteDialog) {
-            AddNoteDialog(
-                onDismiss = { showAddNoteDialog = false },
-                onAddNote = { title: String, content: String ->
-                    viewModel.onAddNote(title, content)
-                    showAddNoteDialog = false
-                }
-            )
-        }
-
-        if (showImageViewer) {
-            ImageViewer(
-                imagePath = selectedImagePath,
-                onDismiss = { showImageViewer = false }
-            )
-        }
-        
-        // Translation Dialog
-        if (showTranslationDialog) {
-            TranslationDialog(
-                originalText = originalParagraph,
-                translatedText = translatedParagraph,
-                isLoading = isTranslating,
-                onDismiss = {
-                    showTranslationDialog = false
-                    originalParagraph = ""
-                    translatedParagraph = ""
-                    isTranslating = false
-                }
-            )
-        }
+            if (showImageViewer) {
+                ImageViewer(
+                    imagePath = selectedImagePath,
+                    onDismiss = { showImageViewer = false }
+                )
+            }
         }
     }
+}
+
+/**
+ * Helper function to split HTML content into chunks while preserving structure
+ */
+private fun splitHtmlIntoChunks(htmlContent: String, maxChunkSize: Int): List<String> {
+    val chunks = mutableListOf<String>()
+    
+    try {
+        // Parse HTML to preserve structure
+        val doc = org.jsoup.Jsoup.parse(htmlContent)
+        val elements = doc.body().children()
+        
+        var currentChunk = StringBuilder()
+        
+        for (element in elements) {
+            val elementHtml = element.outerHtml()
+            
+            // If adding this element would exceed chunk size, start a new chunk
+            if (currentChunk.length + elementHtml.length > maxChunkSize && currentChunk.isNotEmpty()) {
+                chunks.add(currentChunk.toString())
+                currentChunk = StringBuilder()
+            }
+            
+            // If single element is too large, split it further
+            if (elementHtml.length > maxChunkSize) {
+                // Add current chunk if not empty
+                if (currentChunk.isNotEmpty()) {
+                    chunks.add(currentChunk.toString())
+                    currentChunk = StringBuilder()
+                }
+                
+                // Split large element by sentences or paragraphs
+                val text = element.text()
+                val sentences = text.split(". ", "? ", "! ")
+                var sentenceChunk = StringBuilder()
+                val tagName = element.tagName()
+                
+                for (sentence in sentences) {
+                    val sentenceWithTag = "<$tagName>$sentence.</$tagName>"
+                    
+                    if (sentenceChunk.length + sentenceWithTag.length > maxChunkSize && sentenceChunk.isNotEmpty()) {
+                        chunks.add(sentenceChunk.toString())
+                        sentenceChunk = StringBuilder()
+                    }
+                    
+                    sentenceChunk.append(sentenceWithTag as String)
+                }
+                
+                if (sentenceChunk.isNotEmpty()) {
+                    chunks.add(sentenceChunk.toString())
+                }
+            } else {
+                currentChunk.append(elementHtml as String)
+            }
+        }
+        
+        // Add remaining content
+        if (currentChunk.isNotEmpty()) {
+            chunks.add(currentChunk.toString())
+        }
+        
+    } catch (e: Exception) {
+        // Fallback: simple text-based chunking
+        val text = htmlContent.replace(Regex("<[^>]*>"), " ").trim()
+        var startIndex = 0
+        
+        while (startIndex < text.length) {
+            val endIndex = minOf(startIndex + maxChunkSize, text.length)
+            val chunk = text.substring(startIndex, endIndex)
+            chunks.add(chunk)
+            startIndex = endIndex
+        }
+    }
+    
+    // Ensure we always return at least one chunk
+    if (chunks.isEmpty()) {
+        chunks.add(htmlContent.take(maxChunkSize))
+    }
+    
+    return chunks
 }
 
 

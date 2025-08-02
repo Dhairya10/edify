@@ -245,8 +245,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
   }
 
   @Override
-  public Object insertQuest(final GeneratedQuest quest,
-      final Continuation<? super Unit> $completion) {
+  public Object insertQuest(final GeneratedQuest quest, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -260,12 +259,11 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteQuest(final GeneratedQuest quest,
-      final Continuation<? super Unit> $completion) {
+  public Object deleteQuest(final GeneratedQuest quest, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -279,12 +277,11 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object updateQuest(final GeneratedQuest quest,
-      final Continuation<? super Unit> $completion) {
+  public Object updateQuest(final GeneratedQuest quest, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -298,12 +295,12 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object completeQuest(final String questId, final String answer, final long completedAt,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg3) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -336,12 +333,12 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           __preparedStmtOfCompleteQuest.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg3);
   }
 
   @Override
   public Object unlockQuestByChapterId(final String chapterId, final String userId,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg2) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -372,12 +369,11 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           __preparedStmtOfUnlockQuestByChapterId.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
-  public Object deleteQuestById(final String questId,
-      final Continuation<? super Unit> $completion) {
+  public Object deleteQuestById(final String questId, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -402,11 +398,11 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           __preparedStmtOfDeleteQuestById.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteAllQuests(final Continuation<? super Unit> $completion) {
+  public Object deleteAllQuests(final Continuation<? super Unit> arg0) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -425,7 +421,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           __preparedStmtOfDeleteAllQuests.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
@@ -548,7 +544,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
 
   @Override
   public Object getQuestById(final String questId,
-      final Continuation<? super GeneratedQuest> $completion) {
+      final Continuation<? super GeneratedQuest> arg1) {
     final String _sql = "SELECT * FROM generated_quests WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -659,7 +655,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
@@ -899,8 +895,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
   }
 
   @Override
-  public Object getQuestCount(final String userId,
-      final Continuation<? super Integer> $completion) {
+  public Object getQuestCount(final String userId, final Continuation<? super Integer> arg1) {
     final String _sql = "SELECT COUNT(*) FROM generated_quests WHERE userId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -934,12 +929,12 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object getQuestsByChapterId(final String chapterId, final String userId,
-      final Continuation<? super List<GeneratedQuest>> $completion) {
+      final Continuation<? super List<GeneratedQuest>> arg2) {
     final String _sql = "SELECT * FROM generated_quests WHERE chapterId = ? AND userId = ? ORDER BY createdAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -1056,12 +1051,12 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
   public Object getQuestsByType(final String questType, final String userId,
-      final Continuation<? super List<GeneratedQuest>> $completion) {
+      final Continuation<? super List<GeneratedQuest>> arg2) {
     final String _sql = "SELECT * FROM generated_quests WHERE questType = ? AND userId = ? ORDER BY createdAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -1178,12 +1173,12 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
   public Object getPastQuestsForChapters(final List<String> chapterIds, final String chapterId,
-      final String userId, final Continuation<? super List<GeneratedQuest>> $completion) {
+      final String userId, final Continuation<? super List<GeneratedQuest>> arg3) {
     final StringBuilder _stringBuilder = StringUtil.newStringBuilder();
     _stringBuilder.append("SELECT * FROM generated_quests WHERE (chapterId IN (");
     final int _inputSize = chapterIds.size();
@@ -1319,7 +1314,7 @@ public final class GeneratedQuestDao_Impl implements GeneratedQuestDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg3);
   }
 
   @NonNull

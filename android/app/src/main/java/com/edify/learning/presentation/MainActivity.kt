@@ -36,6 +36,7 @@ import com.edify.learning.presentation.notes.NotesScreen
 import com.edify.learning.presentation.chat.ChatScreen
 import com.edify.learning.presentation.chat.ChatViewModel
 import com.edify.learning.presentation.components.TranslationViewModel
+import com.edify.learning.data.service.TranslationCacheService
 import com.edify.learning.presentation.revision.RevisionScreen
 import com.edify.learning.presentation.quest.QuestScreen
 import com.edify.learning.presentation.quest.QuestDetailScreen
@@ -216,6 +217,7 @@ fun EdifyApp() {
                 val viewModel: ChapterViewModel = hiltViewModel()
                 val translationViewModel: TranslationViewModel = hiltViewModel()
                 val gemmaService = translationViewModel.gemmaService
+                val translationCacheService: TranslationCacheService = hiltViewModel<TranslationViewModel>().translationCacheService
                 
                 LaunchedEffect(chapterId) {
                     viewModel.loadChapter(chapterId)
@@ -230,7 +232,8 @@ fun EdifyApp() {
                     onNavigateToChat = { chapterId, selectedText ->
                         navController.navigate("chat/$chapterId?selectedText=$selectedText")
                     },
-                    gemmaService = gemmaService
+                    gemmaService = gemmaService,
+                    translationCacheService = translationCacheService
                 )
             }
             

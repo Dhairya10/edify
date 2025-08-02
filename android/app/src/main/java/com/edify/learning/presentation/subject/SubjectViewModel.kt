@@ -6,6 +6,8 @@ import com.edify.learning.data.model.Subject
 import com.edify.learning.data.model.Chapter
 import com.edify.learning.data.model.Exercise
 import com.edify.learning.data.model.UserResponse
+import com.edify.learning.data.model.RevisionResponse
+import com.edify.learning.data.model.ChapterRevisionData
 import com.edify.learning.data.repository.LearningRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,52 +61,64 @@ class SubjectViewModel @Inject constructor(
     fun onModeChanged(mode: SubjectMode) {
         _selectedMode.value = mode
         
-        // Load exercises when switching to revision mode
+        // Load revision data when switching to revision mode
         if (mode == SubjectMode.REVISION) {
-            loadExercisesForSubject()
+            loadRevisionDataForSubject()
         }
     }
     
-    private fun loadExercisesForSubject() {
+    private fun loadRevisionDataForSubject() {
         viewModelScope.launch {
             try {
-                val chapters = _uiState.value.chapters
-                val chapterExercises = mutableListOf<ChapterExercises>()
+                val subject = _uiState.value.subject ?: return@launch
                 
-                println("SubjectViewModel: Loading exercises for ${chapters.size} chapters")
+                println("SubjectViewModel: Loading revision data for subject: ${subject.id}")
                 
-                chapters.forEach { chapter ->
-                    println("SubjectViewModel: Loading exercises for chapter: ${chapter.id} - ${chapter.title}")
-                    val exercises = repository.getExercisesForChapter(chapter.id)
-                    println("SubjectViewModel: Found ${exercises.size} exercises for chapter ${chapter.id}")
-                    
-                    if (exercises.isNotEmpty()) {
-                        chapterExercises.add(
-                            ChapterExercises(
-                                chapterId = chapter.id,
-                                chapterTitle = chapter.title,
-                                exercises = exercises
-                            )
+                val revisionData = repository.getRevisionDataForSubject(subject.id)
+                println("SubjectViewModel: Found revision data for ${revisionData.size} chapters")
+                
+                revisionData.forEach { chapterData ->
+                    println("SubjectViewModel: Chapter ${chapterData.chapterTitle} has ${chapterData.questions.size} questions")
+                }
+                
+                // Update UI state with revision data
+                _uiState.value = _uiState.value.copy(
+                    revisionData = revisionData
+                )
+                
+                // Load existing revision responses
+                loadRevisionResponses(revisionData)
+                
+            } catch (e: Exception) {
+                println("SubjectViewModel: Error loading revision data: ${e.message}")
+                e.printStackTrace()
+                _uiState.value = _uiState.value.copy(
+                    error = "Failed to load revision data: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    private fun loadRevisionResponses(revisionData: List<ChapterRevisionData>) {
+        viewModelScope.launch {
+            try {
+                val revisionResponses = mutableMapOf<String, RevisionResponse>()
+                
+                revisionData.forEach { chapterData ->
+                    repository.getRevisionResponsesForChapter(chapterData.chapterId).collect { responses ->
+                        responses.forEach { response ->
+                            val key = "${response.chapterId}_${response.questionIndex}"
+                            revisionResponses[key] = response
+                        }
+                        
+                        _uiState.value = _uiState.value.copy(
+                            revisionResponses = revisionResponses
                         )
-                        println("SubjectViewModel: Added ${exercises.size} exercises for chapter ${chapter.title}")
-                    } else {
-                        println("SubjectViewModel: No exercises found for chapter ${chapter.id}")
                     }
                 }
                 
-                println("SubjectViewModel: Total chapter exercises loaded: ${chapterExercises.size}")
-                
-                // Update UI state with exercises
-                _uiState.value = _uiState.value.copy(
-                    exercises = chapterExercises
-                )
-                
             } catch (e: Exception) {
-                println("SubjectViewModel: Error loading exercises: ${e.message}")
-                e.printStackTrace()
-                _uiState.value = _uiState.value.copy(
-                    error = "Failed to load exercises: ${e.message}"
-                )
+                println("SubjectViewModel: Error loading revision responses: ${e.message}")
             }
         }
     }
@@ -139,8 +153,98 @@ class SubjectViewModel @Inject constructor(
         }
     }
     
+    fun updateRevisionResponse(chapterId: String, questionIndex: Int, userAnswer: String, imageUri: String? = null) {
+        viewModelScope.launch {
+            try {
+                // Get existing response or create new one
+                val existingResponse = repository.getRevisionResponse(chapterId, questionIndex)
+                val revisionData = _uiState.value.revisionData
+                val chapterData = revisionData.find { it.chapterId == chapterId }
+                val question = chapterData?.questions?.getOrNull(questionIndex)?.question ?: ""
+                
+                val updatedResponse = existingResponse?.copy(
+                    userAnswer = userAnswer,
+                    imageUri = imageUri,
+                    isSubmitted = false,
+                    updatedAt = System.currentTimeMillis()
+                ) ?: RevisionResponse(
+                    chapterId = chapterId,
+                    questionIndex = questionIndex,
+                    question = question,
+                    userAnswer = userAnswer,
+                    imageUri = imageUri,
+                    isSubmitted = false
+                )
+                
+                // Save to database
+                if (existingResponse != null) {
+                    repository.updateRevisionResponse(updatedResponse)
+                } else {
+                    repository.saveRevisionResponse(updatedResponse)
+                }
+                
+                // Update UI state
+                val key = "${chapterId}_${questionIndex}"
+                val updatedResponses = _uiState.value.revisionResponses.toMutableMap()
+                updatedResponses[key] = updatedResponse
+                
+                _uiState.value = _uiState.value.copy(revisionResponses = updatedResponses)
+                
+            } catch (e: Exception) {
+                println("SubjectViewModel: Error updating revision response: ${e.message}")
+                _uiState.value = _uiState.value.copy(
+                    error = "Failed to save response: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun submitRevisionResponseForReview(chapterId: String, questionIndex: Int, userAnswer: String, imageUri: String? = null) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmittingAnswer = true)
+            
+            try {
+                val result = repository.submitRevisionResponseForReview(chapterId, questionIndex, userAnswer, imageUri)
+                
+                result.fold(
+                    onSuccess = { feedback ->
+                        // Update UI state with the reviewed response
+                        val existingResponse = repository.getRevisionResponse(chapterId, questionIndex)
+                        existingResponse?.let { response ->
+                            val key = "${chapterId}_${questionIndex}"
+                            val updatedResponses = _uiState.value.revisionResponses.toMutableMap()
+                            updatedResponses[key] = response
+                            
+                            _uiState.value = _uiState.value.copy(
+                                revisionResponses = updatedResponses,
+                                isSubmittingAnswer = false,
+                                lastSubmissionResult = "Success"
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isSubmittingAnswer = false,
+                            error = "Failed to get feedback: ${error.message}"
+                        )
+                    }
+                )
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSubmittingAnswer = false,
+                    error = "Error submitting answer: ${e.message}"
+                )
+            }
+        }
+    }
+    
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    fun clearSubmissionResult() {
+        _uiState.value = _uiState.value.copy(lastSubmissionResult = null)
     }
 }
 
@@ -149,7 +253,11 @@ data class SubjectUiState(
     val chapters: List<Chapter> = emptyList(),
     val exercises: List<ChapterExercises> = emptyList(),
     val userResponses: Map<String, UserResponse> = emptyMap(),
+    val revisionData: List<ChapterRevisionData> = emptyList(),
+    val revisionResponses: Map<String, RevisionResponse> = emptyMap(),
     val isLoading: Boolean = false,
+    val isSubmittingAnswer: Boolean = false,
+    val lastSubmissionResult: String? = null,
     val error: String? = null
 )
 
