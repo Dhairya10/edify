@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.*
 import com.edify.learning.R
@@ -140,6 +141,7 @@ fun ChapterScreen(
     var showAddNoteDialog by remember { mutableStateOf(false) }
     var showImageViewer by remember { mutableStateOf(false) }
     var selectedImagePath by remember { mutableStateOf("") }
+    var showToolsMenu by remember { mutableStateOf(false) }
     
     // Translation states
     var isTranslated by remember { mutableStateOf(false) }
@@ -170,168 +172,224 @@ fun ChapterScreen(
                     }
                 },
                 actions = {
-                    // Translate button - only show if user's language is not English
-                    if (userLanguagePreference.lowercase() != "english") {
+                    // Tools menu button
+                    Box {
                         IconButton(
-                            onClick = {
-                                if (!isTranslating) {
-                                    uiState.chapter?.let { chapter ->
-                                        val parsedContent = ContentParser.parseChapterContent(chapter.content)
-                                        parsedContent?.htmlContent?.let { htmlContent ->
-                                            if (!isTranslated) {
-                                                // Store original content and start translation
-                                                originalContent = htmlContent
-                                                isTranslating = true
-                                                
-                                                coroutineScope.launch {
-                                                    try {
-                                                        // First, check if we have a cached translation
-                                                        val cachedTranslation = translationCacheService.getCachedTranslation(
-                                                            chapterId = chapter.id,
-                                                            language = userLanguagePreference,
-                                                            originalContent = htmlContent
-                                                        )
+                            onClick = { showToolsMenu = true }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.apps_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Tools",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        
+                        DropdownMenu(
+                            expanded = showToolsMenu,
+                            onDismissRequest = { showToolsMenu = false },
+                            modifier = Modifier.background(DarkSurface)
+                        ) {
+                            // Translate option - only show if user's language is not English
+                            if (userLanguagePreference.lowercase() != "english") {
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.translate_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                                                contentDescription = null,
+                                                tint = if (isTranslated) SecondaryBlue else TextPrimary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Text(
+                                                text = if (isTranslated) "Show Original" else "Translate",
+                                                color = TextPrimary,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        showToolsMenu = false
+                                        if (!isTranslating) {
+                                            uiState.chapter?.let { chapter ->
+                                                val parsedContent = ContentParser.parseChapterContent(chapter.content)
+                                                parsedContent?.htmlContent?.let { htmlContent ->
+                                                    if (!isTranslated) {
+                                                        // Store original content and start translation
+                                                        originalContent = htmlContent
+                                                        isTranslating = true
                                                         
-                                                        if (cachedTranslation != null) {
-                                                            // Use cached translation
-                                                            translatedContent = cachedTranslation
-                                                            isTranslated = true
-                                                            isTranslating = false
-                                                            
-                                                            Toast.makeText(
-                                                                context,
-                                                                "Loaded cached translation",
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
-                                                        } else {
-                                                            // No cache available, perform fresh translation
-                                                            val maxChunkSize = 25000 // Conservative limit for 32k tokens (~30k chars)
-                                                            
-                                                            if (htmlContent.length <= maxChunkSize) {
-                                                                // Content fits in single request - translate directly
-                                                                gemmaService.translateText(htmlContent, userLanguagePreference).fold(
-                                                                    onSuccess = { translation ->
-                                                                        translatedContent = translation
+                                                        coroutineScope.launch {
+                                                            try {
+                                                                // First, check if we have a cached translation
+                                                                val cachedTranslation = translationCacheService.getCachedTranslation(
+                                                                    chapterId = chapter.id,
+                                                                    language = userLanguagePreference,
+                                                                    originalContent = htmlContent
+                                                                )
+                                                                
+                                                                if (cachedTranslation != null) {
+                                                                    // Use cached translation
+                                                                    translatedContent = cachedTranslation
+                                                                    isTranslated = true
+                                                                    isTranslating = false
+                                                                    
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Loaded cached translation",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                } else {
+                                                                    // No cache available, perform fresh translation
+                                                                    val maxChunkSize = 25000 // Conservative limit for 32k tokens (~30k chars)
+                                                                    
+                                                                    if (htmlContent.length <= maxChunkSize) {
+                                                                        // Content fits in single request - translate directly
+                                                                        gemmaService.translateText(htmlContent, userLanguagePreference).fold(
+                                                                            onSuccess = { translation ->
+                                                                                translatedContent = translation
+                                                                                isTranslated = true
+                                                                                isTranslating = false
+                                                                                
+                                                                                // Cache the translation for future use
+                                                                                coroutineScope.launch {
+                                                                                    translationCacheService.cacheTranslation(
+                                                                                        chapterId = chapter.id,
+                                                                                        language = userLanguagePreference,
+                                                                                        originalContent = htmlContent,
+                                                                                        translatedContent = translation
+                                                                                    )
+                                                                                }
+                                                                            },
+                                                                            onFailure = { error ->
+                                                                                isTranslating = false
+                                                                                Toast.makeText(
+                                                                                    context,
+                                                                                    "Translation failed: ${error.message}",
+                                                                                    Toast.LENGTH_SHORT
+                                                                                ).show()
+                                                                            }
+                                                                        )
+                                                                    } else {
+                                                                        // Content is very long, translate in chunks but display all at once
+                                                                        val chunks = splitHtmlIntoChunks(htmlContent, maxChunkSize)
+                                                                        val translatedChunks = mutableListOf<String>()
+                                                                        
+                                                                        for (chunk in chunks) {
+                                                                            gemmaService.translateText(chunk, userLanguagePreference).fold(
+                                                                                onSuccess = { translation ->
+                                                                                    translatedChunks.add(translation)
+                                                                                },
+                                                                                onFailure = { error ->
+                                                                                    // If any chunk fails, show error and stop
+                                                                                    isTranslating = false
+                                                                                    Toast.makeText(
+                                                                                        context,
+                                                                                        "Translation failed: ${error.message}",
+                                                                                        Toast.LENGTH_SHORT
+                                                                                    ).show()
+                                                                                    return@launch
+                                                                                }
+                                                                            )
+                                                                        }
+                                                                        
+                                                                        // Display complete translated content at once
+                                                                        val fullTranslation = translatedChunks.joinToString("")
+                                                                        translatedContent = fullTranslation
                                                                         isTranslated = true
                                                                         isTranslating = false
                                                                         
-                                                                        // Cache the translation for future use
+                                                                        // Cache the complete translation
                                                                         coroutineScope.launch {
                                                                             translationCacheService.cacheTranslation(
                                                                                 chapterId = chapter.id,
                                                                                 language = userLanguagePreference,
                                                                                 originalContent = htmlContent,
-                                                                                translatedContent = translation
+                                                                                translatedContent = fullTranslation
                                                                             )
                                                                         }
-                                                                    },
-                                                                    onFailure = { error ->
-                                                                        isTranslating = false
-                                                                        Toast.makeText(
-                                                                            context,
-                                                                            "Translation failed: ${error.message}",
-                                                                            Toast.LENGTH_SHORT
-                                                                        ).show()
                                                                     }
-                                                                )
-                                                            } else {
-                                                                // Content is very long, translate in chunks but display all at once
-                                                                val chunks = splitHtmlIntoChunks(htmlContent, maxChunkSize)
-                                                                val translatedChunks = mutableListOf<String>()
-                                                                
-                                                                for (chunk in chunks) {
-                                                                    gemmaService.translateText(chunk, userLanguagePreference).fold(
-                                                                        onSuccess = { translation ->
-                                                                            translatedChunks.add(translation)
-                                                                        },
-                                                                        onFailure = { error ->
-                                                                            // If any chunk fails, show error and stop
-                                                                            isTranslating = false
-                                                                            Toast.makeText(
-                                                                                context,
-                                                                                "Translation failed: ${error.message}",
-                                                                                Toast.LENGTH_SHORT
-                                                                            ).show()
-                                                                            return@launch
-                                                                        }
-                                                                    )
                                                                 }
-                                                                
-                                                                // Display complete translated content at once
-                                                                val fullTranslation = translatedChunks.joinToString("")
-                                                                translatedContent = fullTranslation
-                                                                isTranslated = true
+                                                            } catch (e: Exception) {
                                                                 isTranslating = false
-                                                                
-                                                                // Cache the complete translation
-                                                                coroutineScope.launch {
-                                                                    translationCacheService.cacheTranslation(
-                                                                        chapterId = chapter.id,
-                                                                        language = userLanguagePreference,
-                                                                        originalContent = htmlContent,
-                                                                        translatedContent = fullTranslation
-                                                                    )
-                                                                }
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "Translation error: ${e.message}",
+                                                                    Toast.LENGTH_SHORT
+                                                                ).show()
                                                             }
                                                         }
-                                                    } catch (e: Exception) {
-                                                        isTranslating = false
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Translation error: ${e.message}",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
+                                                    } else {
+                                                        // Switch back to original content
+                                                        isTranslated = false
                                                     }
                                                 }
-                                            } else {
-                                                // Switch back to original content
-                                                isTranslated = false
                                             }
                                         }
+                                    },
+                                    enabled = !isTranslating
+                                )
+                            }
+                            
+                            // Chat option
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.chat_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                                            contentDescription = null,
+                                            tint = TextPrimary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "Chat",
+                                            color = TextPrimary,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    showToolsMenu = false
+                                    uiState.chapter?.let { chapter ->
+                                        onNavigateToChat(chapter.id, null)
                                     }
                                 }
-                            },
-                            enabled = !isTranslating
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.translate_24dp_ffffff_fill0_wght400_grad0_opsz24),
-                                contentDescription = if (isTranslated) "Show Original" else "Translate",
-                                tint = if (isTranslated) SecondaryBlue else TextPrimary,
-                                modifier = Modifier.size(24.dp)
+                            )
+                            
+                            // Revision option
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.table_lamp_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                                            contentDescription = null,
+                                            tint = TextPrimary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "Revision",
+                                            color = TextPrimary,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    showToolsMenu = false
+                                    uiState.chapter?.let { chapter ->
+                                        onNavigateToRevision(chapter.id, chapter.title)
+                                    }
+                                }
                             )
                         }
-                    }
-                    
-                    // Gemma chat button
-                    IconButton(
-                        onClick = {
-                            uiState.chapter?.let { chapter ->
-                                onNavigateToChat(chapter.id, null)
-                            }
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.chat_24dp_ffffff_fill0_wght400_grad0_opsz24),
-                            contentDescription = "Chat with Gemma",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    
-                    // Revision button
-                    IconButton(
-                        onClick = {
-                            uiState.chapter?.let { chapter ->
-                                onNavigateToRevision(chapter.id, chapter.title)
-                            }
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.table_lamp_24dp_ffffff_fill0_wght400_grad0_opsz24),
-                            contentDescription = "Revision",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
