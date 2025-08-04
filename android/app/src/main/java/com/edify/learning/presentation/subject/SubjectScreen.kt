@@ -183,7 +183,7 @@ fun ModeToggleButton(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
             .background(
-                color = if (isSelected) PrimaryBlue else Color.Transparent
+                color = if (isSelected) White else Color.Transparent
             )
             .clickable { onClick() }
             .padding(vertical = 12.dp),
@@ -191,7 +191,7 @@ fun ModeToggleButton(
     ) {
         Text(
             text = text,
-            color = if (isSelected) White else TextSecondary,
+            color = if (isSelected) Black else TextSecondary,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             fontSize = 14.sp
         )
@@ -677,53 +677,7 @@ fun SubjectExerciseCard(
                 )
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Image upload section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Or upload an image:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
-                
-                OutlinedButton(
-                    onClick = { imagePickerLauncher.launch("image/*") },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PrimaryBlue
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Upload image",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Upload Image")
-                }
-            }
-            
-            // Show uploaded image
-            imageUri?.let { uri ->
-                Spacer(modifier = Modifier.height(12.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    AsyncImage(
-                        model = uri,
-                        contentDescription = "Uploaded response image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
+
         }
     }
 }
@@ -891,48 +845,7 @@ fun ExerciseModal(
                             }
                         }
 
-                        item {
-                            // Image upload section
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OutlinedButton(
-                                    onClick = { imagePickerLauncher.launch("image/*") },
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = PrimaryBlue
-                                    )
-                                ) {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "Upload image",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Upload Image")
-                                }
-                            }
-                        }
 
-                        // Show uploaded image
-                        imageUri?.let { uri ->
-                            item {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 200.dp), // Reduced max height
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = uri,
-                                        contentDescription = "Uploaded response image",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -1205,8 +1118,8 @@ fun RevisionQuestionModal(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(20.dp)
                     .fillMaxHeight()
+                    .padding(top = 24.dp, start = 20.dp, end = 20.dp)
             ) {
                 // Header with close button
                 Row(
@@ -1247,10 +1160,12 @@ fun RevisionQuestionModal(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
                     ) {
                         item {
                             // Question text
@@ -1312,16 +1227,20 @@ fun RevisionQuestionModal(
                                 OutlinedButton(
                                     onClick = { imagePickerLauncher.launch("image/*") },
                                     colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = PrimaryBlue
+                                        contentColor = White
                                     )
                                 ) {
                                     Icon(
                                         Icons.Default.Add,
                                         contentDescription = "Upload image",
+                                        tint = White,
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Upload Image")
+                                    Text(
+                                        text = "Upload Image",
+                                        color = White
+                                    )
                                 }
                             }
                         }
@@ -1358,43 +1277,66 @@ fun RevisionQuestionModal(
                             }
                         }
                         
-                        // Submit button
-                        item {
-                            val canSubmit = userAnswer.isNotBlank() && !isSubmittingAnswer
-                            val isAlreadySubmitted = revisionResponse?.isSubmitted == true
-                            
-                            Button(
-                                onClick = { 
-                                    if (canSubmit) {
-                                        onSubmitAnswer(userAnswer, imageUri?.toString())
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = canSubmit && !isAlreadySubmitted,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isAlreadySubmitted) SuccessColor else PrimaryBlue,
-                                    disabledContainerColor = BackgroundGray
-                                )
-                            ) {
-                                if (isSubmittingAnswer) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        color = White
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Getting Feedback...")
-                                } else if (isAlreadySubmitted) {
-                                    Icon(
-                                        Icons.Default.Check,
-                                        contentDescription = "Submitted",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Submitted")
-                                } else {
-                                    Text("Submit for Review")
-                                }
+                        // No submit button here, moved out of LazyColumn
+
+                    }
+                }
+                
+                // Fixed submit button at bottom with padding
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, bottom = 36.dp, top = 8.dp)
+                ) {
+                    val canSubmit = userAnswer.isNotBlank() && !isSubmittingAnswer
+                    val isAlreadySubmitted = revisionResponse?.isSubmitted == true
+                    
+                    Button(
+                        onClick = { 
+                            if (canSubmit) {
+                                onSubmitAnswer(userAnswer, imageUri?.toString())
                             }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        enabled = canSubmit && !isAlreadySubmitted,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = White,
+                            contentColor = Black,
+                            disabledContainerColor = White,
+                            disabledContentColor = Black
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        if (isSubmittingAnswer) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = Black
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Getting Feedback...",
+                                color = Black
+                            )
+                        } else if (isAlreadySubmitted) {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = "Submitted",
+                                modifier = Modifier.size(16.dp),
+                                tint = White
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Submitted",
+                                color = White
+                            )
+                        } else {
+                            Text(
+                                text = "Submit for Review",
+                                color = Black,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }

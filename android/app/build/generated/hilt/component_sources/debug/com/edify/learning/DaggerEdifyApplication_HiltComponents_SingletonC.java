@@ -764,7 +764,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       public T get() {
         switch (id) {
           case 0: // com.edify.learning.data.repository.LearningRepository 
-          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.revisionResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
+          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.revisionResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get());
 
           case 1: // com.edify.learning.data.database.EdifyDatabase 
           return (T) DatabaseModule_ProvideEdifyDatabaseFactory.provideEdifyDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));

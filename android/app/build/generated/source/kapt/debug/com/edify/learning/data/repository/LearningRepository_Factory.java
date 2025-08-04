@@ -10,6 +10,7 @@ import com.edify.learning.data.dao.RevisionResponseDao;
 import com.edify.learning.data.dao.SubjectDao;
 import com.edify.learning.data.dao.UserResponseDao;
 import com.edify.learning.data.service.GemmaService;
+import com.edify.learning.data.service.PromptService;
 import com.edify.learning.data.service.QuestGenerationService;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
@@ -54,6 +55,8 @@ public final class LearningRepository_Factory implements Factory<LearningReposit
 
   private final Provider<QuestGenerationService> questGenerationServiceProvider;
 
+  private final Provider<PromptService> promptServiceProvider;
+
   public LearningRepository_Factory(Provider<Context> contextProvider,
       Provider<SubjectDao> subjectDaoProvider, Provider<ChapterDao> chapterDaoProvider,
       Provider<NoteDao> noteDaoProvider, Provider<ChatDao> chatDaoProvider,
@@ -62,7 +65,8 @@ public final class LearningRepository_Factory implements Factory<LearningReposit
       Provider<ChapterStatsDao> chapterStatsDaoProvider,
       Provider<GeneratedQuestDao> generatedQuestDaoProvider,
       Provider<GemmaService> gemmaServiceProvider,
-      Provider<QuestGenerationService> questGenerationServiceProvider) {
+      Provider<QuestGenerationService> questGenerationServiceProvider,
+      Provider<PromptService> promptServiceProvider) {
     this.contextProvider = contextProvider;
     this.subjectDaoProvider = subjectDaoProvider;
     this.chapterDaoProvider = chapterDaoProvider;
@@ -74,11 +78,12 @@ public final class LearningRepository_Factory implements Factory<LearningReposit
     this.generatedQuestDaoProvider = generatedQuestDaoProvider;
     this.gemmaServiceProvider = gemmaServiceProvider;
     this.questGenerationServiceProvider = questGenerationServiceProvider;
+    this.promptServiceProvider = promptServiceProvider;
   }
 
   @Override
   public LearningRepository get() {
-    return newInstance(contextProvider.get(), subjectDaoProvider.get(), chapterDaoProvider.get(), noteDaoProvider.get(), chatDaoProvider.get(), userResponseDaoProvider.get(), revisionResponseDaoProvider.get(), chapterStatsDaoProvider.get(), generatedQuestDaoProvider.get(), gemmaServiceProvider.get(), questGenerationServiceProvider.get());
+    return newInstance(contextProvider.get(), subjectDaoProvider.get(), chapterDaoProvider.get(), noteDaoProvider.get(), chatDaoProvider.get(), userResponseDaoProvider.get(), revisionResponseDaoProvider.get(), chapterStatsDaoProvider.get(), generatedQuestDaoProvider.get(), gemmaServiceProvider.get(), questGenerationServiceProvider.get(), promptServiceProvider.get());
   }
 
   public static LearningRepository_Factory create(Provider<Context> contextProvider,
@@ -89,15 +94,16 @@ public final class LearningRepository_Factory implements Factory<LearningReposit
       Provider<ChapterStatsDao> chapterStatsDaoProvider,
       Provider<GeneratedQuestDao> generatedQuestDaoProvider,
       Provider<GemmaService> gemmaServiceProvider,
-      Provider<QuestGenerationService> questGenerationServiceProvider) {
-    return new LearningRepository_Factory(contextProvider, subjectDaoProvider, chapterDaoProvider, noteDaoProvider, chatDaoProvider, userResponseDaoProvider, revisionResponseDaoProvider, chapterStatsDaoProvider, generatedQuestDaoProvider, gemmaServiceProvider, questGenerationServiceProvider);
+      Provider<QuestGenerationService> questGenerationServiceProvider,
+      Provider<PromptService> promptServiceProvider) {
+    return new LearningRepository_Factory(contextProvider, subjectDaoProvider, chapterDaoProvider, noteDaoProvider, chatDaoProvider, userResponseDaoProvider, revisionResponseDaoProvider, chapterStatsDaoProvider, generatedQuestDaoProvider, gemmaServiceProvider, questGenerationServiceProvider, promptServiceProvider);
   }
 
   public static LearningRepository newInstance(Context context, SubjectDao subjectDao,
       ChapterDao chapterDao, NoteDao noteDao, ChatDao chatDao, UserResponseDao userResponseDao,
       RevisionResponseDao revisionResponseDao, ChapterStatsDao chapterStatsDao,
       GeneratedQuestDao generatedQuestDao, GemmaService gemmaService,
-      QuestGenerationService questGenerationService) {
-    return new LearningRepository(context, subjectDao, chapterDao, noteDao, chatDao, userResponseDao, revisionResponseDao, chapterStatsDao, generatedQuestDao, gemmaService, questGenerationService);
+      QuestGenerationService questGenerationService, PromptService promptService) {
+    return new LearningRepository(context, subjectDao, chapterDao, noteDao, chatDao, userResponseDao, revisionResponseDao, chapterStatsDao, generatedQuestDao, gemmaService, questGenerationService, promptService);
   }
 }

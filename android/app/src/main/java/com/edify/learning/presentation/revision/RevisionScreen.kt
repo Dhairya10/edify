@@ -61,9 +61,9 @@ fun RevisionScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = PrimaryBlue,
-                    titleContentColor = White,
-                    navigationIconContentColor = White
+                    containerColor = White,
+                    titleContentColor = Black,
+                    navigationIconContentColor = Black
                 ),
                 windowInsets = WindowInsets(0.dp)
             )
@@ -79,7 +79,7 @@ fun RevisionScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = PrimaryBlue)
+                    CircularProgressIndicator(color = White)
                 }
             }
             errorMessage != null -> {
@@ -151,7 +151,7 @@ fun RevisionScreen(
                                     text = "📝 Exercise Mode",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
+                                    color = White
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
@@ -164,7 +164,7 @@ fun RevisionScreen(
                                     text = "Progress: ${uiState.completedCount}/${uiState.exercises.size} completed",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium,
-                                    color = PrimaryBlue
+                                    color = White
                                 )
                             }
                         }
@@ -255,7 +255,7 @@ private fun ExerciseCard(
                     text = "Question ${exerciseIndex + 1}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = PrimaryBlue
+                    color = White
                 )
                 
                 if (userResponse != null && (userResponse.textResponse?.isNotBlank() == true || userResponse.imageUri != null)) {
@@ -301,9 +301,9 @@ private fun ExerciseCard(
                 minLines = 3,
                 maxLines = 8,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = PrimaryBlue,
-                    focusedLabelColor = PrimaryBlue,
-                    cursorColor = PrimaryBlue
+                    focusedBorderColor = White,
+                    focusedLabelColor = White,
+                    cursorColor = White
                 )
             )
             
@@ -324,7 +324,7 @@ private fun ExerciseCard(
                 OutlinedButton(
                     onClick = { imagePickerLauncher.launch("image/*") },
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PrimaryBlue
+                        contentColor = White
                     )
                 ) {
                     Icon(
@@ -333,7 +333,10 @@ private fun ExerciseCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Upload Image")
+                    Text(
+                        text = "Upload Image",
+                        color = White
+                    )
                 }
             }
             

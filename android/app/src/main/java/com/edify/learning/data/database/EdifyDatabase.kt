@@ -20,7 +20,7 @@ import com.edify.learning.data.model.*
         GeneratedQuest::class,
         TranslatedChapter::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

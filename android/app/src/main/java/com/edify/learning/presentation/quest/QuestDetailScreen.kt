@@ -146,102 +146,106 @@ fun QuestDetailContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Black)
-            .verticalScroll(scrollState)
-            .padding(16.dp)
             .imePadding() // Add padding for keyboard
     ) {
-        // Question display with character limit and scrolling
-        Card(
+        // Scrollable content area
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 100.dp, max = 200.dp)
-                .padding(bottom = 24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = DarkSurface
-            ),
-            shape = RoundedCornerShape(12.dp)
+                .weight(1f)
+                .verticalScroll(scrollState)
+                .padding(16.dp)
         ) {
-            val displayText = if (quest.question.length > 300) {
-                quest.question.take(300) + "..."
-            } else {
-                quest.question
-            }
-            
-            val scrollState = rememberScrollState()
-            
-            Text(
-                text = displayText,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextPrimary,
-                lineHeight = 24.sp,
+            // Question display with increased height and scrolling
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(scrollState)
-                    .padding(16.dp)
+                    .heightIn(min = 150.dp, max = 330.dp) // Increased height by 10% (300dp -> 330dp)
+                    .padding(bottom = 24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = DarkSurface
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                val questionScrollState = rememberScrollState()
+                
+                Text(
+                    text = quest.question, // Display full question without truncation
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary,
+                    lineHeight = 24.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(questionScrollState)
+                        .padding(16.dp)
+                )
+            }
+            
+            // Answer input
+            OutlinedTextField(
+                value = userAnswer,
+                onValueChange = { userAnswer = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                placeholder = {
+                    Text(
+                        text = "Share your thoughts here",
+                        color = TextSecondary
+                    )
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SecondaryBlue,
+                    unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f),
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    unfocusedContainerColor = DarkSurface,
+                    focusedContainerColor = DarkSurface
+                ),
+                shape = RoundedCornerShape(12.dp),
+                maxLines = 10,
+                enabled = !isSubmitting
             )
         }
         
-        // Answer input
-        OutlinedTextField(
-            value = userAnswer,
-            onValueChange = { userAnswer = it },
+        // Fixed bottom submit button with proper spacing
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp),
-            placeholder = {
-                Text(
-                    text = "Share your thoughts here",
-                    color = TextSecondary
-                )
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = SecondaryBlue,
-                unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f),
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary,
-                unfocusedContainerColor = DarkSurface,
-                focusedContainerColor = DarkSurface
-            ),
-            shape = RoundedCornerShape(12.dp),
-            maxLines = 10,
-            enabled = !isSubmitting
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Submit button
-        Button(
-            onClick = {
-                if (userAnswer.trim().isNotEmpty()) {
-                    onAnswerSubmit(userAnswer.trim())
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50)
-            ),
-            shape = RoundedCornerShape(16.dp),
-            enabled = userAnswer.trim().isNotBlank() && !isSubmitting
+                .padding(16.dp)
         ) {
-            if (isSubmitting) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = Color.White
-                )
-            } else {
-                Text(
-                    text = if (quest.isCompleted) "Update Answer" else "Submit Answer",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
+            Button(
+                onClick = {
+                    if (userAnswer.trim().isNotEmpty()) {
+                        onAnswerSubmit(userAnswer.trim())
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50)
+                ),
+                shape = RoundedCornerShape(16.dp),
+                enabled = userAnswer.trim().isNotBlank() && !isSubmitting
+            ) {
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White
+                    )
+                } else {
+                    Text(
+                        text = if (quest.isCompleted) "Update Answer" else "Submit Answer",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
+                }
             }
+            
+            Spacer(modifier = Modifier.height(24.dp)) // Bottom spacing
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

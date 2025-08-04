@@ -8,6 +8,7 @@ import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import com.google.mediapipe.tasks.genai.llminference.GraphOptions
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.framework.image.MPImage
+import java.util.regex.Pattern
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -453,17 +454,55 @@ class GemmaService @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
     
-    fun createEducationalPrompt(
-        context: String,
-        question: String,
-        isExplanation: Boolean = false
+    /**
+     * Generates a direct response to a query using the universal tutor prompt
+     */
+    suspend fun generateEducationalResponse(topic: String, query: String): Result<String> {
+        return try {
+            android.util.Log.d(TAG, "EDUCATIONAL_RESPONSE: Generating response for topic '$topic' and query '$query'")
+            
+            val universalPrompt = promptService.getFormattedPrompt(
+                "universal_tutor",
+                "topic" to topic,
+                "input" to query
+            )
+            
+            val response = generateResponse(universalPrompt)
+            response.fold(
+                onSuccess = { educationalResponse ->
+                    android.util.Log.d(TAG, "EDUCATIONAL_RESPONSE: Generated response: '${educationalResponse.take(100)}...'")
+                    Result.success(educationalResponse)
+                },
+                onFailure = { error ->
+                    android.util.Log.w(TAG, "EDUCATIONAL_RESPONSE: Generation failed, using fallback. Error: ${error.message}")
+                    Result.success("I'm having trouble understanding your question right now. Could you try rephrasing it?")
+                }
+            )
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "EDUCATIONAL_RESPONSE: Exception during response generation. Error: ${e.message}")
+            Result.success("I'm having trouble understanding your question right now. Could you try rephrasing it?")
+        }
+    }
+    
+    /**
+     * Creates an image analysis prompt using the universal image tutor
+     */
+    fun createImageAnalysisPrompt(
+        topic: String,
+        query: String
     ): String {
-        val promptKey = if (isExplanation) "educational_explanation" else "educational_question"
-        return promptService.getFormattedPrompt(
-            promptKey,
-            "context" to context,
-            "question" to question
+        android.util.Log.i(TAG, "IMAGE_PROMPT: Using universal image tutor for topic '$topic'")
+        android.util.Log.d(TAG, "IMAGE_PROMPT: Query: '$query'")
+        android.util.Log.d(TAG, "IMAGE_PROMPT: Context: '$topic'")
+        
+        val prompt = promptService.getFormattedPrompt(
+            "image_tutor",
+            "query" to query,
+            "topic" to topic
         )
+        
+        android.util.Log.d(TAG, "IMAGE_PROMPT: Generated unified image analysis prompt")
+        return prompt
     }
     
     /**
@@ -522,4 +561,5 @@ class GemmaService @Inject constructor(
         llmInference = null
         isInitialized = false
     }
+    
 }

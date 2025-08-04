@@ -30,7 +30,44 @@ fun MarkdownText(
     fontSize: TextUnit = 14.sp,
     lineHeight: TextUnit = 20.sp
 ) {
-    val lines = markdown.split("\n")
+    // Decode HTML entities before processing markdown
+    val decodedMarkdown = markdown
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
+        .replace("&#x2019;", "'")
+        .replace("&#x2013;", "–")
+        .replace("&#x2014;", "—")
+        .replace("&hellip;", "…")
+        .replace("&mdash;", "—")
+        .replace("&ndash;", "–")
+        .replace("&rsquo;", "'")
+        .replace("&lsquo;", "'")
+        .replace("&rdquo;", """)
+        .replace("&ldquo;", """)
+        .replace("&times;", "×")
+        .replace("&divide;", "÷")
+        .replace("&plusmn;", "±")
+        .replace("&radic;", "√")
+        .replace("&infin;", "∞")
+        .replace("&pi;", "π")
+        .replace("&alpha;", "α")
+        .replace("&beta;", "β")
+        .replace("&gamma;", "γ")
+        .replace("&delta;", "δ")
+        .replace("&theta;", "θ")
+        .replace("&lambda;", "λ")
+        .replace("&mu;", "μ")
+        .replace("&sigma;", "σ")
+        .replace("&phi;", "φ")
+        .replace("&omega;", "ω")
+        .replace(Regex("<[^>]*>"), "") // Remove any HTML tags
+    
+    val lines = decodedMarkdown.split("\n")
     
     Column(modifier = modifier) {
         var i = 0
@@ -140,74 +177,110 @@ fun MarkdownText(
 
 @Composable
 private fun parseInlineMarkdown(text: String) = buildAnnotatedString {
+    // Decode HTML entities in inline text as well
+    val decodedText = text
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&#x27;", "'")
+        .replace("&#x2019;", "'")
+        .replace("&#x2013;", "–")
+        .replace("&#x2014;", "—")
+        .replace("&hellip;", "…")
+        .replace("&mdash;", "—")
+        .replace("&ndash;", "–")
+        .replace("&rsquo;", "'")
+        .replace("&lsquo;", "'")
+        .replace("&rdquo;", """)
+        .replace("&ldquo;", """)
+        .replace("&times;", "×")
+        .replace("&divide;", "÷")
+        .replace("&plusmn;", "±")
+        .replace("&radic;", "√")
+        .replace("&infin;", "∞")
+        .replace("&pi;", "π")
+        .replace("&alpha;", "α")
+        .replace("&beta;", "β")
+        .replace("&gamma;", "γ")
+        .replace("&delta;", "δ")
+        .replace("&theta;", "θ")
+        .replace("&lambda;", "λ")
+        .replace("&mu;", "μ")
+        .replace("&sigma;", "σ")
+        .replace("&phi;", "φ")
+        .replace("&omega;", "ω")
+        .replace(Regex("<[^>]*>"), "") // Remove any HTML tags
     var currentIndex = 0
-    val length = text.length
+    val length = decodedText.length
     
     while (currentIndex < length) {
         when {
             // Bold text **text**
-            currentIndex < length - 1 && text.substring(currentIndex).startsWith("**") -> {
-                val endIndex = text.indexOf("**", currentIndex + 2)
+            currentIndex < length - 1 && decodedText.substring(currentIndex).startsWith("**") -> {
+                val endIndex = decodedText.indexOf("**", currentIndex + 2)
                 if (endIndex != -1) {
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(text.substring(currentIndex + 2, endIndex))
+                        append(decodedText.substring(currentIndex + 2, endIndex))
                     }
                     currentIndex = endIndex + 2
                 } else {
-                    append(text[currentIndex])
+                    append(decodedText[currentIndex])
                     currentIndex++
                 }
             }
             
             // Italic text *text*
-            currentIndex < length - 1 && text[currentIndex] == '*' && 
-            (currentIndex == 0 || text[currentIndex - 1] != '*') -> {
-                val endIndex = text.indexOf('*', currentIndex + 1)
-                if (endIndex != -1 && (endIndex == length - 1 || text[endIndex + 1] != '*')) {
+            currentIndex < length - 1 && decodedText[currentIndex] == '*' && 
+            (currentIndex == 0 || decodedText[currentIndex - 1] != '*') -> {
+                val endIndex = decodedText.indexOf('*', currentIndex + 1)
+                if (endIndex != -1 && (endIndex == length - 1 || decodedText[endIndex + 1] != '*')) {
                     withStyle(style = SpanStyle(fontStyle = FontStyle.Italic)) {
-                        append(text.substring(currentIndex + 1, endIndex))
+                        append(decodedText.substring(currentIndex + 1, endIndex))
                     }
                     currentIndex = endIndex + 1
                 } else {
-                    append(text[currentIndex])
+                    append(decodedText[currentIndex])
                     currentIndex++
                 }
             }
             
             // Inline code `code`
-            text[currentIndex] == '`' -> {
-                val endIndex = text.indexOf('`', currentIndex + 1)
+            decodedText[currentIndex] == '`' -> {
+                val endIndex = decodedText.indexOf('`', currentIndex + 1)
                 if (endIndex != -1) {
                     withStyle(style = SpanStyle(
                         fontFamily = FontFamily.Monospace,
                         background = Color.Gray.copy(alpha = 0.1f)
                     )) {
-                        append(text.substring(currentIndex + 1, endIndex))
+                        append(decodedText.substring(currentIndex + 1, endIndex))
                     }
                     currentIndex = endIndex + 1
                 } else {
-                    append(text[currentIndex])
+                    append(decodedText[currentIndex])
                     currentIndex++
                 }
             }
             
             // Strikethrough ~~text~~
-            currentIndex < length - 1 && text.substring(currentIndex).startsWith("~~") -> {
-                val endIndex = text.indexOf("~~", currentIndex + 2)
+            currentIndex < length - 1 && decodedText.substring(currentIndex).startsWith("~~") -> {
+                val endIndex = decodedText.indexOf("~~", currentIndex + 2)
                 if (endIndex != -1) {
                     withStyle(style = SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-                        append(text.substring(currentIndex + 2, endIndex))
+                        append(decodedText.substring(currentIndex + 2, endIndex))
                     }
                     currentIndex = endIndex + 2
                 } else {
-                    append(text[currentIndex])
+                    append(decodedText[currentIndex])
                     currentIndex++
                 }
             }
             
             // Regular character
             else -> {
-                append(text[currentIndex])
+                append(decodedText[currentIndex])
                 currentIndex++
             }
         }

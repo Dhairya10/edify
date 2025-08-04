@@ -7,6 +7,7 @@ import com.edify.learning.data.dao.NoteDao
 import com.edify.learning.data.dao.ChatDao
 import com.edify.learning.data.dao.SubjectDao
 import com.edify.learning.data.model.*
+import com.edify.learning.data.util.JsonParsingHelper
 import com.google.gson.Gson
 import com.edify.learning.data.service.PromptService
 import kotlinx.coroutines.*
@@ -179,18 +180,14 @@ class QuestGenerationService @Inject constructor(
      */
     private suspend fun generateDivergentQuestForChapter(chapterData: ChapterInteractionData): LLMQuestResponse? {
         val chapterTitle = chapterData.chapterTitle
+        val chapterSummary = chapterData.chapterDescription
         val subjectName = chapterData.subject
-        val notesSummary = chapterData.notes.joinToString("; ")
-        val chatSummary = chapterData.chatQuestions.joinToString("; ")
-        val revisionSummary = chapterData.revisionAnswers.joinToString("; ")
 
         val prompt = promptService.getFormattedPrompt(
             "divergent_quest",
             "chapterTitle" to chapterTitle,
-            "subjectName" to subjectName,
-            "notesSummary" to notesSummary,
-            "chatSummary" to chatSummary,
-            "revisionSummary" to revisionSummary
+            "chapterSummary" to chapterSummary,
+            "subjectName" to subjectName
         )
         
         return try {
@@ -200,16 +197,70 @@ class QuestGenerationService @Inject constructor(
                 val responseText = response.getOrThrow()
                 println("QUEST_GEN: Divergent quest RAW response from Gemma: '$responseText'")
                 
-                // Clean response by removing markdown code blocks if present
-                val cleanedResponse = responseText
-                    .trim()
-                    .removePrefix("```json")
-                    .removePrefix("```")
-                    .removeSuffix("```")
-                    .trim()
+                // Use centralized JSON parsing helper
+                val cleanedResponse = JsonParsingHelper.extractAndCleanJson(responseText, "QUEST_GEN_DIVERGENT")
                 
-                println("QUEST_GEN: Cleaned response: '$cleanedResponse'")
-                gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
+                // Try parsing cleaned JSON first, only repair if needed
+                try {
+                    println("QUEST_GEN: Attempting to parse cleaned JSON: '$cleanedResponse'")
+                    gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
+                } catch (e: Exception) {
+                    println("QUEST_GEN: Clean JSON failed, trying repair: ${e.message}")
+                    
+                    // Handle plain text responses specifically
+                    if (e.message?.contains("Expected BEGIN_OBJECT but was STRING") == true) {
+                        println("QUEST_GEN: Detected plain text response, attempting to extract quest data")
+                        try {
+                            // Extract title and question from plain text with improved patterns
+                            val titlePatterns = listOf(
+                                Regex("(?:title|Title).*?[:.]\\s*([^\\n.!?]+)"),
+                                Regex("\"title\"\\s*:\\s*\"([^\"]+)\""),
+                                Regex("Quest\\s+(?:title|Title).*?[:.]\\s*([^\\n.!?]+)", RegexOption.IGNORE_CASE)
+                            )
+                            val questionPatterns = listOf(
+                                Regex("(?:question|Question|questionText).*?[:.]\\s*([^\\n]+)"),
+                                Regex("\"questionText\"\\s*:\\s*\"([^\"]+)\""),
+                                Regex("Quest\\s+(?:question|Question).*?[:.]\\s*([^\\n]+)", RegexOption.IGNORE_CASE)
+                            )
+                            
+                            var title: String? = null
+                            var question: String? = null
+                            
+                            // Try all title patterns
+                            for (pattern in titlePatterns) {
+                                val match = pattern.find(responseText)
+                                if (match != null) {
+                                    title = match.groupValues[1].trim()
+                                    break
+                                }
+                            }
+                            
+                            // Try all question patterns
+                            for (pattern in questionPatterns) {
+                                val match = pattern.find(responseText)
+                                if (match != null) {
+                                    question = match.groupValues[1].trim()
+                                    break
+                                }
+                            }
+                            
+                            if (title != null && question != null) {
+                                LLMQuestResponse(title, question)
+                            } else {
+                                throw Exception("Could not extract title and question from plain text: title=$title, question=$question")
+                            }
+                        } catch (plainTextError: Exception) {
+                            println("QUEST_GEN: Plain text extraction failed: ${plainTextError.message}")
+                            val repairedResponse = JsonParsingHelper.repairJsonSyntax(cleanedResponse, "QUEST_GEN_DIVERGENT")
+                            println("QUEST_GEN: Final processed JSON: '$repairedResponse'")
+                            gson.fromJson(repairedResponse, LLMQuestResponse::class.java)
+                        }
+                    } else {
+                        val repairedResponse = JsonParsingHelper.repairJsonSyntax(cleanedResponse, "QUEST_GEN_DIVERGENT")
+                        println("QUEST_GEN: Final processed JSON: '$repairedResponse'")
+                        gson.fromJson(repairedResponse, LLMQuestResponse::class.java)
+                    }
+                }
             }
         } catch (e: TimeoutCancellationException) {
             println("QUEST_GEN: Divergent quest generation timed out - no quest will be generated")
@@ -304,7 +355,7 @@ class QuestGenerationService @Inject constructor(
                 }
                 
                 val prompt = promptService.getFormattedPrompt(
-                    "convergent_quest_llm_selection",
+                    "convergent_quest",
                     "chapterOptions" to chapterOptions,
                     "pastQuestContext" to pastQuestContext
                 )
@@ -316,16 +367,93 @@ class QuestGenerationService @Inject constructor(
                         val responseText = response.getOrThrow()
                         println("QUEST_GEN: Convergent quest with LLM selection RAW response from Gemma: '$responseText'")
                         
-                        // Clean response by removing markdown code blocks if present
-                        val cleanedResponse = responseText
-                            .trim()
-                            .removePrefix("```json")
-                            .removePrefix("```")
-                            .removeSuffix("```")
-                            .trim()
+                        // Use centralized JSON parsing helper
+                        val cleanedResponse = JsonParsingHelper.extractAndCleanJson(responseText, "QUEST_GEN_CONVERGENT")
                         
-                        println("QUEST_GEN: Cleaned response: '$cleanedResponse'")
-                        gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
+                        // Try parsing cleaned JSON first, only repair if needed
+                        try {
+                            println("QUEST_GEN: Attempting to parse cleaned JSON: '$cleanedResponse'")
+                            gson.fromJson(cleanedResponse, LLMQuestResponse::class.java)
+                        } catch (e: Exception) {
+                            println("QUEST_GEN: Clean JSON failed, trying repair: ${e.message}")
+                            
+                            // Handle plain text responses specifically
+                            if (e.message?.contains("Expected BEGIN_OBJECT but was STRING") == true) {
+                                println("QUEST_GEN: Detected plain text response, attempting to extract convergent quest data")
+                                try {
+                                    // Extract data from plain text for convergent quests with improved patterns
+                                    val titlePatterns = listOf(
+                                        Regex("(?:title|Title).*?[:.]\\s*([^\\n.!?]+)"),
+                                        Regex("\"title\"\\s*:\\s*\"([^\"]+)\""),
+                                        Regex("Quest\\s+(?:title|Title).*?[:.]\\s*([^\\n.!?]+)", RegexOption.IGNORE_CASE)
+                                    )
+                                    val questionPatterns = listOf(
+                                        Regex("(?:question|Question|questionText).*?[:.]\\s*([^\\n]+)"),
+                                        Regex("\"questionText\"\\s*:\\s*\"([^\"]+)\""),
+                                        Regex("Quest\\s+(?:question|Question).*?[:.]\\s*([^\\n]+)", RegexOption.IGNORE_CASE)
+                                    )
+                                    val chapterPatterns = listOf(
+                                        Regex("(?:selectedChapterIds|chapter.*?ids?).*?[:.]\\s*\\[?([^\\n\\]]+)\\]?"),
+                                        Regex("\"selectedChapterIds\"\\s*:\\s*\\[([^\\]]+)\\]"),
+                                        Regex("(?:selected|chosen)\\s+chapters?.*?[:.]\\s*([^\\n]+)", RegexOption.IGNORE_CASE)
+                                    )
+                                    
+                                    var title: String? = null
+                                    var question: String? = null
+                                    var chapterIds: List<String> = emptyList()
+                                    
+                                    // Try all title patterns
+                                    for (pattern in titlePatterns) {
+                                        val match = pattern.find(responseText)
+                                        if (match != null) {
+                                            title = match.groupValues[1].trim()
+                                            break
+                                        }
+                                    }
+                                    
+                                    // Try all question patterns
+                                    for (pattern in questionPatterns) {
+                                        val match = pattern.find(responseText)
+                                        if (match != null) {
+                                            question = match.groupValues[1].trim()
+                                            break
+                                        }
+                                    }
+                                    
+                                    // Try all chapter patterns
+                                    for (pattern in chapterPatterns) {
+                                        val match = pattern.find(responseText)
+                                        if (match != null) {
+                                            val chapterText = match.groupValues[1].trim()
+                                            chapterIds = chapterText.split(",", " ", "\"", "'")
+                                                .map { it.trim() }
+                                                .filter { it.isNotEmpty() && !it.matches(Regex("\\W+")) }
+                                            break
+                                        }
+                                    }
+                                    
+                                    // Fallback to first two eligible chapters if extraction failed
+                                    if (chapterIds.isEmpty()) {
+                                        chapterIds = eligibleChapters.take(2).map { it.chapterId }
+                                    }
+                                    
+                                    if (title != null && question != null) {
+                                        LLMQuestResponse(title, question, chapterIds)
+                                    } else {
+                                        throw Exception("Could not extract title and question from plain text: title=$title, question=$question")
+                                    }
+                                } catch (plainTextError: Exception) {
+                                    println("QUEST_GEN: Plain text extraction failed: ${plainTextError.message}")
+                                    val repairedResponse = JsonParsingHelper.repairJsonSyntax(cleanedResponse, "QUEST_GEN_CONVERGENT")
+                                    println("QUEST_GEN: Final processed JSON: '$repairedResponse'")
+                                    gson.fromJson(repairedResponse, LLMQuestResponse::class.java)
+                                }
+                            } else {
+                                val repairedResponse = JsonParsingHelper.repairJsonSyntax(cleanedResponse, "QUEST_GEN_CONVERGENT")
+                                println("QUEST_GEN: Final processed JSON: '$repairedResponse'")
+                                gson.fromJson(repairedResponse, LLMQuestResponse::class.java)
+                            }
+                        }
                     }
                 } catch (e: TimeoutCancellationException) {
                     println("QUEST_GEN: Convergent quest generation with LLM selection timed out - no quest will be generated")
@@ -392,4 +520,5 @@ class QuestGenerationService @Inject constructor(
             chapterStatsDao.insertOrUpdateChapterStats(updatedStats)
         }
     }
+    
 }
