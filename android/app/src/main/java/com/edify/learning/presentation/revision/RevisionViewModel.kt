@@ -13,6 +13,7 @@ import com.edify.learning.data.model.RevisionSubmission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import android.util.Log
 import javax.inject.Inject
 
 data class RevisionUiState(
@@ -36,9 +37,14 @@ class RevisionViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RevisionUiState())
     val uiState: StateFlow<RevisionUiState> = _uiState.asStateFlow()
     
-    private var currentChapterId: String = ""
+        private var currentChapterId: String = ""
+
+    companion object {
+        private const val TAG = "RevisionViewModel"
+    }
     
-    fun loadExercises(chapterId: String) {
+        fun loadExercises(chapterId: String) {
+        Log.d(TAG, "loadExercises called for chapterId: $chapterId")
         currentChapterId = chapterId
         viewModelScope.launch {
             println("RevisionViewModel: Starting loadExercises for chapterId: '$chapterId'")
@@ -96,7 +102,8 @@ class RevisionViewModel @Inject constructor(
         }
     }
     
-    fun updateUserResponse(chapterId: String, exerciseIndex: Int, response: UserResponse) {
+        fun updateUserResponse(chapterId: String, exerciseIndex: Int, response: UserResponse) {
+        Log.d(TAG, "updateUserResponse called for chapterId: $chapterId, exerciseIndex: $exerciseIndex")
         viewModelScope.launch {
             try {
                 val updatedResponse = response.copy(
@@ -163,7 +170,8 @@ class RevisionViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(error = null)
     }
     
-    fun submitForEvaluation(chapterId: String, exerciseIndex: Int) {
+        fun submitForEvaluation(chapterId: String, exerciseIndex: Int) {
+        Log.d(TAG, "submitForEvaluation called for chapterId: $chapterId, exerciseIndex: $exerciseIndex")
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isEvaluating = true)
@@ -179,8 +187,11 @@ class RevisionViewModel @Inject constructor(
                     return@launch
                 }
                 
+                                Log.d(TAG, "User response: $userResponse")
+
                 val result = when {
-                    !userResponse.textResponse.isNullOrBlank() -> {
+                                        !userResponse.textResponse.isNullOrBlank() -> {
+                        Log.d(TAG, "Evaluating text response.")
                         revisionEvaluationService.evaluateTextResponse(
                             chapterId = chapterId,
                             questionIndex = exerciseIndex,
@@ -189,7 +200,8 @@ class RevisionViewModel @Inject constructor(
                             studentResponse = userResponse.textResponse
                         )
                     }
-                    !userResponse.imageUri.isNullOrBlank() -> {
+                                        !userResponse.imageUri.isNullOrBlank() -> {
+                        Log.d(TAG, "Evaluating image response.")
                         revisionEvaluationService.evaluateImageResponse(
                             chapterId = chapterId,
                             questionIndex = exerciseIndex,
@@ -207,8 +219,11 @@ class RevisionViewModel @Inject constructor(
                     }
                 }
                 
+                                Log.d(TAG, "Evaluation result: $result")
+
                 result.fold(
-                    onSuccess = { submission ->
+                                        onSuccess = { submission ->
+                        Log.d(TAG, "Evaluation successful: $submission")
                         // Update UI state with new submission
                         val currentSubmissions = _uiState.value.revisionSubmissions.toMutableMap()
                         val questionSubmissions = currentSubmissions[exerciseIndex]?.toMutableList() ?: mutableListOf()
@@ -220,7 +235,8 @@ class RevisionViewModel @Inject constructor(
                             isEvaluating = false
                         )
                     },
-                    onFailure = { exception ->
+                                        onFailure = { exception ->
+                        Log.e(TAG, "Evaluation failed", exception)
                         _uiState.value = _uiState.value.copy(
                             isEvaluating = false,
                             error = "Failed to evaluate response: ${exception.message}"

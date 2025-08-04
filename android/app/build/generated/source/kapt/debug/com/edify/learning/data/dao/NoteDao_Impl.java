@@ -182,7 +182,7 @@ public final class NoteDao_Impl implements NoteDao {
   }
 
   @Override
-  public Object insertNote(final Note note, final Continuation<? super Unit> $completion) {
+  public Object insertNote(final Note note, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -196,11 +196,11 @@ public final class NoteDao_Impl implements NoteDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object insertNotes(final List<Note> notes, final Continuation<? super Unit> $completion) {
+  public Object insertNotes(final List<Note> notes, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -214,11 +214,11 @@ public final class NoteDao_Impl implements NoteDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteNote(final Note note, final Continuation<? super Unit> $completion) {
+  public Object deleteNote(final Note note, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -232,11 +232,11 @@ public final class NoteDao_Impl implements NoteDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object updateNote(final Note note, final Continuation<? super Unit> $completion) {
+  public Object updateNote(final Note note, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -250,11 +250,11 @@ public final class NoteDao_Impl implements NoteDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteById(final long id, final Continuation<? super Unit> $completion) {
+  public Object deleteById(final long id, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -275,12 +275,12 @@ public final class NoteDao_Impl implements NoteDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object deleteNotesByChapter(final String chapterId,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -305,11 +305,11 @@ public final class NoteDao_Impl implements NoteDao {
           __preparedStmtOfDeleteNotesByChapter.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteAllNotes(final Continuation<? super Unit> $completion) {
+  public Object deleteAllNotes(final Continuation<? super Unit> arg0) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -328,7 +328,7 @@ public final class NoteDao_Impl implements NoteDao {
           __preparedStmtOfDeleteAllNotes.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
@@ -718,7 +718,7 @@ public final class NoteDao_Impl implements NoteDao {
   }
 
   @Override
-  public Object getNoteById(final String id, final Continuation<? super Note> $completion) {
+  public Object getNoteById(final String id, final Continuation<? super Note> arg1) {
     final String _sql = "SELECT * FROM notes WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -789,7 +789,7 @@ public final class NoteDao_Impl implements NoteDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
@@ -878,7 +878,7 @@ public final class NoteDao_Impl implements NoteDao {
 
   @Override
   public Object getNotesCountByType(final String chapterId, final NoteType type,
-      final Continuation<? super Integer> $completion) {
+      final Continuation<? super Integer> arg2) {
     final String _sql = "SELECT COUNT(*) FROM notes WHERE chapterId = ? AND type = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -919,7 +919,7 @@ public final class NoteDao_Impl implements NoteDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @NonNull

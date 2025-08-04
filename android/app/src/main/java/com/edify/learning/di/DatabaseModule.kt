@@ -62,10 +62,6 @@ object DatabaseModule {
         return database.userResponseDao()
     }
     
-    @Provides
-    fun provideRevisionResponseDao(database: EdifyDatabase): RevisionResponseDao {
-        return database.revisionResponseDao()
-    }
     
     @Provides
     fun provideRevisionSubmissionDao(database: EdifyDatabase): RevisionSubmissionDao {

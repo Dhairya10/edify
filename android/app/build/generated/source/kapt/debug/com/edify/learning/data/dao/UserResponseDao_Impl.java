@@ -153,7 +153,7 @@ public final class UserResponseDao_Impl implements UserResponseDao {
 
   @Override
   public Object insertOrUpdateResponse(final UserResponse response,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -167,12 +167,11 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteResponse(final UserResponse response,
-      final Continuation<? super Unit> $completion) {
+  public Object deleteResponse(final UserResponse response, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -186,12 +185,11 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object updateResponse(final UserResponse response,
-      final Continuation<? super Unit> $completion) {
+  public Object updateResponse(final UserResponse response, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -205,11 +203,11 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteById(final long id, final Continuation<? super Unit> $completion) {
+  public Object deleteById(final long id, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -230,12 +228,12 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object deleteAllResponsesForChapter(final String chapterId,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -260,11 +258,11 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           __preparedStmtOfDeleteAllResponsesForChapter.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteAllResponses(final Continuation<? super Unit> $completion) {
+  public Object deleteAllResponses(final Continuation<? super Unit> arg0) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -283,11 +281,11 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           __preparedStmtOfDeleteAllResponses.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
-  public Object getAllResponses(final Continuation<? super List<UserResponse>> $completion) {
+  public Object getAllResponses(final Continuation<? super List<UserResponse>> arg0) {
     final String _sql = "SELECT * FROM user_responses ORDER BY createdAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -342,7 +340,7 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
@@ -415,7 +413,7 @@ public final class UserResponseDao_Impl implements UserResponseDao {
 
   @Override
   public Object getResponse(final String chapterId, final int exerciseIndex,
-      final Continuation<? super UserResponse> $completion) {
+      final Continuation<? super UserResponse> arg2) {
     final String _sql = "SELECT * FROM user_responses WHERE chapterId = ? AND exerciseIndex = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -478,12 +476,12 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
   public Object getResponseCountForChapter(final String chapterId,
-      final Continuation<? super Integer> $completion) {
+      final Continuation<? super Integer> arg1) {
     final String _sql = "SELECT COUNT(*) FROM user_responses WHERE chapterId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -517,7 +515,7 @@ public final class UserResponseDao_Impl implements UserResponseDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @NonNull

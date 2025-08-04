@@ -25,11 +25,10 @@ interface RevisionSubmissionDao {
     @Update
     suspend fun updateSubmission(submission: RevisionSubmission)
     
-    @Query("UPDATE revision_submissions SET gemmaFeedback = :feedback, gemmaGrade = :grade, isEvaluated = :isEvaluated, evaluatedAt = :evaluatedAt WHERE id = :submissionId")
+    @Query("UPDATE revision_submissions SET gemmaFeedback = :feedback, isEvaluated = :isEvaluated, evaluatedAt = :evaluatedAt WHERE id = :submissionId")
     suspend fun updateSubmissionEvaluation(
         submissionId: Long,
         feedback: String,
-        grade: String,
         isEvaluated: Boolean,
         evaluatedAt: Long
     )

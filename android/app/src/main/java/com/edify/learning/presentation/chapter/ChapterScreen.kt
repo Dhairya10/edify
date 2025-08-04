@@ -128,6 +128,7 @@ fun ChapterScreen(
     onNavigateBack: () -> Unit,
     onNavigateToNotes: (String) -> Unit,
     onNavigateToChat: (String, String?) -> Unit,
+    onNavigateToRevision: (String, String) -> Unit,
     gemmaService: GemmaService,
     translationCacheService: TranslationCacheService
 ) {
@@ -312,6 +313,22 @@ fun ChapterScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.chat_24dp_ffffff_fill0_wght400_grad0_opsz24),
                             contentDescription = "Chat with Gemma",
+                            tint = TextPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    
+                    // Revision button
+                    IconButton(
+                        onClick = {
+                            uiState.chapter?.let { chapter ->
+                                onNavigateToRevision(chapter.id, chapter.title)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.table_lamp_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                            contentDescription = "Revision",
                             tint = TextPrimary,
                             modifier = Modifier.size(24.dp)
                         )

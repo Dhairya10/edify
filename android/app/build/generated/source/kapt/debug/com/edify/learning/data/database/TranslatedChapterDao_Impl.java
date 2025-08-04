@@ -117,7 +117,7 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
 
   @Override
   public Object insertTranslatedChapter(final TranslatedChapter translatedChapter,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -131,13 +131,12 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object updateTranslatedContent(final String chapterId, final String language,
-      final String translatedContent, final long updatedAt,
-      final Continuation<? super Unit> $completion) {
+      final String translatedContent, final long updatedAt, final Continuation<? super Unit> arg4) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -176,12 +175,12 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           __preparedStmtOfUpdateTranslatedContent.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg4);
   }
 
   @Override
   public Object deleteTranslatedChapter(final String chapterId, final String language,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg2) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -212,12 +211,12 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           __preparedStmtOfDeleteTranslatedChapter.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
   public Object deleteAllTranslationsForChapter(final String chapterId,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -242,11 +241,11 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           __preparedStmtOfDeleteAllTranslationsForChapter.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteAllTranslations(final Continuation<? super Unit> $completion) {
+  public Object deleteAllTranslations(final Continuation<? super Unit> arg0) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -265,12 +264,12 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           __preparedStmtOfDeleteAllTranslations.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
   public Object getTranslatedChapter(final String chapterId, final String language,
-      final Continuation<? super TranslatedChapter> $completion) {
+      final Continuation<? super TranslatedChapter> arg2) {
     final String _sql = "SELECT * FROM translated_chapters WHERE chapterId = ? AND language = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -341,7 +340,7 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
@@ -411,7 +410,7 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
   }
 
   @Override
-  public Object getTranslationCount(final Continuation<? super Integer> $completion) {
+  public Object getTranslationCount(final Continuation<? super Integer> arg0) {
     final String _sql = "SELECT COUNT(*) FROM translated_chapters";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -439,12 +438,12 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
   public Object getTranslationsForChapter(final String chapterId,
-      final Continuation<? super List<TranslatedChapter>> $completion) {
+      final Continuation<? super List<TranslatedChapter>> arg1) {
     final String _sql = "SELECT * FROM translated_chapters WHERE chapterId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -509,7 +508,7 @@ public final class TranslatedChapterDao_Impl implements TranslatedChapterDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @NonNull

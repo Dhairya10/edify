@@ -6,7 +6,6 @@ import com.google.gson.reflect.TypeToken
 import com.edify.learning.data.model.ContentItem
 import com.edify.learning.data.model.MessageType
 import com.edify.learning.data.model.NoteType
-import com.edify.learning.data.model.FeedbackCategory
 
 class Converters {
     
@@ -55,13 +54,4 @@ class Converters {
         return gson.fromJson(stringListString, listType)
     }
     
-    @TypeConverter
-    fun fromFeedbackCategory(feedbackCategory: FeedbackCategory?): String? {
-        return feedbackCategory?.name
-    }
-    
-    @TypeConverter
-    fun toFeedbackCategory(feedbackCategory: String?): FeedbackCategory? {
-        return feedbackCategory?.let { FeedbackCategory.valueOf(it) }
-    }
 }

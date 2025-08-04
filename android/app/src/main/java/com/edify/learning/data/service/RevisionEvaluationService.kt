@@ -4,44 +4,36 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import com.edify.learning.data.dao.RevisionSubmissionDao
-import com.edify.learning.data.model.FeedbackCategory
 import com.edify.learning.data.model.RevisionSubmission
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
-
-data class RevisionEvaluationResult(
-    val grade: FeedbackCategory,
-    val feedback: String
-)
-
-data class EvaluationResponse(
-    val grade: String,
-    val feedback: String
-)
 
 @Singleton
 class RevisionEvaluationService @Inject constructor(
     private val context: Context,
     private val gemmaService: GemmaService,
     private val promptService: PromptService,
-    private val revisionSubmissionDao: RevisionSubmissionDao
+        private val revisionSubmissionDao: RevisionSubmissionDao
 ) {
+
+    companion object {
+        private const val TAG = "RevisionEvaluationSvc"
+    }
     
-    private val gson = Gson()
-    
-    suspend fun evaluateTextResponse(
+            suspend fun evaluateTextResponse(
         chapterId: String,
         questionIndex: Int,
         question: String,
         expectedAnswer: String,
-        studentResponse: String
+                studentResponse: String
     ): Result<RevisionSubmission> = withContext(Dispatchers.IO) {
+        Log.d(TAG, "evaluateTextResponse called for chapterId: $chapterId, questionIndex: $questionIndex")
         try {
             // Create initial submission record
             val submission = RevisionSubmission(
@@ -64,20 +56,19 @@ class RevisionEvaluationService @Inject constructor(
             )
             
             return@withContext evaluationResult.fold(
-                onSuccess = { result ->
+                onSuccess = { feedback ->
+                    Log.d(TAG, "Gemma evaluation successful for text response submissionId: $submissionId")
                     // Update submission with evaluation results
                     revisionSubmissionDao.updateSubmissionEvaluation(
                         submissionId = submissionId,
-                        feedback = result.feedback,
-                        grade = result.grade.name,
+                        feedback = feedback,
                         isEvaluated = true,
                         evaluatedAt = System.currentTimeMillis()
                     )
                     
                     val updatedSubmission = submission.copy(
                         id = submissionId,
-                        gemmaFeedback = result.feedback,
-                        gemmaGrade = result.grade,
+                        gemmaFeedback = feedback,
                         isEvaluated = true,
                         evaluatedAt = System.currentTimeMillis()
                     )
@@ -85,21 +76,24 @@ class RevisionEvaluationService @Inject constructor(
                     Result.success(updatedSubmission)
                 },
                 onFailure = { exception ->
+                    Log.e(TAG, "Gemma evaluation failed for text response submissionId: $submissionId", exception)
                     Result.failure(exception)
                 }
             )
         } catch (e: Exception) {
+            Log.e(TAG, "Exception in evaluateTextResponse for chapterId $chapterId", e)
             Result.failure(e)
         }
     }
     
-    suspend fun evaluateImageResponse(
+        suspend fun evaluateImageResponse(
         chapterId: String,
         questionIndex: Int,
         question: String,
         expectedAnswer: String,
-        imageUri: String
+                imageUri: String
     ): Result<RevisionSubmission> = withContext(Dispatchers.IO) {
+        Log.d(TAG, "evaluateImageResponse called for chapterId: $chapterId, questionIndex: $questionIndex")
         try {
             // Create initial submission record
             val submission = RevisionSubmission(
@@ -114,7 +108,8 @@ class RevisionEvaluationService @Inject constructor(
             val submissionId = revisionSubmissionDao.insertSubmission(submission)
             
             // Load and process image
-            val bitmap = loadBitmapFromUri(imageUri)
+                        val bitmap = loadBitmapFromUri(imageUri)
+            Log.d(TAG, "Loaded bitmap for submissionId: $submissionId")
             if (bitmap == null) {
                 return@withContext Result.failure(Exception("Failed to load image from URI: $imageUri"))
             }
@@ -127,20 +122,19 @@ class RevisionEvaluationService @Inject constructor(
             )
             
             return@withContext evaluationResult.fold(
-                onSuccess = { result ->
+                onSuccess = { feedback ->
+                    Log.d(TAG, "Gemma evaluation successful for image response submissionId: $submissionId")
                     // Update submission with evaluation results
                     revisionSubmissionDao.updateSubmissionEvaluation(
                         submissionId = submissionId,
-                        feedback = result.feedback,
-                        grade = result.grade.name,
+                        feedback = feedback,
                         isEvaluated = true,
                         evaluatedAt = System.currentTimeMillis()
                     )
                     
                     val updatedSubmission = submission.copy(
                         id = submissionId,
-                        gemmaFeedback = result.feedback,
-                        gemmaGrade = result.grade,
+                        gemmaFeedback = feedback,
                         isEvaluated = true,
                         evaluatedAt = System.currentTimeMillis()
                     )
@@ -148,10 +142,12 @@ class RevisionEvaluationService @Inject constructor(
                     Result.success(updatedSubmission)
                 },
                 onFailure = { exception ->
+                    Log.e(TAG, "Gemma evaluation failed for image response submissionId: $submissionId", exception)
                     Result.failure(exception)
                 }
             )
         } catch (e: Exception) {
+            Log.e(TAG, "Exception in evaluateImageResponse for chapterId $chapterId", e)
             Result.failure(e)
         }
     }
@@ -161,7 +157,7 @@ class RevisionEvaluationService @Inject constructor(
         expectedAnswer: String,
         studentResponse: String,
         isImageResponse: Boolean
-    ): Result<RevisionEvaluationResult> {
+    ): Result<String> {
         return try {
             val promptKey = if (isImageResponse) "revision_image_evaluation" else "revision_text_evaluation"
             val prompt = promptService.getFormattedPrompt(
@@ -175,18 +171,19 @@ class RevisionEvaluationService @Inject constructor(
             
             return gemmaResult.fold(
                 onSuccess = { response ->
-                    parseEvaluationResponse(response)
+                    // Return the response directly as it's now plain text
+                    Result.success(response.trim())
                 },
                 onFailure = { _ ->
                     // Fallback evaluation if Gemma fails
-                    val fallbackResult = createFallbackEvaluation(studentResponse)
-                    Result.success(fallbackResult)
+                    val fallbackFeedback = createFallbackEvaluation(studentResponse)
+                    Result.success(fallbackFeedback)
                 }
             )
         } catch (e: Exception) {
             // Create fallback evaluation
-            val fallbackResult = createFallbackEvaluation(studentResponse)
-            Result.success(fallbackResult)
+            val fallbackFeedback = createFallbackEvaluation(studentResponse)
+            Result.success(fallbackFeedback)
         }
     }
     
@@ -194,7 +191,7 @@ class RevisionEvaluationService @Inject constructor(
         question: String,
         expectedAnswer: String,
         imageBitmap: Bitmap
-    ): Result<RevisionEvaluationResult> {
+    ): Result<String> {
         return try {
             val prompt = promptService.getFormattedPrompt(
                 "revision_image_evaluation",
@@ -206,93 +203,27 @@ class RevisionEvaluationService @Inject constructor(
             
             return gemmaResult.fold(
                 onSuccess = { response ->
-                    parseEvaluationResponse(response)
+                    // Return the response directly as it's now plain text
+                    Result.success(response.trim())
                 },
                 onFailure = { _ ->
                     // Fallback evaluation for image
-                    val fallbackResult = RevisionEvaluationResult(
-                        grade = FeedbackCategory.GOOD_JOB,
-                        feedback = "Thank you for submitting your handwritten work! Your effort shows dedication to learning. Please review the expected answer to ensure you've covered all key points."
-                    )
-                    Result.success(fallbackResult)
+                    val fallbackFeedback = "Thank you for submitting your handwritten work! Your effort shows dedication to learning. Please review the expected answer to ensure you've covered all key points."
+                    Result.success(fallbackFeedback)
                 }
             )
         } catch (e: Exception) {
-            val fallbackResult = RevisionEvaluationResult(
-                grade = FeedbackCategory.GOOD_JOB,
-                feedback = "Thank you for submitting your handwritten work! Your effort shows dedication to learning. Please review the expected answer to ensure you've covered all key points."
-            )
-            Result.success(fallbackResult)
+            val fallbackFeedback = "Thank you for submitting your handwritten work! Your effort shows dedication to learning. Please review the expected answer to ensure you've covered all key points."
+            Result.success(fallbackFeedback)
         }
     }
     
-    private fun parseEvaluationResponse(gemmaResponse: String): Result<RevisionEvaluationResult> {
-        return try {
-            // Try to extract JSON from the response
-            val jsonStart = gemmaResponse.indexOf('{')
-            val jsonEnd = gemmaResponse.lastIndexOf('}') + 1
-            
-            if (jsonStart == -1 || jsonEnd <= jsonStart) {
-                throw JsonSyntaxException("No valid JSON found in response")
-            }
-            
-            val jsonString = gemmaResponse.substring(jsonStart, jsonEnd)
-            val evaluationResponse = gson.fromJson(jsonString, EvaluationResponse::class.java)
-            
-            val grade = when (evaluationResponse.grade.uppercase()) {
-                "EXCELLENT" -> FeedbackCategory.EXCELLENT
-                "GOOD_JOB" -> FeedbackCategory.GOOD_JOB
-                "NEEDS_IMPROVEMENT" -> FeedbackCategory.NEEDS_IMPROVEMENT
-                else -> FeedbackCategory.GOOD_JOB // Default fallback
-            }
-            
-            val result = RevisionEvaluationResult(
-                grade = grade,
-                feedback = evaluationResponse.feedback.take(200) // Limit feedback length
-            )
-            
-            Result.success(result)
-        } catch (e: Exception) {
-            // If JSON parsing fails, try to extract grade and feedback using regex
-            try {
-                val gradePattern = "(?i)grade[\"\\s:]*[\"\\s]*([A-Z_]+)".toRegex()
-                val feedbackPattern = "(?i)feedback[\"\\s:]*[\"\\s]*([^\"\\n]+)".toRegex()
-                
-                val gradeMatch = gradePattern.find(gemmaResponse)
-                val feedbackMatch = feedbackPattern.find(gemmaResponse)
-                
-                val grade = when (gradeMatch?.groupValues?.get(1)?.uppercase()) {
-                    "EXCELLENT" -> FeedbackCategory.EXCELLENT
-                    "GOOD_JOB" -> FeedbackCategory.GOOD_JOB
-                    "NEEDS_IMPROVEMENT" -> FeedbackCategory.NEEDS_IMPROVEMENT
-                    else -> FeedbackCategory.GOOD_JOB
-                }
-                
-                val feedback = feedbackMatch?.groupValues?.get(1)?.trim()?.take(200) 
-                    ?: "Great effort on your response! Keep practicing to improve your understanding."
-                
-                val result = RevisionEvaluationResult(grade = grade, feedback = feedback)
-                Result.success(result)
-            } catch (regexException: Exception) {
-                Result.failure(Exception("Failed to parse evaluation response: ${e.message}"))
-            }
+    private fun createFallbackEvaluation(studentResponse: String): String {
+        return when {
+            studentResponse.length < 20 -> "Your response shows effort, but could benefit from more detail. Try to elaborate on your key points and provide specific examples."
+            studentResponse.length > 100 -> "Good work on your response! You've shown understanding of the topic. Review the expected answer to see if you missed any important points."
+            else -> "Good work on your response! You've shown understanding of the topic. Review the expected answer to see if you missed any important points."
         }
-    }
-    
-    private fun createFallbackEvaluation(studentResponse: String): RevisionEvaluationResult {
-        val grade = when {
-            studentResponse.length < 20 -> FeedbackCategory.NEEDS_IMPROVEMENT
-            studentResponse.length > 100 -> FeedbackCategory.GOOD_JOB
-            else -> FeedbackCategory.GOOD_JOB
-        }
-        
-        val feedback = when (grade) {
-            FeedbackCategory.NEEDS_IMPROVEMENT -> "Your response shows effort, but could benefit from more detail. Try to elaborate on your key points and provide specific examples."
-            FeedbackCategory.GOOD_JOB -> "Good work on your response! You've shown understanding of the topic. Review the expected answer to see if you missed any important points."
-            FeedbackCategory.EXCELLENT -> "Excellent response! You've demonstrated strong understanding and provided thoughtful analysis."
-        }
-        
-        return RevisionEvaluationResult(grade = grade, feedback = feedback)
     }
     
     private fun loadBitmapFromUri(imageUri: String): Bitmap? {
@@ -313,63 +244,53 @@ class RevisionEvaluationService @Inject constructor(
         }
     }
     
-    suspend fun getRevisionHistory(chapterId: String, questionIndex: Int): List<RevisionSubmission> {
-        return revisionSubmissionDao.getSubmissionsForQuestion(chapterId, questionIndex)
-            .let { flow ->
-                // For now, return empty list. In a real implementation, you'd collect from the flow
-                emptyList()
-            }
+    suspend fun getRevisionHistory(chapterId: String, exerciseIndex: Int): List<RevisionSubmission> {
+        return try {
+            revisionSubmissionDao.getSubmissionsForQuestion(chapterId, exerciseIndex)
+                .first() // Convert Flow to List by taking the first emission
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
     
-    suspend fun processAllPendingEvaluations() {
-        val pendingSubmissions = revisionSubmissionDao.getPendingEvaluations()
+        suspend fun processAllPendingEvaluations() {
+        Log.d(TAG, "Starting processAllPendingEvaluations")
+                val pendingSubmissions = revisionSubmissionDao.getPendingEvaluations()
+        Log.d(TAG, "Found ${pendingSubmissions.size} pending submissions to process.")
         
         pendingSubmissions.forEach { submission ->
             try {
-                when {
-                    !submission.userTextResponse.isNullOrBlank() -> {
-                        evaluateWithGemma(
+                val feedback = if (submission.userTextResponse != null) {
+                    evaluateWithGemma(
+                        question = submission.question,
+                        expectedAnswer = submission.expectedAnswer,
+                        studentResponse = submission.userTextResponse,
+                        isImageResponse = false
+                    ).getOrElse { createFallbackEvaluation(submission.userTextResponse) }
+                } else if (submission.userImageUri != null) {
+                    val bitmap = loadBitmapFromUri(submission.userImageUri)
+                    if (bitmap != null) {
+                        evaluateImageWithGemma(
                             question = submission.question,
                             expectedAnswer = submission.expectedAnswer,
-                            studentResponse = submission.userTextResponse,
-                            isImageResponse = false
-                        ).fold(
-                            onSuccess = { result ->
-                                revisionSubmissionDao.updateSubmissionEvaluation(
-                                    submissionId = submission.id,
-                                    feedback = result.feedback,
-                                    grade = result.grade.name,
-                                    isEvaluated = true,
-                                    evaluatedAt = System.currentTimeMillis()
-                                )
-                            },
-                            onFailure = { /* Handle error - maybe log it */ }
-                        )
+                            imageBitmap = bitmap
+                        ).getOrElse { "Thank you for your submission! Please review the expected answer." }
+                    } else {
+                        "Thank you for your submission! Please review the expected answer."
                     }
-                    !submission.userImageUri.isNullOrBlank() -> {
-                        val bitmap = loadBitmapFromUri(submission.userImageUri)
-                        bitmap?.let { bmp ->
-                            evaluateImageWithGemma(
-                                question = submission.question,
-                                expectedAnswer = submission.expectedAnswer,
-                                imageBitmap = bmp
-                            ).fold(
-                                onSuccess = { result ->
-                                    revisionSubmissionDao.updateSubmissionEvaluation(
-                                        submissionId = submission.id,
-                                        feedback = result.feedback,
-                                        grade = result.grade.name,
-                                        isEvaluated = true,
-                                        evaluatedAt = System.currentTimeMillis()
-                                    )
-                                },
-                                onFailure = { /* Handle error */ }
-                            )
-                        }
-                    }
+                } else {
+                    "Thank you for your submission! Please review the expected answer."
                 }
+                
+                revisionSubmissionDao.updateSubmissionEvaluation(
+                    submissionId = submission.id,
+                    feedback = feedback,
+                    isEvaluated = true,
+                    evaluatedAt = System.currentTimeMillis()
+                )
             } catch (e: Exception) {
-                // Log error and continue with next submission
+                // Log error but continue processing other submissions
+                e.printStackTrace()
             }
         }
     }

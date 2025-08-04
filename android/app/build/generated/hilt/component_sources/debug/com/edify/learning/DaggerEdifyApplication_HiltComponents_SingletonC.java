@@ -11,7 +11,6 @@ import com.edify.learning.data.dao.ChapterStatsDao;
 import com.edify.learning.data.dao.ChatDao;
 import com.edify.learning.data.dao.GeneratedQuestDao;
 import com.edify.learning.data.dao.NoteDao;
-import com.edify.learning.data.dao.RevisionResponseDao;
 import com.edify.learning.data.dao.RevisionSubmissionDao;
 import com.edify.learning.data.dao.SubjectDao;
 import com.edify.learning.data.dao.UserProfileDao;
@@ -38,7 +37,6 @@ import com.edify.learning.di.DatabaseModule_ProvideNoteDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvidePromptServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideQuestGenerationServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideRevisionEvaluationServiceFactory;
-import com.edify.learning.di.DatabaseModule_ProvideRevisionResponseDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideRevisionSubmissionDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideSubjectDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideTranslatedChapterDaoFactory;
@@ -702,10 +700,6 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       return DatabaseModule_ProvideUserResponseDaoFactory.provideUserResponseDao(provideEdifyDatabaseProvider.get());
     }
 
-    private RevisionResponseDao revisionResponseDao() {
-      return DatabaseModule_ProvideRevisionResponseDaoFactory.provideRevisionResponseDao(provideEdifyDatabaseProvider.get());
-    }
-
     private ChapterStatsDao chapterStatsDao() {
       return DatabaseModule_ProvideChapterStatsDaoFactory.provideChapterStatsDao(provideEdifyDatabaseProvider.get());
     }
@@ -775,7 +769,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       public T get() {
         switch (id) {
           case 0: // com.edify.learning.data.repository.LearningRepository 
-          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.revisionResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get());
+          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get());
 
           case 1: // com.edify.learning.data.database.EdifyDatabase 
           return (T) DatabaseModule_ProvideEdifyDatabaseFactory.provideEdifyDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));

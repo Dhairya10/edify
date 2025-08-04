@@ -16,14 +16,13 @@ import com.edify.learning.data.model.RevisionSubmission
         Note::class,
         ChatMessage::class,
         UserResponse::class,
-        RevisionResponse::class,
         RevisionSubmission::class,
         ChapterStats::class,
         UserProfile::class,
         GeneratedQuest::class,
         TranslatedChapter::class
     ],
-    version = 15,
+    version = 17,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -34,7 +33,6 @@ abstract class EdifyDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun chatDao(): ChatDao
     abstract fun userResponseDao(): UserResponseDao
-    abstract fun revisionResponseDao(): RevisionResponseDao
     abstract fun revisionSubmissionDao(): RevisionSubmissionDao
     abstract fun chapterStatsDao(): ChapterStatsDao
     abstract fun userProfileDao(): UserProfileDao

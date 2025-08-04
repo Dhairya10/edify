@@ -13,8 +13,6 @@ import androidx.room.SharedSQLiteStatement;
 import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
-import com.edify.learning.data.database.Converters;
-import com.edify.learning.data.model.FeedbackCategory;
 import com.edify.learning.data.model.RevisionSubmission;
 import java.lang.Class;
 import java.lang.Exception;
@@ -40,8 +38,6 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
 
   private final EntityInsertionAdapter<RevisionSubmission> __insertionAdapterOfRevisionSubmission;
 
-  private final Converters __converters = new Converters();
-
   private final EntityDeletionOrUpdateAdapter<RevisionSubmission> __deletionAdapterOfRevisionSubmission;
 
   private final EntityDeletionOrUpdateAdapter<RevisionSubmission> __updateAdapterOfRevisionSubmission;
@@ -56,7 +52,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR ABORT INTO `revision_submissions` (`id`,`chapterId`,`questionIndex`,`question`,`expectedAnswer`,`userTextResponse`,`userImageUri`,`gemmaFeedback`,`gemmaGrade`,`isEvaluated`,`submittedAt`,`evaluatedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR ABORT INTO `revision_submissions` (`id`,`chapterId`,`questionIndex`,`question`,`expectedAnswer`,`userTextResponse`,`userImageUri`,`gemmaFeedback`,`isEvaluated`,`submittedAt`,`evaluatedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -94,19 +90,13 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
         } else {
           statement.bindString(8, entity.getGemmaFeedback());
         }
-        final String _tmp = __converters.fromFeedbackCategory(entity.getGemmaGrade());
-        if (_tmp == null) {
-          statement.bindNull(9);
-        } else {
-          statement.bindString(9, _tmp);
-        }
-        final int _tmp_1 = entity.isEvaluated() ? 1 : 0;
-        statement.bindLong(10, _tmp_1);
-        statement.bindLong(11, entity.getSubmittedAt());
+        final int _tmp = entity.isEvaluated() ? 1 : 0;
+        statement.bindLong(9, _tmp);
+        statement.bindLong(10, entity.getSubmittedAt());
         if (entity.getEvaluatedAt() == null) {
-          statement.bindNull(12);
+          statement.bindNull(11);
         } else {
-          statement.bindLong(12, entity.getEvaluatedAt());
+          statement.bindLong(11, entity.getEvaluatedAt());
         }
       }
     };
@@ -127,7 +117,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `revision_submissions` SET `id` = ?,`chapterId` = ?,`questionIndex` = ?,`question` = ?,`expectedAnswer` = ?,`userTextResponse` = ?,`userImageUri` = ?,`gemmaFeedback` = ?,`gemmaGrade` = ?,`isEvaluated` = ?,`submittedAt` = ?,`evaluatedAt` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `revision_submissions` SET `id` = ?,`chapterId` = ?,`questionIndex` = ?,`question` = ?,`expectedAnswer` = ?,`userTextResponse` = ?,`userImageUri` = ?,`gemmaFeedback` = ?,`isEvaluated` = ?,`submittedAt` = ?,`evaluatedAt` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -165,28 +155,22 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
         } else {
           statement.bindString(8, entity.getGemmaFeedback());
         }
-        final String _tmp = __converters.fromFeedbackCategory(entity.getGemmaGrade());
-        if (_tmp == null) {
-          statement.bindNull(9);
-        } else {
-          statement.bindString(9, _tmp);
-        }
-        final int _tmp_1 = entity.isEvaluated() ? 1 : 0;
-        statement.bindLong(10, _tmp_1);
-        statement.bindLong(11, entity.getSubmittedAt());
+        final int _tmp = entity.isEvaluated() ? 1 : 0;
+        statement.bindLong(9, _tmp);
+        statement.bindLong(10, entity.getSubmittedAt());
         if (entity.getEvaluatedAt() == null) {
-          statement.bindNull(12);
+          statement.bindNull(11);
         } else {
-          statement.bindLong(12, entity.getEvaluatedAt());
+          statement.bindLong(11, entity.getEvaluatedAt());
         }
-        statement.bindLong(13, entity.getId());
+        statement.bindLong(12, entity.getId());
       }
     };
     this.__preparedStmtOfUpdateSubmissionEvaluation = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
       public String createQuery() {
-        final String _query = "UPDATE revision_submissions SET gemmaFeedback = ?, gemmaGrade = ?, isEvaluated = ?, evaluatedAt = ? WHERE id = ?";
+        final String _query = "UPDATE revision_submissions SET gemmaFeedback = ?, isEvaluated = ?, evaluatedAt = ? WHERE id = ?";
         return _query;
       }
     };
@@ -202,7 +186,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
 
   @Override
   public Object insertSubmission(final RevisionSubmission submission,
-      final Continuation<? super Long> $completion) {
+      final Continuation<? super Long> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Long>() {
       @Override
       @NonNull
@@ -216,12 +200,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object deleteSubmission(final RevisionSubmission submission,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -235,12 +219,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object updateSubmission(final RevisionSubmission submission,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -254,13 +238,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object updateSubmissionEvaluation(final long submissionId, final String feedback,
-      final String grade, final boolean isEvaluated, final long evaluatedAt,
-      final Continuation<? super Unit> $completion) {
+      final boolean isEvaluated, final long evaluatedAt, final Continuation<? super Unit> arg4) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -273,17 +256,11 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _stmt.bindString(_argIndex, feedback);
         }
         _argIndex = 2;
-        if (grade == null) {
-          _stmt.bindNull(_argIndex);
-        } else {
-          _stmt.bindString(_argIndex, grade);
-        }
-        _argIndex = 3;
         final int _tmp = isEvaluated ? 1 : 0;
         _stmt.bindLong(_argIndex, _tmp);
-        _argIndex = 4;
+        _argIndex = 3;
         _stmt.bindLong(_argIndex, evaluatedAt);
-        _argIndex = 5;
+        _argIndex = 4;
         _stmt.bindLong(_argIndex, submissionId);
         try {
           __db.beginTransaction();
@@ -298,12 +275,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __preparedStmtOfUpdateSubmissionEvaluation.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg4);
   }
 
   @Override
   public Object deleteSubmissionsForChapter(final String chapterId,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -328,7 +305,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __preparedStmtOfDeleteSubmissionsForChapter.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
@@ -355,7 +332,6 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           final int _cursorIndexOfUserTextResponse = CursorUtil.getColumnIndexOrThrow(_cursor, "userTextResponse");
           final int _cursorIndexOfUserImageUri = CursorUtil.getColumnIndexOrThrow(_cursor, "userImageUri");
           final int _cursorIndexOfGemmaFeedback = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaFeedback");
-          final int _cursorIndexOfGemmaGrade = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaGrade");
           final int _cursorIndexOfIsEvaluated = CursorUtil.getColumnIndexOrThrow(_cursor, "isEvaluated");
           final int _cursorIndexOfSubmittedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "submittedAt");
           final int _cursorIndexOfEvaluatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "evaluatedAt");
@@ -402,18 +378,10 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpGemmaFeedback = _cursor.getString(_cursorIndexOfGemmaFeedback);
             }
-            final FeedbackCategory _tmpGemmaGrade;
-            final String _tmp;
-            if (_cursor.isNull(_cursorIndexOfGemmaGrade)) {
-              _tmp = null;
-            } else {
-              _tmp = _cursor.getString(_cursorIndexOfGemmaGrade);
-            }
-            _tmpGemmaGrade = __converters.toFeedbackCategory(_tmp);
             final boolean _tmpIsEvaluated;
-            final int _tmp_1;
-            _tmp_1 = _cursor.getInt(_cursorIndexOfIsEvaluated);
-            _tmpIsEvaluated = _tmp_1 != 0;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsEvaluated);
+            _tmpIsEvaluated = _tmp != 0;
             final long _tmpSubmittedAt;
             _tmpSubmittedAt = _cursor.getLong(_cursorIndexOfSubmittedAt);
             final Long _tmpEvaluatedAt;
@@ -422,7 +390,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpEvaluatedAt = _cursor.getLong(_cursorIndexOfEvaluatedAt);
             }
-            _item = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpGemmaGrade,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
+            _item = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
             _result.add(_item);
           }
           return _result;
@@ -465,7 +433,6 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           final int _cursorIndexOfUserTextResponse = CursorUtil.getColumnIndexOrThrow(_cursor, "userTextResponse");
           final int _cursorIndexOfUserImageUri = CursorUtil.getColumnIndexOrThrow(_cursor, "userImageUri");
           final int _cursorIndexOfGemmaFeedback = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaFeedback");
-          final int _cursorIndexOfGemmaGrade = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaGrade");
           final int _cursorIndexOfIsEvaluated = CursorUtil.getColumnIndexOrThrow(_cursor, "isEvaluated");
           final int _cursorIndexOfSubmittedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "submittedAt");
           final int _cursorIndexOfEvaluatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "evaluatedAt");
@@ -512,18 +479,10 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpGemmaFeedback = _cursor.getString(_cursorIndexOfGemmaFeedback);
             }
-            final FeedbackCategory _tmpGemmaGrade;
-            final String _tmp;
-            if (_cursor.isNull(_cursorIndexOfGemmaGrade)) {
-              _tmp = null;
-            } else {
-              _tmp = _cursor.getString(_cursorIndexOfGemmaGrade);
-            }
-            _tmpGemmaGrade = __converters.toFeedbackCategory(_tmp);
             final boolean _tmpIsEvaluated;
-            final int _tmp_1;
-            _tmp_1 = _cursor.getInt(_cursorIndexOfIsEvaluated);
-            _tmpIsEvaluated = _tmp_1 != 0;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsEvaluated);
+            _tmpIsEvaluated = _tmp != 0;
             final long _tmpSubmittedAt;
             _tmpSubmittedAt = _cursor.getLong(_cursorIndexOfSubmittedAt);
             final Long _tmpEvaluatedAt;
@@ -532,7 +491,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpEvaluatedAt = _cursor.getLong(_cursorIndexOfEvaluatedAt);
             }
-            _item = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpGemmaGrade,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
+            _item = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
             _result.add(_item);
           }
           return _result;
@@ -550,7 +509,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
 
   @Override
   public Object getLatestSubmissionForQuestion(final String chapterId, final int questionIndex,
-      final Continuation<? super RevisionSubmission> $completion) {
+      final Continuation<? super RevisionSubmission> arg2) {
     final String _sql = "SELECT * FROM revision_submissions WHERE chapterId = ? AND questionIndex = ? ORDER BY submittedAt DESC LIMIT 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -576,7 +535,6 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           final int _cursorIndexOfUserTextResponse = CursorUtil.getColumnIndexOrThrow(_cursor, "userTextResponse");
           final int _cursorIndexOfUserImageUri = CursorUtil.getColumnIndexOrThrow(_cursor, "userImageUri");
           final int _cursorIndexOfGemmaFeedback = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaFeedback");
-          final int _cursorIndexOfGemmaGrade = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaGrade");
           final int _cursorIndexOfIsEvaluated = CursorUtil.getColumnIndexOrThrow(_cursor, "isEvaluated");
           final int _cursorIndexOfSubmittedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "submittedAt");
           final int _cursorIndexOfEvaluatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "evaluatedAt");
@@ -622,18 +580,10 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpGemmaFeedback = _cursor.getString(_cursorIndexOfGemmaFeedback);
             }
-            final FeedbackCategory _tmpGemmaGrade;
-            final String _tmp;
-            if (_cursor.isNull(_cursorIndexOfGemmaGrade)) {
-              _tmp = null;
-            } else {
-              _tmp = _cursor.getString(_cursorIndexOfGemmaGrade);
-            }
-            _tmpGemmaGrade = __converters.toFeedbackCategory(_tmp);
             final boolean _tmpIsEvaluated;
-            final int _tmp_1;
-            _tmp_1 = _cursor.getInt(_cursorIndexOfIsEvaluated);
-            _tmpIsEvaluated = _tmp_1 != 0;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsEvaluated);
+            _tmpIsEvaluated = _tmp != 0;
             final long _tmpSubmittedAt;
             _tmpSubmittedAt = _cursor.getLong(_cursorIndexOfSubmittedAt);
             final Long _tmpEvaluatedAt;
@@ -642,7 +592,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpEvaluatedAt = _cursor.getLong(_cursorIndexOfEvaluatedAt);
             }
-            _result = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpGemmaGrade,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
+            _result = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
           } else {
             _result = null;
           }
@@ -652,12 +602,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
   public Object getSubmissionById(final long submissionId,
-      final Continuation<? super RevisionSubmission> $completion) {
+      final Continuation<? super RevisionSubmission> arg1) {
     final String _sql = "SELECT * FROM revision_submissions WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -677,7 +627,6 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           final int _cursorIndexOfUserTextResponse = CursorUtil.getColumnIndexOrThrow(_cursor, "userTextResponse");
           final int _cursorIndexOfUserImageUri = CursorUtil.getColumnIndexOrThrow(_cursor, "userImageUri");
           final int _cursorIndexOfGemmaFeedback = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaFeedback");
-          final int _cursorIndexOfGemmaGrade = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaGrade");
           final int _cursorIndexOfIsEvaluated = CursorUtil.getColumnIndexOrThrow(_cursor, "isEvaluated");
           final int _cursorIndexOfSubmittedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "submittedAt");
           final int _cursorIndexOfEvaluatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "evaluatedAt");
@@ -723,18 +672,10 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpGemmaFeedback = _cursor.getString(_cursorIndexOfGemmaFeedback);
             }
-            final FeedbackCategory _tmpGemmaGrade;
-            final String _tmp;
-            if (_cursor.isNull(_cursorIndexOfGemmaGrade)) {
-              _tmp = null;
-            } else {
-              _tmp = _cursor.getString(_cursorIndexOfGemmaGrade);
-            }
-            _tmpGemmaGrade = __converters.toFeedbackCategory(_tmp);
             final boolean _tmpIsEvaluated;
-            final int _tmp_1;
-            _tmp_1 = _cursor.getInt(_cursorIndexOfIsEvaluated);
-            _tmpIsEvaluated = _tmp_1 != 0;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsEvaluated);
+            _tmpIsEvaluated = _tmp != 0;
             final long _tmpSubmittedAt;
             _tmpSubmittedAt = _cursor.getLong(_cursorIndexOfSubmittedAt);
             final Long _tmpEvaluatedAt;
@@ -743,7 +684,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpEvaluatedAt = _cursor.getLong(_cursorIndexOfEvaluatedAt);
             }
-            _result = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpGemmaGrade,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
+            _result = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
           } else {
             _result = null;
           }
@@ -753,12 +694,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object getEvaluatedSubmissionsCount(final String chapterId,
-      final Continuation<? super Integer> $completion) {
+      final Continuation<? super Integer> arg1) {
     final String _sql = "SELECT COUNT(*) FROM revision_submissions WHERE chapterId = ? AND isEvaluated = 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -792,12 +733,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object getUniqueQuestionsAnswered(final String chapterId,
-      final Continuation<? super Integer> $completion) {
+      final Continuation<? super Integer> arg1) {
     final String _sql = "SELECT COUNT(DISTINCT questionIndex) FROM revision_submissions WHERE chapterId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -831,12 +772,11 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object getPendingEvaluations(
-      final Continuation<? super List<RevisionSubmission>> $completion) {
+  public Object getPendingEvaluations(final Continuation<? super List<RevisionSubmission>> arg0) {
     final String _sql = "SELECT * FROM revision_submissions WHERE isEvaluated = 0 ORDER BY submittedAt ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -854,7 +794,6 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           final int _cursorIndexOfUserTextResponse = CursorUtil.getColumnIndexOrThrow(_cursor, "userTextResponse");
           final int _cursorIndexOfUserImageUri = CursorUtil.getColumnIndexOrThrow(_cursor, "userImageUri");
           final int _cursorIndexOfGemmaFeedback = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaFeedback");
-          final int _cursorIndexOfGemmaGrade = CursorUtil.getColumnIndexOrThrow(_cursor, "gemmaGrade");
           final int _cursorIndexOfIsEvaluated = CursorUtil.getColumnIndexOrThrow(_cursor, "isEvaluated");
           final int _cursorIndexOfSubmittedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "submittedAt");
           final int _cursorIndexOfEvaluatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "evaluatedAt");
@@ -901,18 +840,10 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpGemmaFeedback = _cursor.getString(_cursorIndexOfGemmaFeedback);
             }
-            final FeedbackCategory _tmpGemmaGrade;
-            final String _tmp;
-            if (_cursor.isNull(_cursorIndexOfGemmaGrade)) {
-              _tmp = null;
-            } else {
-              _tmp = _cursor.getString(_cursorIndexOfGemmaGrade);
-            }
-            _tmpGemmaGrade = __converters.toFeedbackCategory(_tmp);
             final boolean _tmpIsEvaluated;
-            final int _tmp_1;
-            _tmp_1 = _cursor.getInt(_cursorIndexOfIsEvaluated);
-            _tmpIsEvaluated = _tmp_1 != 0;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsEvaluated);
+            _tmpIsEvaluated = _tmp != 0;
             final long _tmpSubmittedAt;
             _tmpSubmittedAt = _cursor.getLong(_cursorIndexOfSubmittedAt);
             final Long _tmpEvaluatedAt;
@@ -921,7 +852,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
             } else {
               _tmpEvaluatedAt = _cursor.getLong(_cursorIndexOfEvaluatedAt);
             }
-            _item = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpGemmaGrade,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
+            _item = new RevisionSubmission(_tmpId,_tmpChapterId,_tmpQuestionIndex,_tmpQuestion,_tmpExpectedAnswer,_tmpUserTextResponse,_tmpUserImageUri,_tmpGemmaFeedback,_tmpIsEvaluated,_tmpSubmittedAt,_tmpEvaluatedAt);
             _result.add(_item);
           }
           return _result;
@@ -930,7 +861,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @NonNull

@@ -27,17 +27,10 @@ data class RevisionSubmission(
     val userTextResponse: String? = null,
     val userImageUri: String? = null,
     val gemmaFeedback: String? = null,
-    val gemmaGrade: FeedbackCategory? = null,
     val isEvaluated: Boolean = false,
     val submittedAt: Long = System.currentTimeMillis(),
     val evaluatedAt: Long? = null
 )
-
-enum class FeedbackCategory(val displayName: String) {
-    NEEDS_IMPROVEMENT("Needs Improvement"),
-    GOOD_JOB("Good Job"), 
-    EXCELLENT("Excellent")
-}
 
 data class RevisionHistory(
     val chapterId: String,
@@ -45,10 +38,6 @@ data class RevisionHistory(
     val question: String,
     val expectedAnswer: String,
     val submissions: List<RevisionSubmission> = emptyList(),
-    val latestSubmission: RevisionSubmission? = submissions.lastOrNull(),
-    val totalSubmissions: Int = submissions.size,
-    val hasImproved: Boolean = submissions.size >= 2 && 
-        submissions.takeLast(2).let { recent ->
-            recent.size == 2 && recent[1].gemmaGrade?.ordinal ?: -1 > recent[0].gemmaGrade?.ordinal ?: -1
-        }
+    val latestSubmission: RevisionSubmission? = submissions.maxByOrNull { it.submittedAt },
+    val totalSubmissions: Int = submissions.size
 )
