@@ -340,9 +340,8 @@ fun QuestionScreen(
                                     model = uri,
                                     contentDescription = "Uploaded response image",
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 250.dp),
-                                    contentScale = ContentScale.Crop
+                                        .wrapContentWidth(Alignment.Start),
+                                    contentScale = ContentScale.Fit
                                 )
                             }
                         }
