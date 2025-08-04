@@ -8,6 +8,8 @@ import com.edify.learning.data.model.UserAction
 import com.edify.learning.data.repository.LearningRepository
 import com.edify.learning.data.repository.QuestRepository
 import com.edify.learning.data.service.QuestGenerationService
+import com.edify.learning.data.service.RevisionEvaluationService
+import com.edify.learning.data.model.RevisionSubmission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,7 +19,9 @@ data class RevisionUiState(
     val isLoading: Boolean = false,
     val exercises: List<Exercise> = emptyList(),
     val userResponses: Map<Int, UserResponse> = emptyMap(),
+    val revisionSubmissions: Map<Int, List<RevisionSubmission>> = emptyMap(),
     val completedCount: Int = 0,
+    val isEvaluating: Boolean = false,
     val error: String? = null
 )
 
@@ -25,7 +29,8 @@ data class RevisionUiState(
 class RevisionViewModel @Inject constructor(
     private val repository: LearningRepository,
     private val questRepository: QuestRepository,
-    private val questGenerationService: QuestGenerationService
+    private val questGenerationService: QuestGenerationService,
+    private val revisionEvaluationService: RevisionEvaluationService
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(RevisionUiState())
@@ -156,5 +161,97 @@ class RevisionViewModel @Inject constructor(
     
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    fun submitForEvaluation(chapterId: String, exerciseIndex: Int) {
+        viewModelScope.launch {
+            try {
+                _uiState.value = _uiState.value.copy(isEvaluating = true)
+                
+                val exercise = _uiState.value.exercises.getOrNull(exerciseIndex)
+                val userResponse = _uiState.value.userResponses[exerciseIndex]
+                
+                if (exercise == null || userResponse == null) {
+                    _uiState.value = _uiState.value.copy(
+                        isEvaluating = false,
+                        error = "No response found to evaluate"
+                    )
+                    return@launch
+                }
+                
+                val result = when {
+                    !userResponse.textResponse.isNullOrBlank() -> {
+                        revisionEvaluationService.evaluateTextResponse(
+                            chapterId = chapterId,
+                            questionIndex = exerciseIndex,
+                            question = exercise.question,
+                            expectedAnswer = exercise.answer,
+                            studentResponse = userResponse.textResponse
+                        )
+                    }
+                    !userResponse.imageUri.isNullOrBlank() -> {
+                        revisionEvaluationService.evaluateImageResponse(
+                            chapterId = chapterId,
+                            questionIndex = exerciseIndex,
+                            question = exercise.question,
+                            expectedAnswer = exercise.answer,
+                            imageUri = userResponse.imageUri
+                        )
+                    }
+                    else -> {
+                        _uiState.value = _uiState.value.copy(
+                            isEvaluating = false,
+                            error = "Please provide a text or image response before submitting"
+                        )
+                        return@launch
+                    }
+                }
+                
+                result.fold(
+                    onSuccess = { submission ->
+                        // Update UI state with new submission
+                        val currentSubmissions = _uiState.value.revisionSubmissions.toMutableMap()
+                        val questionSubmissions = currentSubmissions[exerciseIndex]?.toMutableList() ?: mutableListOf()
+                        questionSubmissions.add(submission)
+                        currentSubmissions[exerciseIndex] = questionSubmissions
+                        
+                        _uiState.value = _uiState.value.copy(
+                            revisionSubmissions = currentSubmissions,
+                            isEvaluating = false
+                        )
+                    },
+                    onFailure = { exception ->
+                        _uiState.value = _uiState.value.copy(
+                            isEvaluating = false,
+                            error = "Failed to evaluate response: ${exception.message}"
+                        )
+                    }
+                )
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isEvaluating = false,
+                    error = "Error submitting for evaluation: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun loadRevisionHistory(chapterId: String, exerciseIndex: Int) {
+        viewModelScope.launch {
+            try {
+                val submissions = revisionEvaluationService.getRevisionHistory(chapterId, exerciseIndex)
+                val currentSubmissions = _uiState.value.revisionSubmissions.toMutableMap()
+                currentSubmissions[exerciseIndex] = submissions
+                
+                _uiState.value = _uiState.value.copy(
+                    revisionSubmissions = currentSubmissions
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Failed to load revision history: ${e.message}"
+                )
+            }
+        }
     }
 }

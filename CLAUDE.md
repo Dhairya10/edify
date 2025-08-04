@@ -28,6 +28,8 @@ cd android
 ./gradlew assembleRelease
 ```
 
+NOTE: I will build the app directly in Android Studio, do not run gradle commands outside of it
+
 ### Model Setup (Required for AI functionality)
 The app uses Gemma 3n model for on-device AI. Model setup is critical:
 

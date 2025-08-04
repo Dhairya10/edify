@@ -31,9 +31,3 @@ data class RevisionResponse(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
-
-enum class FeedbackCategory(val displayName: String) {
-    NEEDS_IMPROVEMENT("Needs Improvement"),
-    GOOD_JOB("Good Job"),
-    EXCELLENT("Excellent")
-}

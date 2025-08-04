@@ -3,6 +3,7 @@ package com.edify.learning.di
 import android.content.Context
 import androidx.room.Room
 import com.edify.learning.data.dao.*
+import com.edify.learning.data.dao.RevisionSubmissionDao
 import com.edify.learning.data.database.TranslatedChapterDao
 import com.edify.learning.data.database.EdifyDatabase
 import com.edify.learning.data.service.GemmaService
@@ -10,6 +11,7 @@ import com.edify.learning.data.service.QuestService
 import com.edify.learning.data.service.QuestGenerationService
 import com.edify.learning.data.service.PromptService
 import com.edify.learning.data.service.TranslationCacheService
+import com.edify.learning.data.service.RevisionEvaluationService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -63,6 +65,11 @@ object DatabaseModule {
     @Provides
     fun provideRevisionResponseDao(database: EdifyDatabase): RevisionResponseDao {
         return database.revisionResponseDao()
+    }
+    
+    @Provides
+    fun provideRevisionSubmissionDao(database: EdifyDatabase): RevisionSubmissionDao {
+        return database.revisionSubmissionDao()
     }
     
     @Provides
@@ -140,5 +147,16 @@ object DatabaseModule {
         translatedChapterDao: TranslatedChapterDao
     ): TranslationCacheService {
         return TranslationCacheService(translatedChapterDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideRevisionEvaluationService(
+        @ApplicationContext context: Context,
+        gemmaService: GemmaService,
+        promptService: PromptService,
+        revisionSubmissionDao: RevisionSubmissionDao
+    ): RevisionEvaluationService {
+        return RevisionEvaluationService(context, gemmaService, promptService, revisionSubmissionDao)
     }
 }

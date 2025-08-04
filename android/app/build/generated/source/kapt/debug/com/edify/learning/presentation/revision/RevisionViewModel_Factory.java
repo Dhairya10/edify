@@ -3,6 +3,7 @@ package com.edify.learning.presentation.revision;
 import com.edify.learning.data.repository.LearningRepository;
 import com.edify.learning.data.repository.QuestRepository;
 import com.edify.learning.data.service.QuestGenerationService;
+import com.edify.learning.data.service.RevisionEvaluationService;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -30,27 +31,33 @@ public final class RevisionViewModel_Factory implements Factory<RevisionViewMode
 
   private final Provider<QuestGenerationService> questGenerationServiceProvider;
 
+  private final Provider<RevisionEvaluationService> revisionEvaluationServiceProvider;
+
   public RevisionViewModel_Factory(Provider<LearningRepository> repositoryProvider,
       Provider<QuestRepository> questRepositoryProvider,
-      Provider<QuestGenerationService> questGenerationServiceProvider) {
+      Provider<QuestGenerationService> questGenerationServiceProvider,
+      Provider<RevisionEvaluationService> revisionEvaluationServiceProvider) {
     this.repositoryProvider = repositoryProvider;
     this.questRepositoryProvider = questRepositoryProvider;
     this.questGenerationServiceProvider = questGenerationServiceProvider;
+    this.revisionEvaluationServiceProvider = revisionEvaluationServiceProvider;
   }
 
   @Override
   public RevisionViewModel get() {
-    return newInstance(repositoryProvider.get(), questRepositoryProvider.get(), questGenerationServiceProvider.get());
+    return newInstance(repositoryProvider.get(), questRepositoryProvider.get(), questGenerationServiceProvider.get(), revisionEvaluationServiceProvider.get());
   }
 
   public static RevisionViewModel_Factory create(Provider<LearningRepository> repositoryProvider,
       Provider<QuestRepository> questRepositoryProvider,
-      Provider<QuestGenerationService> questGenerationServiceProvider) {
-    return new RevisionViewModel_Factory(repositoryProvider, questRepositoryProvider, questGenerationServiceProvider);
+      Provider<QuestGenerationService> questGenerationServiceProvider,
+      Provider<RevisionEvaluationService> revisionEvaluationServiceProvider) {
+    return new RevisionViewModel_Factory(repositoryProvider, questRepositoryProvider, questGenerationServiceProvider, revisionEvaluationServiceProvider);
   }
 
   public static RevisionViewModel newInstance(LearningRepository repository,
-      QuestRepository questRepository, QuestGenerationService questGenerationService) {
-    return new RevisionViewModel(repository, questRepository, questGenerationService);
+      QuestRepository questRepository, QuestGenerationService questGenerationService,
+      RevisionEvaluationService revisionEvaluationService) {
+    return new RevisionViewModel(repository, questRepository, questGenerationService, revisionEvaluationService);
   }
 }

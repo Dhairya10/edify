@@ -11,6 +11,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.ui.res.painterResource
+import com.edify.learning.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +27,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.edify.learning.data.model.Exercise
 import com.edify.learning.data.model.UserResponse
+import com.edify.learning.data.model.RevisionSubmission
+import com.edify.learning.data.model.FeedbackCategory
 import com.edify.learning.ui.theme.*
+import androidx.compose.ui.graphics.Color
 import java.io.File
 import java.io.FileOutputStream
 
@@ -175,8 +181,16 @@ fun RevisionScreen(
                             exercise = exercise,
                             exerciseIndex = index,
                             userResponse = uiState.userResponses[index],
+                            revisionSubmissions = uiState.revisionSubmissions[index] ?: emptyList(),
+                            isEvaluating = uiState.isEvaluating,
                             onResponseChanged = { response ->
                                 viewModel.updateUserResponse(chapterId, index, response)
+                            },
+                            onSubmitForEvaluation = {
+                                viewModel.submitForEvaluation(chapterId, index)
+                            },
+                            onShowHistory = {
+                                viewModel.loadRevisionHistory(chapterId, index)
                             }
                         )
                     }
@@ -191,7 +205,11 @@ private fun ExerciseCard(
     exercise: Exercise,
     exerciseIndex: Int,
     userResponse: UserResponse?,
-    onResponseChanged: (UserResponse) -> Unit
+    revisionSubmissions: List<RevisionSubmission>,
+    isEvaluating: Boolean,
+    onResponseChanged: (UserResponse) -> Unit,
+    onSubmitForEvaluation: () -> Unit,
+    onShowHistory: () -> Unit
 ) {
     var textResponse by remember(userResponse) { 
         mutableStateOf(userResponse?.textResponse ?: "") 
@@ -199,8 +217,11 @@ private fun ExerciseCard(
     var imageUri by remember(userResponse) { 
         mutableStateOf(userResponse?.imageUri?.let { Uri.parse(it) }) 
     }
+    var showHistory by remember { mutableStateOf(false) }
     
     val context = LocalContext.current
+    val hasResponse = textResponse.isNotBlank() || imageUri != null
+    val latestSubmission = revisionSubmissions.maxByOrNull { it.submittedAt }
     
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -356,6 +377,214 @@ private fun ExerciseCard(
                         contentScale = ContentScale.Crop
                     )
                 }
+            }
+            
+            // Submission and history section
+            if (hasResponse) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Submit for evaluation button
+                    Button(
+                        onClick = onSubmitForEvaluation,
+                        enabled = !isEvaluating,
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                    ) {
+                        if (isEvaluating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Evaluating...", color = White)
+                        } else {
+                            Icon(
+                                Icons.Default.Send,
+                                contentDescription = "Submit for evaluation",
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Submit for Review", color = White)
+                        }
+                    }
+                    
+                    // History button
+                    if (revisionSubmissions.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = { 
+                                showHistory = !showHistory
+                                if (showHistory) onShowHistory()
+                            },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = White)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.history_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                                contentDescription = "View history",
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("History (${revisionSubmissions.size})", color = White)
+                        }
+                    }
+                }
+            }
+            
+            // Show latest feedback if available
+            latestSubmission?.let { submission ->
+                if (submission.isEvaluated && submission.gemmaFeedback != null && submission.gemmaGrade != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = when (submission.gemmaGrade) {
+                                FeedbackCategory.EXCELLENT -> Color(0xFF45B7D1).copy(alpha = 0.1f)
+                                FeedbackCategory.GOOD_JOB -> Color(0xFF4ECDC4).copy(alpha = 0.1f)
+                                FeedbackCategory.NEEDS_IMPROVEMENT -> Color(0xFFFF6B6B).copy(alpha = 0.1f)
+                            }
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Latest Feedback:",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = when (submission.gemmaGrade) {
+                                            FeedbackCategory.EXCELLENT -> Color(0xFF45B7D1)
+                                            FeedbackCategory.GOOD_JOB -> Color(0xFF4ECDC4)
+                                            FeedbackCategory.NEEDS_IMPROVEMENT -> Color(0xFFFF6B6B)
+                                        }
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text(
+                                        text = submission.gemmaGrade.displayName,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = White,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Text(
+                                text = submission.gemmaFeedback,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // History dialog/expansion
+            if (showHistory && revisionSubmissions.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Submission History",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = White
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        revisionSubmissions.sortedByDescending { it.submittedAt }.forEach { submission ->
+                            HistoryItem(submission = submission)
+                            if (submission != revisionSubmissions.last()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryItem(submission: RevisionSubmission) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)),
+        shape = RoundedCornerShape(6.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Submitted ${java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(submission.submittedAt))}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary
+                )
+                
+                if (submission.isEvaluated && submission.gemmaGrade != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = when (submission.gemmaGrade) {
+                                FeedbackCategory.EXCELLENT -> Color(0xFF45B7D1)
+                                FeedbackCategory.GOOD_JOB -> Color(0xFF4ECDC4)
+                                FeedbackCategory.NEEDS_IMPROVEMENT -> Color(0xFFFF6B6B)
+                            }
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = submission.gemmaGrade.displayName,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = White,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Evaluating...",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary
+                    )
+                }
+            }
+            
+            if (submission.isEvaluated && !submission.gemmaFeedback.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = submission.gemmaFeedback,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextPrimary
+                )
             }
         }
     }

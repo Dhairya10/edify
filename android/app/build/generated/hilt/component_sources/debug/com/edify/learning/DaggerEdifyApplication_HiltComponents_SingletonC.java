@@ -12,6 +12,7 @@ import com.edify.learning.data.dao.ChatDao;
 import com.edify.learning.data.dao.GeneratedQuestDao;
 import com.edify.learning.data.dao.NoteDao;
 import com.edify.learning.data.dao.RevisionResponseDao;
+import com.edify.learning.data.dao.RevisionSubmissionDao;
 import com.edify.learning.data.dao.SubjectDao;
 import com.edify.learning.data.dao.UserProfileDao;
 import com.edify.learning.data.dao.UserResponseDao;
@@ -24,6 +25,7 @@ import com.edify.learning.data.service.ChatResponseService;
 import com.edify.learning.data.service.GemmaService;
 import com.edify.learning.data.service.PromptService;
 import com.edify.learning.data.service.QuestGenerationService;
+import com.edify.learning.data.service.RevisionEvaluationService;
 import com.edify.learning.data.service.TranslationCacheService;
 import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.di.DatabaseModule_ProvideChapterDaoFactory;
@@ -35,7 +37,9 @@ import com.edify.learning.di.DatabaseModule_ProvideGeneratedQuestDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideNoteDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvidePromptServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideQuestGenerationServiceFactory;
+import com.edify.learning.di.DatabaseModule_ProvideRevisionEvaluationServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideRevisionResponseDaoFactory;
+import com.edify.learning.di.DatabaseModule_ProvideRevisionSubmissionDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideSubjectDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideTranslatedChapterDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideTranslationCacheServiceFactory;
@@ -563,7 +567,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
           return (T) new QuestViewModel(singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
           case 9: // com.edify.learning.presentation.revision.RevisionViewModel 
-          return (T) new RevisionViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get());
+          return (T) new RevisionViewModel(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get(), singletonCImpl.provideRevisionEvaluationServiceProvider.get());
 
           case 10: // com.edify.learning.presentation.subject.SubjectViewModel 
           return (T) new SubjectViewModel(singletonCImpl.learningRepositoryProvider.get());
@@ -668,6 +672,8 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private Provider<QuestScoringService> questScoringServiceProvider;
 
+    private Provider<RevisionEvaluationService> provideRevisionEvaluationServiceProvider;
+
     private Provider<TranslationCacheService> provideTranslationCacheServiceProvider;
 
     private SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
@@ -712,6 +718,10 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       return DatabaseModule_ProvideUserProfileDaoFactory.provideUserProfileDao(provideEdifyDatabaseProvider.get());
     }
 
+    private RevisionSubmissionDao revisionSubmissionDao() {
+      return DatabaseModule_ProvideRevisionSubmissionDaoFactory.provideRevisionSubmissionDao(provideEdifyDatabaseProvider.get());
+    }
+
     private TranslatedChapterDao translatedChapterDao() {
       return DatabaseModule_ProvideTranslatedChapterDaoFactory.provideTranslatedChapterDao(provideEdifyDatabaseProvider.get());
     }
@@ -727,7 +737,8 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       this.userProfileRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<UserProfileRepository>(singletonCImpl, 6));
       this.chatResponseServiceProvider = DoubleCheck.provider(new SwitchingProvider<ChatResponseService>(singletonCImpl, 7));
       this.questScoringServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestScoringService>(singletonCImpl, 8));
-      this.provideTranslationCacheServiceProvider = DoubleCheck.provider(new SwitchingProvider<TranslationCacheService>(singletonCImpl, 9));
+      this.provideRevisionEvaluationServiceProvider = DoubleCheck.provider(new SwitchingProvider<RevisionEvaluationService>(singletonCImpl, 9));
+      this.provideTranslationCacheServiceProvider = DoubleCheck.provider(new SwitchingProvider<TranslationCacheService>(singletonCImpl, 10));
     }
 
     @Override
@@ -790,7 +801,10 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
           case 8: // com.edify.learning.domain.service.QuestScoringService 
           return (T) new QuestScoringService(singletonCImpl.chapterStatsDao());
 
-          case 9: // com.edify.learning.data.service.TranslationCacheService 
+          case 9: // com.edify.learning.data.service.RevisionEvaluationService 
+          return (T) DatabaseModule_ProvideRevisionEvaluationServiceFactory.provideRevisionEvaluationService(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get(), singletonCImpl.revisionSubmissionDao());
+
+          case 10: // com.edify.learning.data.service.TranslationCacheService 
           return (T) DatabaseModule_ProvideTranslationCacheServiceFactory.provideTranslationCacheService(singletonCImpl.translatedChapterDao());
 
           default: throw new AssertionError(id);

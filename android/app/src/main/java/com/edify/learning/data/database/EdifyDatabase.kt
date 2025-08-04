@@ -6,7 +6,9 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import android.content.Context
 import com.edify.learning.data.dao.*
+import com.edify.learning.data.dao.RevisionSubmissionDao
 import com.edify.learning.data.model.*
+import com.edify.learning.data.model.RevisionSubmission
 @Database(
     entities = [
         Subject::class,
@@ -15,12 +17,13 @@ import com.edify.learning.data.model.*
         ChatMessage::class,
         UserResponse::class,
         RevisionResponse::class,
+        RevisionSubmission::class,
         ChapterStats::class,
         UserProfile::class,
         GeneratedQuest::class,
         TranslatedChapter::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -32,6 +35,7 @@ abstract class EdifyDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
     abstract fun userResponseDao(): UserResponseDao
     abstract fun revisionResponseDao(): RevisionResponseDao
+    abstract fun revisionSubmissionDao(): RevisionSubmissionDao
     abstract fun chapterStatsDao(): ChapterStatsDao
     abstract fun userProfileDao(): UserProfileDao
     abstract fun generatedQuestDao(): GeneratedQuestDao
