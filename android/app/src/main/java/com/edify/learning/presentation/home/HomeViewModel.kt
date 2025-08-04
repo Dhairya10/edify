@@ -47,9 +47,6 @@ class HomeViewModel @Inject constructor(
                 // Initialize Gemma model
                 repository.initializeGemma()
                 
-                // Initialize content data from JSON files
-                repository.initializeContentData()
-                
                 _uiState.value = _uiState.value.copy(isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

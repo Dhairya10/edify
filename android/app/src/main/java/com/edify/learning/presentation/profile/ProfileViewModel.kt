@@ -111,8 +111,6 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoading = false) }
                 }
                 
-                // Reinitialize content data with clean state
-                learningRepository.initializeContentData()
                 
             } catch (e: Exception) {
                 _uiState.update { 

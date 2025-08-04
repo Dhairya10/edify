@@ -131,14 +131,12 @@ fun QuestionScreen(
                     }
                 },
                 actions = {
-                    if (revisionSubmissions.isNotEmpty()) {
-                        IconButton(onClick = onNavigateToHistory) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.history_24dp_ffffff_fill0_wght400_grad0_opsz24),
-                                contentDescription = "View history",
-                                tint = TextPrimary
-                            )
-                        }
+                    IconButton(onClick = onNavigateToHistory) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.history_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                            contentDescription = "View history",
+                            tint = TextPrimary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
