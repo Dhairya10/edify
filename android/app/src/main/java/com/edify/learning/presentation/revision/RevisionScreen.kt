@@ -1,32 +1,27 @@
 package com.edify.learning.presentation.revision
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.res.painterResource
+import com.edify.learning.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import com.edify.learning.data.model.Exercise
-import com.edify.learning.data.model.UserResponse
 import com.edify.learning.ui.theme.*
-import java.io.File
-import java.io.FileOutputStream
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,10 +29,10 @@ fun RevisionScreen(
     chapterId: String,
     chapterTitle: String,
     onNavigateBack: () -> Unit,
+    onNavigateToQuestion: (Int) -> Unit,
     viewModel: RevisionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     
     LaunchedEffect(chapterId) {
         viewModel.loadExercises(chapterId)
@@ -45,7 +40,7 @@ fun RevisionScreen(
     
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = White,
+        containerColor = DarkBackground,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { 
@@ -61,9 +56,9 @@ fun RevisionScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = PrimaryBlue,
-                    titleContentColor = White,
-                    navigationIconContentColor = White
+                    containerColor = DarkBackground,
+                    titleContentColor = TextPrimary,
+                    navigationIconContentColor = TextPrimary
                 ),
                 windowInsets = WindowInsets(0.dp)
             )
@@ -79,7 +74,7 @@ fun RevisionScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = PrimaryBlue)
+                    CircularProgressIndicator(color = White)
                 }
             }
             errorMessage != null -> {
@@ -151,11 +146,11 @@ fun RevisionScreen(
                                     text = "📝 Exercise Mode",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
+                                    color = White
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Answer the questions below. You can type your response or upload an image of your work.",
+                                    text = "Select a question to start practicing. You can type your response or upload an image of your work.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = TextSecondary
                                 )
@@ -164,20 +159,20 @@ fun RevisionScreen(
                                     text = "Progress: ${uiState.completedCount}/${uiState.exercises.size} completed",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium,
-                                    color = PrimaryBlue
+                                    color = White
                                 )
                             }
                         }
                     }
                     
                     itemsIndexed(uiState.exercises) { index, exercise ->
-                        ExerciseCard(
+                        QuestionListCard(
                             exercise = exercise,
-                            exerciseIndex = index,
-                            userResponse = uiState.userResponses[index],
-                            onResponseChanged = { response ->
-                                viewModel.updateUserResponse(chapterId, index, response)
-                            }
+                            questionIndex = index,
+                            isCompleted = uiState.userResponses[index]?.let { response ->
+                                response.textResponse?.isNotBlank() == true || response.imageUri != null
+                            } ?: false,
+                            onClick = { onNavigateToQuestion(index) }
                         )
                     }
                 }
@@ -187,172 +182,61 @@ fun RevisionScreen(
 }
 
 @Composable
-private fun ExerciseCard(
+private fun QuestionListCard(
     exercise: Exercise,
-    exerciseIndex: Int,
-    userResponse: UserResponse?,
-    onResponseChanged: (UserResponse) -> Unit
+    questionIndex: Int,
+    isCompleted: Boolean,
+    onClick: () -> Unit
 ) {
-    var textResponse by remember(userResponse) { 
-        mutableStateOf(userResponse?.textResponse ?: "") 
-    }
-    var imageUri by remember(userResponse) { 
-        mutableStateOf(userResponse?.imageUri?.let { Uri.parse(it) }) 
-    }
-    
-    val context = LocalContext.current
-    
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { selectedUri ->
-            try {
-                // Copy image to app's internal storage
-                val inputStream = context.contentResolver.openInputStream(selectedUri)
-                val fileName = "exercise_${exerciseIndex}_${System.currentTimeMillis()}.jpg"
-                val file = File(context.filesDir, fileName)
-                val outputStream = FileOutputStream(file)
-                
-                inputStream?.use { input ->
-                    outputStream.use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                
-                imageUri = Uri.fromFile(file)
-                
-                // Update response with image
-                val response = UserResponse(
-                    id = userResponse?.id ?: 0,
-                    chapterId = "", // Will be set in ViewModel
-                    exerciseIndex = exerciseIndex,
-                    textResponse = textResponse.takeIf { it.isNotBlank() },
-                    imageUri = file.absolutePath
-                )
-                onResponseChanged(response)
-                
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
     
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Question header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "Question ${exerciseIndex + 1}",
+                    text = "Question ${questionIndex + 1}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = PrimaryBlue
+                    color = TextPrimary
                 )
                 
-                if (userResponse != null && (userResponse.textResponse?.isNotBlank() == true || userResponse.imageUri != null)) {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = "Completed",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Question text
-            Text(
-                text = exercise.question,
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Text response input
-            OutlinedTextField(
-                value = textResponse,
-                onValueChange = { newText ->
-                    textResponse = newText
-                    val response = UserResponse(
-                        id = userResponse?.id ?: 0,
-                        chapterId = "", // Will be set in ViewModel
-                        exerciseIndex = exerciseIndex,
-                        textResponse = newText.takeIf { it.isNotBlank() },
-                        imageUri = userResponse?.imageUri
-                    )
-                    onResponseChanged(response)
-                },
-                label = { Text("Your answer") },
-                placeholder = { Text("Type your answer here...") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 100.dp),
-                minLines = 3,
-                maxLines = 8,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = PrimaryBlue,
-                    focusedLabelColor = PrimaryBlue,
-                    cursorColor = PrimaryBlue
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Image upload section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                Spacer(modifier = Modifier.height(8.dp))
+                
                 Text(
-                    text = "Or upload an image:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    text = exercise.question.take(100) + if (exercise.question.length > 100) "..." else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                    maxLines = 2
                 )
-                
-                OutlinedButton(
-                    onClick = { imagePickerLauncher.launch("image/*") },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PrimaryBlue
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Upload image",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Upload Image")
-                }
             }
             
-            // Show uploaded image
-            imageUri?.let { uri ->
-                Spacer(modifier = Modifier.height(12.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    AsyncImage(
-                        model = uri,
-                        contentDescription = "Uploaded response image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+            if (isCompleted) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Completed",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Icon(
+                    Icons.Default.ArrowForward,
+                    contentDescription = "Start question",
+                    tint = TextSecondary,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

@@ -93,10 +93,14 @@ dependencies {
     
     // MediaPipe LLM Inference
     implementation 'com.google.mediapipe:tasks-genai:0.10.24'
+    implementation 'com.google.mediapipe:tasks-vision:latest.release'
     
     // JSON parsing
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0'
+    
+    // HTML parsing
+    implementation 'org.jsoup:jsoup:1.17.2'
     
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'

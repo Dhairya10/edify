@@ -243,10 +243,10 @@ fun MessageBubble(
                             contentDescription = "Attached image",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(80.dp)
+                                .heightIn(max = 200.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(DarkSurface),
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             error = painterResource(id = R.drawable.image_24px),
                             placeholder = painterResource(id = R.drawable.image_24px)
                         )

@@ -47,7 +47,6 @@ fun SubjectScreen(
     onNavigateToChapter: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val selectedMode by viewModel.selectedMode.collectAsState()
     
     Column(
         modifier = Modifier
@@ -83,8 +82,6 @@ fun SubjectScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Mode Toggle removed - showing only chapters
-            
             // Loading State
             if (uiState.isLoading) {
                 Box(
@@ -111,8 +108,7 @@ fun SubjectScreen(
                 }
             }
             
-            // Always show Learning mode content in the UI
-            // Revision mode removed from UI but code remains intact
+            // Content - only show learning mode
             LearningModeContent(
                 chapters = uiState.chapters,
                 onChapterClick = onNavigateToChapter
@@ -121,56 +117,6 @@ fun SubjectScreen(
     }
 }
 
-@Composable
-fun ModeToggle(
-    selectedMode: SubjectMode,
-    onModeChanged: (SubjectMode) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // Only showing Learning mode tab, Revision mode hidden from UI
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = BackgroundGray,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(4.dp),
-    ) {
-        ModeToggleButton(
-            text = "Learning",
-            isSelected = true,  // Always selected as it's the only option
-            onClick = { onModeChanged(SubjectMode.LEARNING) },
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-fun ModeToggleButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                color = if (isSelected) PrimaryBlue else Color.Transparent
-            )
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = if (isSelected) White else TextSecondary,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            fontSize = 14.sp
-        )
-    }
-}
 
 @Composable
 fun LearningModeContent(
@@ -197,89 +143,6 @@ fun LearningModeContent(
     }
 }
 
-@Composable
-fun RevisionModeContent(
-    exercises: List<ChapterExercises>,
-    userResponses: Map<String, UserResponse>,
-    onResponseChanged: (String, Int, UserResponse) -> Unit
-) {
-    var selectedExercise by remember { mutableStateOf<Triple<ChapterExercises, Int, Exercise>?>(null) }
-    var expandedChapters by remember { mutableStateOf(setOf<String>()) }
-    
-    Column {
-        // Header
-        Text(
-            text = "Exercises",
-            style = MaterialTheme.typography.titleLarge,
-            color = TextPrimary,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        if (exercises.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "📚 No Exercises Available",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextSecondary
-                    )
-                    Text(
-                        text = "Exercises will appear here when available",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
-                }
-            }
-        } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                exercises.forEach { chapterExercises ->
-                    item {
-                        CollapsibleChapterCard(
-                            chapterExercises = chapterExercises,
-                            isExpanded = expandedChapters.contains(chapterExercises.chapterId),
-                            onToggleExpanded = { chapterId ->
-                                expandedChapters = if (expandedChapters.contains(chapterId)) {
-                                    expandedChapters - chapterId
-                                } else {
-                                    expandedChapters + chapterId
-                                }
-                            },
-                            userResponses = userResponses,
-                            onExerciseClick = { exercise, exerciseIndex ->
-                                selectedExercise = Triple(chapterExercises, exerciseIndex, exercise)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-    
-    // Exercise Modal
-    selectedExercise?.let { (chapterExercises, exerciseIndex, exercise) ->
-        val responseKey = "${chapterExercises.chapterId}_$exerciseIndex"
-        val userResponse = userResponses[responseKey]
-        
-        ExerciseModal(
-            exercise = exercise,
-            exerciseIndex = exerciseIndex,
-            chapterTitle = chapterExercises.chapterTitle,
-            userResponse = userResponse,
-            onDismiss = { selectedExercise = null },
-            onResponseChanged = { response ->
-                onResponseChanged(chapterExercises.chapterId, exerciseIndex, response)
-            }
-        )
-    }
-}
 
 @Composable
 fun ChapterCard(
@@ -328,11 +191,12 @@ fun ChapterCard(
                                 val summary = summaryObject?.optString("summary")
                                 
                                 if (!summary.isNullOrBlank()) {
-                                    // Extract first 100 characters with ellipsis
-                                    if (summary.length > 100) {
-                                        summary.substring(0, 100) + "..."
+                                    // Remove HTML tags and extract first 100 characters
+                                    val cleanSummary = summary.replace(Regex("<[^>]*>"), "").trim()
+                                    if (cleanSummary.length > 100) {
+                                        cleanSummary.substring(0, 100) + "..."
                                     } else {
-                                        summary
+                                        cleanSummary
                                     }
                                 } else {
                                     chapter.description
@@ -644,53 +508,7 @@ fun SubjectExerciseCard(
                 )
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Image upload section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Or upload an image:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
-                
-                OutlinedButton(
-                    onClick = { imagePickerLauncher.launch("image/*") },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PrimaryBlue
-                    )
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Upload image",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Upload Image")
-                }
-            }
-            
-            // Show uploaded image
-            imageUri?.let { uri ->
-                Spacer(modifier = Modifier.height(12.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    AsyncImage(
-                        model = uri,
-                        contentDescription = "Uploaded response image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
+
         }
     }
 }
@@ -858,48 +676,7 @@ fun ExerciseModal(
                             }
                         }
 
-                        item {
-                            // Image upload section
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OutlinedButton(
-                                    onClick = { imagePickerLauncher.launch("image/*") },
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = PrimaryBlue
-                                    )
-                                ) {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "Upload image",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Upload Image")
-                                }
-                            }
-                        }
 
-                        // Show uploaded image
-                        imageUri?.let { uri ->
-                            item {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 200.dp), // Reduced max height
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = uri,
-                                        contentDescription = "Uploaded response image",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             }

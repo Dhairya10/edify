@@ -1,9 +1,14 @@
 package com.edify.learning.data.util
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import com.edify.learning.data.model.Chapter
 import com.edify.learning.data.model.Subject
 import com.edify.learning.data.model.Exercise
+import com.edify.learning.data.model.RevisionQuestion
+import com.edify.learning.data.model.ChapterRevisionData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -69,22 +74,7 @@ object ContentLoader {
             )
         }
         
-        // Social Science
-        val socialChapters = loadChaptersFromDirectory(context, "social_science")
-        if (socialChapters.isNotEmpty()) {
-            subjects.add(
-                Subject(
-                    id = "social_001",
-                    name = "Social Science",
-                    description = "History and Geography",
-                    color = "#003c63",
-                    iconRes = "ic_social",
-                    totalChapters = socialChapters.size,
-                    completedChapters = 0,
-                    lastReadChapterId = null
-                )
-            )
-        }
+        // Remove Social Science as it's no longer available
         
         subjects
     }
@@ -94,7 +84,6 @@ object ContentLoader {
             "math_001" -> "maths"
             "science_001" -> "science"
             "english_001" -> "english"
-            "social_001" -> "social_science"
             else -> return@withContext emptyList()
         }
         
@@ -124,14 +113,12 @@ object ContentLoader {
                     println("ContentLoader: File content length: ${content.length} characters")
                     val filename = fileName.substringBeforeLast(".")
                     
-                    // Parse JSON to get subject info and title
+                    // Parse JSON to get chapter info
                     val jsonObject = json.parseToJsonElement(content).jsonObject
+                    val chapterId = jsonObject["id"]?.jsonPrimitive?.content ?: filename
                     val subject = jsonObject["subject"]?.jsonPrimitive?.content ?: ""
-                    
-                    // Extract chapter title from JSON, fallback to generated title
-                    val chapterTitle = jsonObject["title"]?.jsonPrimitive?.content 
-                        ?: generateChapterTitle(filename, content)
-                    val chapterDescription = extractDescription(content)
+                    val chapterTitle = jsonObject["title"]?.jsonPrimitive?.content ?: "Untitled Chapter"
+                    val chapterDescription = "Chapter content"
                     val estimatedTime = estimateReadingTime(content)
                     
                     println("ContentLoader: Using title from JSON: '$chapterTitle' for file $fileName")
@@ -140,12 +127,11 @@ object ContentLoader {
                         "maths" -> "math_001"
                         "science" -> "science_001"
                         "english" -> "english_001"
-                        "social_science" -> "social_001"
                         else -> "unknown_001"
                     }
                     
                     val chapter = Chapter(
-                        id = filename,
+                        id = chapterId,
                         subjectId = actualSubjectId,
                         title = chapterTitle,
                         description = chapterDescription,
@@ -172,69 +158,17 @@ object ContentLoader {
         return chapters
     }
     
-    private fun generateChapterTitle(filename: String, content: String): String {
-        try {
-            val jsonObject = json.parseToJsonElement(content).jsonObject
-            val markdownText = jsonObject["content"]?.jsonObject?.get("markdown_text")?.jsonPrimitive?.content
-            
-            // Look for the first meaningful header in markdown (skip image references)
-            markdownText?.let { markdown ->
-                val lines = markdown.split("\n")
-                for (line in lines) {
-                    val trimmed = line.trim()
-                    // Look for headers that are not just image references
-                    if (trimmed.startsWith("#") && !trimmed.startsWith("![]") && trimmed.length > 2) {
-                        val headerText = trimmed.replaceFirst("^#+\\s*".toRegex(), "").trim()
-                        if (headerText.isNotBlank() && headerText.length > 3) {
-                            return headerText
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            println("ContentLoader: Error extracting title from $filename: ${e.message}")
-        }
-        
-        // Fallback: create a meaningful title from filename
-        val chapterNumber = filename.takeLast(3).toIntOrNull() ?: filename.takeLast(2).toIntOrNull()
-        return if (chapterNumber != null) {
-            "Chapter $chapterNumber"
-        } else {
-            filename.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-        }
-    }
-    
-    private fun extractDescription(content: String): String {
-        try {
-            val jsonObject = json.parseToJsonElement(content).jsonObject
-            val markdownText = jsonObject["content"]?.jsonObject?.get("markdown_text")?.jsonPrimitive?.content
-            
-            markdownText?.let { markdown ->
-                // Find first paragraph after headers
-                val lines = markdown.split("\n").map { it.trim() }
-                for (line in lines) {
-                    if (line.isNotBlank() && 
-                        !line.startsWith("#") && 
-                        !line.startsWith("![") &&
-                        line.length > 20) {
-                        return line.take(100) + if (line.length > 100) "..." else ""
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            // Ignore parsing errors
-        }
-        
-        return "Chapter content"
-    }
+    // Helper functions removed as they're no longer needed with the new JSON structure
     
     private fun estimateReadingTime(content: String): Int {
         try {
             val jsonObject = json.parseToJsonElement(content).jsonObject
-            val markdownText = jsonObject["content"]?.jsonObject?.get("markdown_text")?.jsonPrimitive?.content
+            val htmlContent = jsonObject["content"]?.jsonObject?.get("html_content")?.jsonPrimitive?.content
             
-            markdownText?.let { markdown ->
-                val wordCount = markdown.split("\\s+".toRegex()).size
+            htmlContent?.let { html ->
+                // Remove HTML tags and count words
+                val cleanText = html.replace(Regex("<[^>]*>"), " ")
+                val wordCount = cleanText.split("\\s+".toRegex()).filter { it.isNotBlank() }.size
                 // Average reading speed: 200 words per minute
                 return (wordCount / 200).coerceAtLeast(1)
             }
@@ -242,7 +176,7 @@ object ContentLoader {
             // Ignore parsing errors
         }
         
-        return 30 // Default reading time
+        return 15 // Default reading time
     }
     
     fun loadExercisesForChapter(context: Context, chapterId: String): List<Exercise> {
@@ -250,13 +184,12 @@ object ContentLoader {
             println("ContentLoader: Loading exercises for chapterId: '$chapterId'")
             
             // Determine the correct directory based on chapter ID pattern
-            val (directory, filename) = getDirectoryAndFilename(chapterId)
-            if (directory == "english" && !chapterId.startsWith("jeff") && 
-                !chapterId.startsWith("jesc") && !chapterId.startsWith("jemh") && 
-                !chapterId.startsWith("jess")) {
-                // This means we hit the default fallback case
+            val directoryAndFilename = getDirectoryAndFilename(context, chapterId)
+            if (directoryAndFilename == null) {
+                println("ContentLoader: Could not find file for chapter '$chapterId'")
                 return emptyList()
             }
+            val (directory, filename) = directoryAndFilename
             println("ContentLoader: Looking for filename: '$filename' in directory: '$directory'")
             
             try {
@@ -288,25 +221,46 @@ object ContentLoader {
         }
     }
     
-    private fun getDirectoryAndFilename(chapterId: String): Pair<String, String> {
-        val directory = when {
-            chapterId.startsWith("jeff") -> "english"
-            chapterId.startsWith("jesc") -> "science"
-            chapterId.startsWith("jemh") -> "maths"
-            chapterId.startsWith("jess") -> "social_science"
-            else -> {
-                println("ContentLoader: Unknown chapter ID pattern: '$chapterId'")
-                "english" // default fallback
+    private fun getDirectoryAndFilename(context: Context, chapterId: String): Pair<String, String>? {
+        // Since chapter IDs are UUIDs, we need to search all directories to find the matching file
+        val directories = listOf("english", "science", "maths", "social_science")
+        
+        for (directory in directories) {
+            try {
+                val files = context.assets.list(directory) ?: continue
+                for (file in files) {
+                    if (file.endsWith(".json")) {
+                        try {
+                            val content = context.assets.open("$directory/$file").bufferedReader().use { it.readText() }
+                            val jsonObject = json.parseToJsonElement(content).jsonObject
+                            val fileChapterId = jsonObject["id"]?.jsonPrimitive?.content
+                            
+                            if (fileChapterId == chapterId) {
+                                println("ContentLoader: Found chapter $chapterId in $directory/$file")
+                                return Pair(directory, file)
+                            }
+                        } catch (e: Exception) {
+                            // Skip files that can't be parsed
+                            continue
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                continue
             }
         }
         
-        val filename = if (chapterId.endsWith(".json")) chapterId else "$chapterId.json"
-        return Pair(directory, filename)
+        println("ContentLoader: Could not find file for chapter ID: $chapterId")
+        return null
     }
     
     suspend fun loadChapterSummaryForChat(context: Context, chapterId: String): String = withContext(Dispatchers.IO) {
         try {
-            val (directory, filename) = getDirectoryAndFilename(chapterId)
+            val directoryAndFilename = getDirectoryAndFilename(context, chapterId)
+            if (directoryAndFilename == null) {
+                return@withContext "Unable to find chapter content for this discussion."
+            }
+            val (directory, filename) = directoryAndFilename
             val content = context.assets.open("$directory/$filename").bufferedReader().use { it.readText() }
             
             val jsonObject = json.parseToJsonElement(content).jsonObject
@@ -341,8 +295,9 @@ object ContentLoader {
             }
             
             // Fallback: extract basic info from the chapter
-            val markdownText = contentObject?.get("markdown_text")?.jsonPrimitive?.content ?: ""
-            val firstParagraph = markdownText.split("\n\n").take(3).joinToString("\n\n")
+            val htmlContent = contentObject?.get("html_content")?.jsonPrimitive?.content ?: ""
+            val cleanText = htmlContent.replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ")
+            val firstParagraph = cleanText.take(300)
             return@withContext "Chapter Content Overview:\n$firstParagraph"
             
         } catch (e: Exception) {
@@ -357,7 +312,7 @@ object ContentLoader {
             val jsonObject = json.parseToJsonElement(content).jsonObject
             println("ContentLoader: JSON object keys: ${jsonObject.keys}")
             
-            // Exercises are nested under content.exercises, not at root level
+            // Questions are nested under content.questions, not exercises
             val contentObject = jsonObject["content"]?.jsonObject
             println("ContentLoader: Content object found: ${contentObject != null}")
             
@@ -365,17 +320,17 @@ object ContentLoader {
                 println("ContentLoader: Content object keys: ${contentObject.keys}")
             }
             
-            val exercisesArray = contentObject?.get("exercises")?.jsonArray
-            println("ContentLoader: Exercises array found: ${exercisesArray != null}")
-            println("ContentLoader: Exercises array size: ${exercisesArray?.size ?: 0}")
+            val questionsArray = contentObject?.get("questions")?.jsonArray
+            println("ContentLoader: Questions array found: ${questionsArray != null}")
+            println("ContentLoader: Questions array size: ${questionsArray?.size ?: 0}")
             
             val exercises = mutableListOf<Exercise>()
-            exercisesArray?.forEach { exerciseElement ->
-                val exerciseObj = exerciseElement.jsonObject
-                val question = exerciseObj["question"]?.jsonPrimitive?.content ?: ""
-                val answer = exerciseObj["answer"]?.jsonPrimitive?.content ?: ""
+            questionsArray?.forEach { questionElement ->
+                val questionObj = questionElement.jsonObject
+                val question = questionObj["question"]?.jsonPrimitive?.content ?: ""
+                val answer = questionObj["answer"]?.jsonPrimitive?.content ?: ""
                 
-                println("ContentLoader: Found exercise - Question: '${question.take(50)}...', Answer: '${answer.take(50)}...'")
+                println("ContentLoader: Found question - Question: '${question.take(50)}...', Answer: '${answer.take(50)}...'")
                 
                 if (question.isNotBlank()) {
                     exercises.add(Exercise(question = question, answer = answer))
@@ -389,6 +344,98 @@ object ContentLoader {
             println("ContentLoader: Error parsing exercises: ${e.message}")
             e.printStackTrace()
             return emptyList()
+        }
+    }
+    
+    fun loadRevisionQuestionsForChapter(context: Context, chapterId: String): List<RevisionQuestion> {
+        try {
+            println("ContentLoader: Loading revision questions for chapter: $chapterId")
+            val directoryAndFilename = getDirectoryAndFilename(context, chapterId)
+            if (directoryAndFilename == null) {
+                println("ContentLoader: Could not find file for chapter '$chapterId'")
+                return emptyList()
+            }
+            val (directory, filename) = directoryAndFilename
+            println("ContentLoader: Directory: $directory, Filename: $filename")
+            
+            val content = context.assets.open("$directory/$filename").bufferedReader().use { it.readText() }
+            println("ContentLoader: Successfully loaded content, length: ${content.length}")
+            
+            val jsonObject = json.parseToJsonElement(content).jsonObject
+            val contentObject = jsonObject["content"]?.jsonObject
+            println("ContentLoader: Content object found: ${contentObject != null}")
+            
+            val questionsArray = contentObject?.get("questions")?.jsonArray
+            println("ContentLoader: Questions array found: ${questionsArray != null}, size: ${questionsArray?.size ?: 0}")
+            
+            val revisionQuestions = mutableListOf<RevisionQuestion>()
+            questionsArray?.forEach { questionElement ->
+                val questionObj = questionElement.jsonObject
+                val question = questionObj["question"]?.jsonPrimitive?.content ?: ""
+                val answer = questionObj["answer"]?.jsonPrimitive?.content ?: ""
+                
+                println("ContentLoader: Found question: '${question.take(50)}...', answer length: ${answer.length}")
+                
+                if (question.isNotBlank() && answer.isNotBlank()) {
+                    revisionQuestions.add(RevisionQuestion(question = question, answer = answer))
+                }
+            }
+            
+            println("ContentLoader: Loaded ${revisionQuestions.size} revision questions for chapter $chapterId")
+            return revisionQuestions
+            
+        } catch (e: Exception) {
+            println("ContentLoader: Error loading revision questions for '$chapterId': ${e.message}")
+            e.printStackTrace()
+            return emptyList()
+        }
+    }
+    
+    suspend fun loadRevisionDataForSubject(context: Context, subjectId: String): List<ChapterRevisionData> = withContext(Dispatchers.IO) {
+        try {
+            println("ContentLoader: Loading revision data for subject: $subjectId")
+            val chapters = loadChaptersForSubject(context, subjectId)
+            println("ContentLoader: Found ${chapters.size} chapters for subject $subjectId")
+            
+            val revisionData = mutableListOf<ChapterRevisionData>()
+            
+            chapters.forEach { chapter ->
+                println("ContentLoader: Processing chapter: ${chapter.id} - ${chapter.title}")
+                val questions = loadRevisionQuestionsForChapter(context, chapter.id)
+                println("ContentLoader: Chapter ${chapter.id} has ${questions.size} questions")
+                
+                if (questions.isNotEmpty()) {
+                    revisionData.add(
+                        ChapterRevisionData(
+                            chapterId = chapter.id,
+                            chapterTitle = chapter.title,
+                            questions = questions
+                        )
+                    )
+                    println("ContentLoader: Added chapter ${chapter.title} to revision data")
+                } else {
+                    println("ContentLoader: Skipping chapter ${chapter.title} - no questions found")
+                }
+            }
+            
+            println("ContentLoader: Total revision data chapters: ${revisionData.size}")
+            return@withContext revisionData
+            
+        } catch (e: Exception) {
+            println("ContentLoader: Error loading revision data for subject '$subjectId': ${e.message}")
+            e.printStackTrace()
+            return@withContext emptyList()
+        }
+    }
+    
+    fun loadImageFromUri(context: Context, uriString: String): Bitmap? {
+        return try {
+            val uri = Uri.parse(uriString)
+            val inputStream = context.contentResolver.openInputStream(uri)
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            println("ContentLoader: Error loading image from URI '$uriString': ${e.message}")
+            null
         }
     }
 }

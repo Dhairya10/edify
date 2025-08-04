@@ -6,6 +6,7 @@ import com.edify.learning.data.dao.*
 import com.edify.learning.data.model.*
 import com.edify.learning.data.service.GemmaService
 import com.edify.learning.data.service.QuestGenerationService
+import com.edify.learning.data.service.PromptService
 import com.edify.learning.data.util.ContentLoader
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,8 @@ class LearningRepository @Inject constructor(
     private val chapterStatsDao: ChapterStatsDao,
     private val generatedQuestDao: GeneratedQuestDao,
     private val gemmaService: GemmaService,
-    private val questGenerationService: QuestGenerationService
+    private val questGenerationService: QuestGenerationService,
+    private val promptService: PromptService
 ) {
     
     // Subject operations
@@ -127,49 +129,85 @@ class LearningRepository @Inject constructor(
     
     suspend fun generateGemmaResponse(
         prompt: String,
-        context: String? = null,
-        isExplanation: Boolean = false
+        subject: String? = null,
+        context: String? = null
     ): Result<String> {
-        val fullPrompt = if (context != null) {
-            gemmaService.createEducationalPrompt(context, prompt, isExplanation)
+        return if (subject != null && context != null) {
+            generateEducationalResponse(prompt, subject, context)
         } else {
-            prompt
+            gemmaService.generateResponse(prompt)
         }
+    }
+    
+    /**
+     * Generates an educational response using the simplified universal tutor approach
+     */
+    private suspend fun generateEducationalResponse(
+        query: String,
+        subject: String,
+        context: String
+    ): Result<String> {
+        android.util.Log.i("LearningRepository", "EDUCATIONAL_RESPONSE: Generating response for subject '$subject'")
+        android.util.Log.d("LearningRepository", "EDUCATIONAL_RESPONSE: Query: '$query'")
+        android.util.Log.d("LearningRepository", "EDUCATIONAL_RESPONSE: Context: '$context'")
         
-        return gemmaService.generateResponse(fullPrompt)
+        // Use the simplified universal tutor approach - no classification needed
+        return gemmaService.generateEducationalResponse(context, query)
     }
     
     suspend fun generateGemmaResponseWithImage(
         prompt: String,
+        subject: String? = null,
         context: String? = null,
-        image: Bitmap? = null,
-        isExplanation: Boolean = false
+        image: Bitmap? = null
     ): Result<String> {
-        val fullPrompt = if (context != null) {
-            gemmaService.createEducationalPrompt(context, prompt, isExplanation)
-        } else {
-            prompt
-        }
-        
-        return if (image != null) {
-            gemmaService.generateResponseWithImage(fullPrompt, image)
-        } else {
-            gemmaService.generateResponse(fullPrompt)
+        return try {
+            if (image == null) {
+                android.util.Log.w("LearningRepository", "IMAGE_RESPONSE: No image provided, falling back to text-only response")
+                return gemmaService.generateResponse(prompt)
+            }
+            
+            android.util.Log.i("LearningRepository", "IMAGE_RESPONSE: Starting image analysis with subject: '$subject'")
+            android.util.Log.d("LearningRepository", "IMAGE_RESPONSE: Query: '$prompt'")
+            
+            val finalPrompt = if (subject != null && context != null) {
+                android.util.Log.i("LearningRepository", "IMAGE_RESPONSE: Using universal image tutor for topic '$context'")
+                // Use unified image analysis prompt
+                gemmaService.createImageAnalysisPrompt(
+                    topic = context,
+                    query = prompt
+                )
+            } else {
+                android.util.Log.w("LearningRepository", "IMAGE_RESPONSE: No subject/context provided, using generic image analysis")
+                // Fallback to original prompt for generic image analysis
+                prompt
+            }
+            
+            android.util.Log.d("LearningRepository", "IMAGE_RESPONSE: Sending multimodal request to Gemma with image")
+            gemmaService.generateResponseWithImage(finalPrompt, image)
+        } catch (e: Exception) {
+            android.util.Log.e("LearningRepository", "IMAGE_RESPONSE: Exception during image analysis: ${e.message}")
+            Result.failure(e)
         }
     }
     
     suspend fun generateGemmaResponseStream(
         prompt: String,
-        context: String? = null,
-        isExplanation: Boolean = false
+        subject: String? = null,
+        context: String? = null
     ): Flow<String> {
-        val fullPrompt = if (context != null) {
-            gemmaService.createEducationalPrompt(context, prompt, isExplanation)
+        val finalPrompt = if (subject != null && context != null) {
+            android.util.Log.i("LearningRepository", "STREAMING_RESPONSE: Using universal tutor for topic '$context'")
+            promptService.getFormattedPrompt(
+                "universal_tutor",
+                "topic" to context,
+                "input" to prompt
+            )
         } else {
             prompt
         }
         
-        return gemmaService.generateResponseStream(fullPrompt)
+        return gemmaService.generateResponseStream(finalPrompt)
     }
     
     suspend fun initializeGemma(): Result<Unit> = gemmaService.initializeModel()
@@ -490,4 +528,16 @@ class LearningRepository @Inject constructor(
             chapterStatsDao.insertOrUpdateChapterStats(newStats)
         }
     }
+    
+    // Revision operations
+    fun getRevisionQuestionsForChapter(chapterId: String): List<RevisionQuestion> {
+        return ContentLoader.loadRevisionQuestionsForChapter(context, chapterId)
+    }
+    
+    suspend fun getRevisionDataForSubject(subjectId: String): List<ChapterRevisionData> {
+        return ContentLoader.loadRevisionDataForSubject(context, subjectId)
+    }
+    
+    
+    
 }

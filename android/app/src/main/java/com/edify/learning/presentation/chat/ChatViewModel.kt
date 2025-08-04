@@ -49,6 +49,7 @@ class ChatViewModel @Inject constructor(
     private var currentSessionId: String = ""
     private var currentChapterId: String = ""
     private var contextContent: String? = null
+    private var currentSubject: String? = null
     
     fun initializeChat(chapterId: String, selectedText: String?) {
         currentChapterId = chapterId
@@ -59,6 +60,13 @@ class ChatViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
+                // Load chapter and subject information for subject-specific query classification
+                val chapter = repository.getChapterById(chapterId)
+                if (chapter != null) {
+                    val subject = repository.getSubjectById(chapter.subjectId)
+                    currentSubject = subject?.name?.lowercase()
+                }
+                
                 // Load chapter summary context from JSON files
                 val chapterSummary = repository.getChapterSummaryForChat(chapterId)
                 contextContent = if (selectedText != null) {
@@ -153,14 +161,14 @@ class ChatViewModel @Inject constructor(
                 _messageInput.value = ""
                 _selectedImage.value = null
                 
-                // Use ChatResponseService for robust background response generation
+                // Use ChatResponseService for robust background response generation with subject-specific classification
                 // Loading state is managed by the service callbacks
                 chatResponseService.generateChatResponse(
                     userMessage = userMessage,
                     prompt = input,
                     context = contextContent,
+                    subject = currentSubject,
                     image = image,
-                    isExplanation = false,
                     onLoadingStateChange = { isLoading ->
                         viewModelScope.launch {
                             if (isLoading) {

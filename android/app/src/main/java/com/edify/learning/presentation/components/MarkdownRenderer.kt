@@ -41,14 +41,14 @@ import android.widget.Toast
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.edify.learning.data.model.ChapterContent
-import com.edify.learning.data.model.ImageMetadata
+// ImageMetadata removed - no longer needed
 import com.edify.learning.ui.theme.*
 import java.io.File
 
 @Composable
 fun MarkdownRenderer(
     content: ChapterContent,
-    baseImagePath: String,
+    baseImagePath: String = "",
     modifier: Modifier = Modifier,
     onTextSelected: (String) -> Unit = {},
     onImageClick: (String) -> Unit = {},
@@ -61,8 +61,9 @@ fun MarkdownRenderer(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Parse and render markdown content
-        val processedMarkdown = processMarkdownWithImages(content.markdownText, content.images, baseImagePath)
+        // Convert HTML content to plain text for markdown-style processing
+        val markdownText = content.htmlContent.replace(Regex("<[^>]*>"), " ")
+        val processedMarkdown = processMarkdownWithImages(markdownText, emptyList(), baseImagePath)
         
         processedMarkdown.forEach { element ->
             when (element) {
@@ -379,7 +380,7 @@ sealed class MarkdownElement {
 // Function to process markdown and create elements
 fun processMarkdownWithImages(
     markdownText: String,
-    images: List<ImageMetadata>,
+    images: List<String> = emptyList(), // Changed to simple string list
     baseImagePath: String
 ): List<MarkdownElement> {
     val elements = mutableListOf<MarkdownElement>()
@@ -400,23 +401,11 @@ fun processMarkdownWithImages(
                         val altText = match.groupValues[1]
                         val imageName = match.groupValues[2]
                     
-                    // Find corresponding image metadata
-                    val imageMetadata = images.find { it.name == imageName }
-                    val imagePath = if (imageMetadata != null) {
-                        // Extract the chapter folder from the image path
-                        // e.g., "/home/content/converted_books/images/jeff102/_page_0_Picture_0.jpeg" -> "jeff102/_page_0_Picture_0.jpeg"
-                        val pathParts = imageMetadata.path.split("/")
-                        val chapterFolder = pathParts.getOrNull(pathParts.size - 2) // e.g., "jeff102"
-                        val fileName = pathParts.lastOrNull() // e.g., "_page_0_Picture_0.jpeg"
-                        
-                        if (chapterFolder != null && fileName != null) {
-                            "file:///android_asset/images/$chapterFolder/$fileName"
-                        } else {
-                            "file:///android_asset/images/${imageName}"
-                        }
-                    } else {
-                        // Fallback to base path + image name
+                    // Simple image path construction since we no longer have image metadata
+                    val imagePath = if (baseImagePath.isNotEmpty()) {
                         "$baseImagePath/$imageName"
+                    } else {
+                        "file:///android_asset/images/$imageName"
                     }
                     
                     elements.add(

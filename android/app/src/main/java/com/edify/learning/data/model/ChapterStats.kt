@@ -114,7 +114,6 @@ data class UserProfile(
     val userId: String,
     val name: String = "",
     val languagePreference: String = "English",
-    val classLevel: Int = 1,
     val hasCompletedOnboarding: Boolean = false,
     val hasUnlockedPersonalizedQuests: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),

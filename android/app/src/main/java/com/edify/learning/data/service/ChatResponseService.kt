@@ -31,14 +31,14 @@ class ChatResponseService @Inject constructor(
     
     /**
      * Generate chat response in background that survives navigation/lifecycle changes
-     * Uses same robust pattern as QuestGenerationService
+     * Uses same robust pattern as QuestGenerationService with subject-specific query classification
      */
     fun generateChatResponse(
         userMessage: ChatMessage,
         prompt: String,
         context: String?,
+        subject: String? = null,
         image: Bitmap? = null,
-        isExplanation: Boolean = false,
         onLoadingStateChange: ((Boolean) -> Unit)? = null,
         onError: ((String) -> Unit)? = null
     ) {
@@ -62,7 +62,7 @@ class ChatResponseService @Inject constructor(
                 try {
                     // Add timeout to prevent indefinite hanging (same as QuestGenerationService)
                     withTimeout(300000) { // 5 minute timeout
-                        generateResponseInternal(userMessage, prompt, context, image, isExplanation)
+                        generateResponseInternal(userMessage, prompt, context, subject, image)
                     }
                 } catch (e: TimeoutCancellationException) {
                     println("CHAT_RESPONSE: Response generation timed out after 5 minutes")
@@ -86,58 +86,53 @@ class ChatResponseService @Inject constructor(
     
     /**
      * Internal response generation logic with proper coroutine context checks
+     * Now uses subject-specific query classification
      */
     private suspend fun generateResponseInternal(
         userMessage: ChatMessage,
         prompt: String,
         context: String?,
-        image: Bitmap?,
-        isExplanation: Boolean
+        subject: String? = null,
+        image: Bitmap? = null
     ) {
-        coroutineContext.ensureActive()
-        
-        // Generate response using repository
-        val result = if (image != null) {
-            repository.generateGemmaResponseWithImage(
-                prompt = prompt,
-                context = context,
-                image = image,
-                isExplanation = isExplanation
-            )
-        } else {
-            repository.generateGemmaResponse(
-                prompt = prompt,
-                context = context,
-                isExplanation = isExplanation
-            )
-        }
-        
-        coroutineContext.ensureActive()
-        
-        result.fold(
-            onSuccess = { response ->
-                // Create and save Gemma response message
-                val gemmaMessage = ChatMessage(
-                    id = UUID.randomUUID().toString(),
-                    sessionId = userMessage.sessionId,
-                    chapterId = userMessage.chapterId,
-                    content = response,
-                    isFromUser = false,
-                    messageType = MessageType.TEXT
+        try {
+            val result = if (image != null) {
+                repository.generateGemmaResponseWithImage(
+                    prompt = prompt,
+                    subject = subject,
+                    context = context,
+                    image = image
                 )
-                
-                // Save response to database
-                chatDao.insertMessage(gemmaMessage)
-                
-                // Clean up pending response tracking
-                cleanupPendingResponse(userMessage.id)
-                
-                println("CHAT_RESPONSE: Successfully generated and saved response for message ${userMessage.id}")
-            },
-            onFailure = { error ->
-                throw error
+            } else {
+                repository.generateGemmaResponse(
+                    prompt = prompt,
+                    subject = subject,
+                    context = context
+                )
             }
-        )
+            
+            result.fold(
+                onSuccess = { response ->
+                    val aiMessage = ChatMessage(
+                        id = UUID.randomUUID().toString(),
+                        sessionId = userMessage.sessionId,
+                        chapterId = userMessage.chapterId,
+                        content = response,
+                        isFromUser = false,
+                        timestamp = System.currentTimeMillis(),
+                        messageType = MessageType.TEXT
+                    )
+                    
+                    repository.insertChatMessage(aiMessage)
+                    pendingResponses.remove(userMessage.id)
+                },
+                onFailure = { error ->
+                    handleResponseGenerationFailure(userMessage.id, error.message ?: "Failed to generate response", null)
+                }
+            )
+        } catch (e: Exception) {
+            handleResponseGenerationFailure(userMessage.id, e.message ?: "Failed to generate response", null)
+        }
     }
     
     /**

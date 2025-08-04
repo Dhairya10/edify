@@ -194,8 +194,7 @@ public final class ChatDao_Impl implements ChatDao {
   }
 
   @Override
-  public Object insertMessage(final ChatMessage message,
-      final Continuation<? super Unit> $completion) {
+  public Object insertMessage(final ChatMessage message, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -209,12 +208,12 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object insertMessages(final List<ChatMessage> messages,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -228,12 +227,11 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteMessage(final ChatMessage message,
-      final Continuation<? super Unit> $completion) {
+  public Object deleteMessage(final ChatMessage message, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -247,12 +245,11 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object updateMessage(final ChatMessage message,
-      final Continuation<? super Unit> $completion) {
+  public Object updateMessage(final ChatMessage message, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -266,11 +263,11 @@ public final class ChatDao_Impl implements ChatDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteById(final long id, final Continuation<? super Unit> $completion) {
+  public Object deleteById(final long id, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -291,12 +288,12 @@ public final class ChatDao_Impl implements ChatDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object deleteMessagesBySession(final String sessionId,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -321,11 +318,11 @@ public final class ChatDao_Impl implements ChatDao {
           __preparedStmtOfDeleteMessagesBySession.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteAllMessages(final Continuation<? super Unit> $completion) {
+  public Object deleteAllMessages(final Continuation<? super Unit> arg0) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -344,11 +341,11 @@ public final class ChatDao_Impl implements ChatDao {
           __preparedStmtOfDeleteAllMessages.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
-  public Object getAllMessages(final Continuation<? super List<ChatMessage>> $completion) {
+  public Object getAllMessages(final Continuation<? super List<ChatMessage>> arg0) {
     final String _sql = "SELECT * FROM chat_messages ORDER BY timestamp DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -422,7 +419,7 @@ public final class ChatDao_Impl implements ChatDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
@@ -600,8 +597,7 @@ public final class ChatDao_Impl implements ChatDao {
   }
 
   @Override
-  public Object getMessageById(final String id,
-      final Continuation<? super ChatMessage> $completion) {
+  public Object getMessageById(final String id, final Continuation<? super ChatMessage> arg1) {
     final String _sql = "SELECT * FROM chat_messages WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -681,12 +677,11 @@ public final class ChatDao_Impl implements ChatDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object getMessageCount(final String sessionId,
-      final Continuation<? super Integer> $completion) {
+  public Object getMessageCount(final String sessionId, final Continuation<? super Integer> arg1) {
     final String _sql = "SELECT COUNT(*) FROM chat_messages WHERE sessionId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -720,7 +715,7 @@ public final class ChatDao_Impl implements ChatDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @NonNull

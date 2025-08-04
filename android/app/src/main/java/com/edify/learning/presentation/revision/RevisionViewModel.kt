@@ -8,16 +8,21 @@ import com.edify.learning.data.model.UserAction
 import com.edify.learning.data.repository.LearningRepository
 import com.edify.learning.data.repository.QuestRepository
 import com.edify.learning.data.service.QuestGenerationService
+import com.edify.learning.data.service.RevisionEvaluationService
+import com.edify.learning.data.model.RevisionSubmission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import android.util.Log
 import javax.inject.Inject
 
 data class RevisionUiState(
     val isLoading: Boolean = false,
     val exercises: List<Exercise> = emptyList(),
     val userResponses: Map<Int, UserResponse> = emptyMap(),
+    val revisionSubmissions: Map<Int, List<RevisionSubmission>> = emptyMap(),
     val completedCount: Int = 0,
+    val isEvaluating: Boolean = false,
     val error: String? = null
 )
 
@@ -25,15 +30,21 @@ data class RevisionUiState(
 class RevisionViewModel @Inject constructor(
     private val repository: LearningRepository,
     private val questRepository: QuestRepository,
-    private val questGenerationService: QuestGenerationService
+    private val questGenerationService: QuestGenerationService,
+    private val revisionEvaluationService: RevisionEvaluationService
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(RevisionUiState())
     val uiState: StateFlow<RevisionUiState> = _uiState.asStateFlow()
     
-    private var currentChapterId: String = ""
+        private var currentChapterId: String = ""
+
+    companion object {
+        private const val TAG = "RevisionViewModel"
+    }
     
-    fun loadExercises(chapterId: String) {
+        fun loadExercises(chapterId: String) {
+        Log.d(TAG, "loadExercises called for chapterId: $chapterId")
         currentChapterId = chapterId
         viewModelScope.launch {
             println("RevisionViewModel: Starting loadExercises for chapterId: '$chapterId'")
@@ -91,7 +102,8 @@ class RevisionViewModel @Inject constructor(
         }
     }
     
-    fun updateUserResponse(chapterId: String, exerciseIndex: Int, response: UserResponse) {
+        fun updateUserResponse(chapterId: String, exerciseIndex: Int, response: UserResponse) {
+        Log.d(TAG, "updateUserResponse called for chapterId: $chapterId, exerciseIndex: $exerciseIndex")
         viewModelScope.launch {
             try {
                 val updatedResponse = response.copy(
@@ -156,5 +168,106 @@ class RevisionViewModel @Inject constructor(
     
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+        fun submitForEvaluation(chapterId: String, exerciseIndex: Int) {
+        Log.d(TAG, "submitForEvaluation called for chapterId: $chapterId, exerciseIndex: $exerciseIndex")
+        viewModelScope.launch {
+            try {
+                _uiState.value = _uiState.value.copy(isEvaluating = true)
+                
+                val exercise = _uiState.value.exercises.getOrNull(exerciseIndex)
+                val userResponse = _uiState.value.userResponses[exerciseIndex]
+                
+                if (exercise == null || userResponse == null) {
+                    _uiState.value = _uiState.value.copy(
+                        isEvaluating = false,
+                        error = "No response found to evaluate"
+                    )
+                    return@launch
+                }
+                
+                                Log.d(TAG, "User response: $userResponse")
+
+                val result = when {
+                                        !userResponse.textResponse.isNullOrBlank() -> {
+                        Log.d(TAG, "Evaluating text response.")
+                        revisionEvaluationService.evaluateTextResponse(
+                            chapterId = chapterId,
+                            questionIndex = exerciseIndex,
+                            question = exercise.question,
+                            expectedAnswer = exercise.answer,
+                            studentResponse = userResponse.textResponse
+                        )
+                    }
+                                        !userResponse.imageUri.isNullOrBlank() -> {
+                        Log.d(TAG, "Evaluating image response.")
+                        revisionEvaluationService.evaluateImageResponse(
+                            chapterId = chapterId,
+                            questionIndex = exerciseIndex,
+                            question = exercise.question,
+                            expectedAnswer = exercise.answer,
+                            imageUri = userResponse.imageUri
+                        )
+                    }
+                    else -> {
+                        _uiState.value = _uiState.value.copy(
+                            isEvaluating = false,
+                            error = "Please provide a text or image response before submitting"
+                        )
+                        return@launch
+                    }
+                }
+                
+                                Log.d(TAG, "Evaluation result: $result")
+
+                result.fold(
+                                        onSuccess = { submission ->
+                        Log.d(TAG, "Evaluation successful: $submission")
+                        // Update UI state with new submission
+                        val currentSubmissions = _uiState.value.revisionSubmissions.toMutableMap()
+                        val questionSubmissions = currentSubmissions[exerciseIndex]?.toMutableList() ?: mutableListOf()
+                        questionSubmissions.add(submission)
+                        currentSubmissions[exerciseIndex] = questionSubmissions
+                        
+                        _uiState.value = _uiState.value.copy(
+                            revisionSubmissions = currentSubmissions,
+                            isEvaluating = false
+                        )
+                    },
+                                        onFailure = { exception ->
+                        Log.e(TAG, "Evaluation failed", exception)
+                        _uiState.value = _uiState.value.copy(
+                            isEvaluating = false,
+                            error = "Failed to evaluate response: ${exception.message}"
+                        )
+                    }
+                )
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isEvaluating = false,
+                    error = "Error submitting for evaluation: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun loadRevisionHistory(chapterId: String, exerciseIndex: Int) {
+        viewModelScope.launch {
+            try {
+                val submissions = revisionEvaluationService.getRevisionHistory(chapterId, exerciseIndex)
+                val currentSubmissions = _uiState.value.revisionSubmissions.toMutableMap()
+                currentSubmissions[exerciseIndex] = submissions
+                
+                _uiState.value = _uiState.value.copy(
+                    revisionSubmissions = currentSubmissions
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Failed to load revision history: ${e.message}"
+                )
+            }
+        }
     }
 }

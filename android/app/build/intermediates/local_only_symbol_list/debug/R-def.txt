@@ -35,6 +35,7 @@ drawable draft_24dp_ffffff_fill0_wght400_grad0_opsz24
 drawable explore_24dp_ffffff_fill0_wght400_grad0_opsz24
 drawable functions_24dp_ffffff_fill0_wght400_grad0_opsz24
 drawable functions_24dp_ffffff_fill1_wght400_grad0_opsz24
+drawable history_24dp_ffffff_fill0_wght400_grad0_opsz24
 drawable ic_chat
 drawable ic_marker
 drawable image_24dp_ffffff_fill0_wght400_grad0_opsz24
@@ -47,6 +48,7 @@ drawable slab_serif_24dp_ffffff_fill0_wght400_grad0_opsz24
 drawable slab_serif_24dp_ffffff_fill1_wght400_grad0_opsz24
 drawable stars_24dp_ffffff_fill0_wght400_grad0_opsz24
 drawable stars_24dp_ffffff_fill1_wght400_grad0_opsz24
+drawable table_lamp_24dp_ffffff_fill0_wght400_grad0_opsz24
 drawable task_alt_24dp_6eb48d_fill0_wght400_grad0_opsz24
 drawable translate_24dp_ffffff_fill0_wght400_grad0_opsz24
 mipmap ic_launcher
@@ -78,7 +80,6 @@ string revision
 string science
 string search_subjects
 string send_message
-string social_science
 string type_message
 string welcome_back
 string your_subjects

@@ -32,17 +32,22 @@ sealed class ContentItem : Parcelable {
 @Parcelize
 @Serializable
 data class ChapterContent(
-    val markdownText: String,
-    val contentItems: List<ContentItem> = emptyList(),
-    val images: List<ImageMetadata> = emptyList()
+    val htmlContent: String,
+    val questions: List<QuestionItem> = emptyList(),
+    val summary: SummaryItem? = null
 ) : Parcelable
 
 @Parcelize
 @Serializable
-data class ImageMetadata(
-    val name: String,
-    val path: String,
-    val sizeBytes: Long,
-    val description: String? = null,
-    val descriptionGeneratedAt: String? = null
+data class QuestionItem(
+    val question: String,
+    val answer: String
+) : Parcelable
+
+@Parcelize
+@Serializable
+data class SummaryItem(
+    val title: String,
+    val keyConcepts: List<String>,
+    val summary: String
 ) : Parcelable

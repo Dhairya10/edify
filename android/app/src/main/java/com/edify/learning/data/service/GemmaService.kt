@@ -6,9 +6,10 @@ import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOptions
 import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import com.google.mediapipe.tasks.genai.llminference.GraphOptions
-// TODO: Fix MediaPipe framework dependency issues
-// import com.google.mediapipe.framework.image.BitmapImageBuilder
-// import com.google.mediapipe.framework.image.MPImage
+import com.google.mediapipe.framework.image.BitmapImageBuilder
+import com.google.mediapipe.framework.image.MPImage
+import java.util.regex.Pattern
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -38,7 +39,7 @@ class GemmaService @Inject constructor(
     companion object {
         // Custom Gemma model file used in this project
         private const val MODEL_FILENAME = "gemma-3n-E2B-it-int4.task" // Our specific model (smaller, faster)
-        private const val MAX_TOKENS = 1024
+        private const val MAX_TOKENS = 32000 // Gemma 3N supports up to 32k tokens
         private const val TOP_K = 64
         private const val TEMPERATURE = 0.7f
         private const val RANDOM_SEED = 42
@@ -317,31 +318,11 @@ class GemmaService @Inject constructor(
             }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error generating response: ${e.message}")
-            Result.failure(e)
+            android.util.Log.w(TAG, "Falling back to mock response")
+            Result.success(getMockResponse(prompt))
         }
     }
     
-    // TODO: Temporarily commented out due to MediaPipe framework dependency issues
-    // Will be restored once BitmapImageBuilder and MPImage classes are available
-    suspend fun generateResponseWithImage(prompt: String, image: Bitmap): Result<String> = withContext(Dispatchers.IO) {
-        android.util.Log.w(TAG, "Image inference temporarily disabled due to MediaPipe framework issues")
-        
-        // Fallback to enhanced text-based approach
-        val imageContextPrompt = promptService.getFormattedPrompt("image_context", "originalPrompt" to prompt)
-        
-        return@withContext generateResponse(imageContextPrompt).fold(
-            onSuccess = { response ->
-                Result.success(response)
-            },
-            onFailure = { error ->
-                android.util.Log.w(TAG, "Text-based fallback failed: ${error.message}")
-                Result.success(getMockImageResponse(prompt))
-            }
-        )
-    }
-    
-    /*
-    // Original multimodal implementation - commented out due to dependency issues
     suspend fun generateResponseWithImage(prompt: String, image: Bitmap): Result<String> = withContext(Dispatchers.IO) {
         try {
             if (!isInitialized) {
@@ -354,6 +335,18 @@ class GemmaService @Inject constructor(
             val mpImage: MPImage = BitmapImageBuilder(image).build()
             android.util.Log.d(TAG, "Converted bitmap to MPImage successfully")
             
+            // Get the model file path (same as used in main initialization)
+            val modelFile = prepareModelFile()
+                ?: throw IllegalStateException("Model file not available for multimodal inference")
+            
+            // Create LLM inference options with max images = 1 for Gemma-3n (required for multimodal)
+            val multimodalOptions = LlmInferenceOptions.builder()
+                .setModelPath(modelFile.absolutePath)
+                .setMaxTokens(MAX_TOKENS)
+                .setMaxTopK(TOP_K)
+                .setMaxNumImages(1) // Gemma-3n accepts maximum of 1 image per session
+                .build()
+            
             // Create session options with vision modality enabled
             val sessionOptions = LlmInferenceSession.LlmInferenceSessionOptions.builder()
                 .setTopK(TOP_K)
@@ -365,18 +358,10 @@ class GemmaService @Inject constructor(
                 )
                 .build()
             
-            // Create LLM inference options with max images = 1 for Gemma-3n
-            val options = LlmInferenceOptions.builder()
-                .setModelPath(llmInference?.let { "" } ?: throw IllegalStateException("Model not initialized"))
-                .setMaxTokens(MAX_TOKENS)
-                .setMaxTopK(TOP_K)
-                .setMaxNumImages(1) // Gemma-3n accepts maximum of 1 image per session
-                .build()
-            
-            // Use the existing llmInference instance with session-based approach
-            llmInference?.let { inference ->
-                LlmInferenceSession.createFromOptions(inference, sessionOptions).use { session ->
-                    android.util.Log.d(TAG, "Created LlmInferenceSession with vision modality")
+            // Create multimodal LlmInference instance and session according to official docs
+            LlmInference.createFromOptions(context, multimodalOptions).use { multimodalInference ->
+                LlmInferenceSession.createFromOptions(multimodalInference, sessionOptions).use { session ->
+                    android.util.Log.d(TAG, "Created multimodal LlmInferenceSession with vision modality")
                     
                     // Add text query and image to session as per documentation
                     session.addQueryChunk(prompt)
@@ -394,15 +379,15 @@ class GemmaService @Inject constructor(
                         throw IllegalStateException("Empty response from multimodal model")
                     }
                 }
-            } ?: throw IllegalStateException("LLM inference not initialized")
+            }
             
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Multimodal response generation error: ${e.message}")
             e.printStackTrace()
             
-            // Fallback to enhanced text-based approach if multimodal fails
-            android.util.Log.w(TAG, "Falling back to enhanced text-based image analysis")
-            val imageContextPrompt = createImageContextPrompt(prompt, image)
+            // Fallback to text-based approach if multimodal fails
+            android.util.Log.w(TAG, "Falling back to text-based image analysis")
+            val imageContextPrompt = "Please analyze this image and answer the following question: $prompt"
             
             return@withContext generateResponse(imageContextPrompt).fold(
                 onSuccess = { response ->
@@ -411,79 +396,21 @@ class GemmaService @Inject constructor(
                 onFailure = { error ->
                     android.util.Log.w(TAG, "Text-based fallback also failed: ${error.message}")
                     Result.success(getMockImageResponse(prompt))
-                )
-            }
-        } catch (e: Exception) {
-            android.util.Log.e(TAG, "Multimodal response generation error: ${e.message}")
-            e.printStackTrace()
-            Result.failure(e)
+                }
+            )
         }
     }
-    */
+
     
     /**
      * Provides a mock response when the Gemma model is unavailable
-     * This creates a more engaging user experience than just showing error messages
      */
     private fun getMockResponse(prompt: String): String {
-        val promptLower = prompt.lowercase()
-        
-        // Check if this is a quest generation request expecting JSON response
-        if (promptLower.contains("respond in json format") || 
-            promptLower.contains("json format") ||
-            promptLower.contains("curriculum designer") ||
-            promptLower.contains("expert educator") ||
-            promptLower.contains("learning coach")) {
-            
-            // Return a properly formatted JSON response for quest generation
-            if (promptLower.contains("strategy") && (promptLower.contains("convergent") || promptLower.contains("divergent"))) {
-                // Strategy selection mock response
-                return """{"strategy": "Divergent", "chapter": "mock_chapter_id"}"""
-            } else {
-                // Quest generation mock response
-                return """{"title": "Mock Quest - Model Unavailable", "questionText": "This is a placeholder quest generated because the Gemma model is not available. Please ensure the model file is properly installed."}"""
-            }
-        }
-        
-        // Check if this is a greeting or introduction
-        if (promptLower.contains("hello") || promptLower.contains("hi") || 
-            promptLower.contains("hey") || promptLower.startsWith("introduce")) {
-            return "Hello! I'm the Edify learning assistant. While my AI capabilities are currently limited (model not found), I can still help with basic questions. Feel free to explore the app's other features like notes, highlighting, and reading educational content!"
-        }
-        
-        // Check if asking about capabilities
-        if (promptLower.contains("what can you do") || promptLower.contains("capabilities") || 
-            promptLower.contains("help me with")) {
-            return "Normally, I can explain concepts, answer questions about your learning materials, and help you understand difficult topics. However, my AI capabilities are currently limited as the Gemma model file is missing. The app developer needs to include this file in the assets/models directory for full functionality."
-        }
-        
-        // Check for math/science related questions
-        if (promptLower.contains("math") || promptLower.contains("equation") || 
-            promptLower.contains("calculate") || promptLower.contains("science") || 
-            promptLower.contains("physics")) {
-            return "I'd love to help with your math or science question! Unfortunately, my AI capabilities are currently limited because the Gemma model file is not installed. Please try the exercises and learning materials available in the app instead, or check back later when the AI model is properly configured."
-        }
-        
-        // Default response for other questions
-        return "I'm sorry, I can't provide a detailed response at the moment because the AI model is missing from this device. The Gemma model file needs to be included in the app's assets/models directory. You can continue using other app features like reading content, making notes, and studying exercises while this issue is resolved."
+        return "I'm sorry, I can't provide a response right now because the AI model is unavailable. Please try again later or use other app features."
     }
     
     private fun getMockImageResponse(prompt: String): String {
-        // Provide contextual mock responses for image-based queries
-        return when {
-            prompt.contains("describe", ignoreCase = true) || prompt.contains("what", ignoreCase = true) -> {
-                "I can see you've shared an image with me. While I can't analyze it right now due to the AI model being unavailable, I'd be happy to help once the Gemma model is properly configured. You can continue using other features of the app in the meantime."
-            }
-            prompt.contains("explain", ignoreCase = true) || prompt.contains("how", ignoreCase = true) -> {
-                "I notice you've included an image for explanation. The visual analysis feature requires the Gemma model to be available. Please ensure the model file is properly installed, and then I'll be able to provide detailed explanations about your images."
-            }
-            prompt.contains("solve", ignoreCase = true) || prompt.contains("calculate", ignoreCase = true) -> {
-                "I can see you've shared an image that might contain a problem to solve. Once the AI model is available, I'll be able to analyze images and help solve mathematical problems, read diagrams, and provide step-by-step solutions."
-            }
-            else -> {
-                "I can see you've shared an image with your question. The image analysis feature is currently unavailable because the AI model needs to be properly configured. You can still use text-based chat and other app features while this is being resolved."
-            }
-        }
+        return "I can see you've shared an image, but I can't analyze it right now because the AI model is unavailable. Please try again later."
     }
     
     fun generateResponseStream(prompt: String): Flow<String> = flow {
@@ -527,17 +454,55 @@ class GemmaService @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
     
-    fun createEducationalPrompt(
-        context: String,
-        question: String,
-        isExplanation: Boolean = false
+    /**
+     * Generates a direct response to a query using the universal tutor prompt
+     */
+    suspend fun generateEducationalResponse(topic: String, query: String): Result<String> {
+        return try {
+            android.util.Log.d(TAG, "EDUCATIONAL_RESPONSE: Generating response for topic '$topic' and query '$query'")
+            
+            val universalPrompt = promptService.getFormattedPrompt(
+                "universal_tutor",
+                "topic" to topic,
+                "input" to query
+            )
+            
+            val response = generateResponse(universalPrompt)
+            response.fold(
+                onSuccess = { educationalResponse ->
+                    android.util.Log.d(TAG, "EDUCATIONAL_RESPONSE: Generated response: '${educationalResponse.take(100)}...'")
+                    Result.success(educationalResponse)
+                },
+                onFailure = { error ->
+                    android.util.Log.w(TAG, "EDUCATIONAL_RESPONSE: Generation failed, using fallback. Error: ${error.message}")
+                    Result.success("I'm having trouble understanding your question right now. Could you try rephrasing it?")
+                }
+            )
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "EDUCATIONAL_RESPONSE: Exception during response generation. Error: ${e.message}")
+            Result.success("I'm having trouble understanding your question right now. Could you try rephrasing it?")
+        }
+    }
+    
+    /**
+     * Creates an image analysis prompt using the universal image tutor
+     */
+    fun createImageAnalysisPrompt(
+        topic: String,
+        query: String
     ): String {
-        val promptKey = if (isExplanation) "educational_explanation" else "educational_question"
-        return promptService.getFormattedPrompt(
-            promptKey,
-            "context" to context,
-            "question" to question
+        android.util.Log.i(TAG, "IMAGE_PROMPT: Using universal image tutor for topic '$topic'")
+        android.util.Log.d(TAG, "IMAGE_PROMPT: Query: '$query'")
+        android.util.Log.d(TAG, "IMAGE_PROMPT: Context: '$topic'")
+        
+        val prompt = promptService.getFormattedPrompt(
+            "image_tutor",
+            "query" to query,
+            "topic" to topic
         )
+        
+        android.util.Log.d(TAG, "IMAGE_PROMPT: Generated unified image analysis prompt")
+        return prompt
     }
     
     /**
@@ -596,4 +561,5 @@ class GemmaService @Inject constructor(
         llmInference = null
         isInitialized = false
     }
+    
 }

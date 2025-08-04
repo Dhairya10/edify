@@ -36,7 +36,10 @@ import com.edify.learning.presentation.notes.NotesScreen
 import com.edify.learning.presentation.chat.ChatScreen
 import com.edify.learning.presentation.chat.ChatViewModel
 import com.edify.learning.presentation.components.TranslationViewModel
+import com.edify.learning.data.service.TranslationCacheService
 import com.edify.learning.presentation.revision.RevisionScreen
+import com.edify.learning.presentation.revision.QuestionScreen
+import com.edify.learning.presentation.revision.QuestionHistoryScreen
 import com.edify.learning.presentation.quest.QuestScreen
 import com.edify.learning.presentation.quest.QuestDetailScreen
 import com.edify.learning.presentation.developer.DeveloperModeScreen
@@ -216,6 +219,7 @@ fun EdifyApp() {
                 val viewModel: ChapterViewModel = hiltViewModel()
                 val translationViewModel: TranslationViewModel = hiltViewModel()
                 val gemmaService = translationViewModel.gemmaService
+                val translationCacheService: TranslationCacheService = hiltViewModel<TranslationViewModel>().translationCacheService
                 
                 LaunchedEffect(chapterId) {
                     viewModel.loadChapter(chapterId)
@@ -230,7 +234,11 @@ fun EdifyApp() {
                     onNavigateToChat = { chapterId, selectedText ->
                         navController.navigate("chat/$chapterId?selectedText=$selectedText")
                     },
-                    gemmaService = gemmaService
+                    onNavigateToRevision = { chapterId, chapterTitle ->
+                        navController.navigate("revision/$chapterId?title=${chapterTitle}")
+                    },
+                    gemmaService = gemmaService,
+                    translationCacheService = translationCacheService
                 )
             }
             
@@ -259,6 +267,38 @@ fun EdifyApp() {
                 
                 RevisionScreen(
                     chapterId = chapterId,
+                    chapterTitle = chapterTitle,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToQuestion = { questionIndex ->
+                        navController.navigate("revision/$chapterId/question/$questionIndex?title=$chapterTitle")
+                    }
+                )
+            }
+            
+            composable("revision/{chapterId}/question/{questionIndex}?title={title}") { backStackEntry ->
+                val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+                val questionIndex = backStackEntry.arguments?.getString("questionIndex")?.toIntOrNull() ?: 0
+                val chapterTitle = backStackEntry.arguments?.getString("title") ?: "Chapter"
+                
+                QuestionScreen(
+                    chapterId = chapterId,
+                    questionIndex = questionIndex,
+                    chapterTitle = chapterTitle,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToHistory = {
+                        navController.navigate("revision/$chapterId/question/$questionIndex/history?title=$chapterTitle")
+                    }
+                )
+            }
+            
+            composable("revision/{chapterId}/question/{questionIndex}/history?title={title}") { backStackEntry ->
+                val chapterId = backStackEntry.arguments?.getString("chapterId") ?: ""
+                val questionIndex = backStackEntry.arguments?.getString("questionIndex")?.toIntOrNull() ?: 0
+                val chapterTitle = backStackEntry.arguments?.getString("title") ?: "Chapter"
+                
+                QuestionHistoryScreen(
+                    chapterId = chapterId,
+                    questionIndex = questionIndex,
                     chapterTitle = chapterTitle,
                     onNavigateBack = { navController.popBackStack() }
                 )

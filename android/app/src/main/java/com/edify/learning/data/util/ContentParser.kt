@@ -1,8 +1,8 @@
 package com.edify.learning.data.util
 
 import com.edify.learning.data.model.ChapterContent
-import com.edify.learning.data.model.ContentItem
-import com.edify.learning.data.model.ImageMetadata
+import com.edify.learning.data.model.QuestionItem
+import com.edify.learning.data.model.SummaryItem
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -17,81 +17,50 @@ object ContentParser {
             val jsonObject = json.parseToJsonElement(jsonString).jsonObject
             val content = jsonObject["content"]?.jsonObject
             
-            val markdownText = content?.get("markdown_text")?.jsonPrimitive?.content ?: ""
+            val htmlContent = content?.get("html_content")?.jsonPrimitive?.content ?: ""
             
-            // Parse images
-            val imagesArray = content?.get("images")?.jsonArray
+            // Parse questions
+            val questionsArray = content?.get("questions")?.jsonArray
             
-            val images: List<ImageMetadata> = imagesArray?.mapNotNull { imageElement ->
+            val questions: List<QuestionItem> = questionsArray?.mapNotNull { questionElement ->
                 try {
-                    val imageObj = imageElement.jsonObject
-                    ImageMetadata(
-                        name = imageObj["name"]?.jsonPrimitive?.content ?: "",
-                        path = imageObj["path"]?.jsonPrimitive?.content ?: "",
-                        sizeBytes = imageObj["size_bytes"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L,
-                        description = imageObj["description"]?.jsonPrimitive?.content,
-                        descriptionGeneratedAt = imageObj["description_generated_at"]?.jsonPrimitive?.content
+                    val questionObj = questionElement.jsonObject
+                    QuestionItem(
+                        question = questionObj["question"]?.jsonPrimitive?.content ?: "",
+                        answer = questionObj["answer"]?.jsonPrimitive?.content ?: ""
                     )
                 } catch (e: Exception) {
                     null
                 }
             } ?: emptyList()
             
-            // Parse structured content items if available
-            val contentItems: List<ContentItem> = content?.get("structured_data")?.jsonObject?.get("contentItems")?.jsonArray?.mapNotNull { itemElement ->
+            // Parse summary
+            val summaryObj = content?.get("summary")?.jsonObject
+            val summary = summaryObj?.let {
                 try {
-                    val itemObj = itemElement.jsonObject
-                    val type = itemObj["type"]?.jsonPrimitive?.content
-                    val blockId = itemObj["blockId"]?.jsonPrimitive?.content ?: ""
+                    val keyConcepts = it["key_concepts"]?.jsonArray?.mapNotNull { concept ->
+                        concept.jsonPrimitive.content
+                    } ?: emptyList()
                     
-                    when (type) {
-                        "text" -> ContentItem.TextContent(
-                            blockId = blockId,
-                            text = itemObj["selectedText"]?.jsonPrimitive?.content ?: "",
-                            startOffset = itemObj["startOffset"]?.jsonPrimitive?.content?.toIntOrNull(),
-                            endOffset = itemObj["endOffset"]?.jsonPrimitive?.content?.toIntOrNull(),
-                            selectedText = itemObj["selectedText"]?.jsonPrimitive?.content
-                        )
-                        "image" -> ContentItem.ImageContent(
-                            blockId = blockId,
-                            src = itemObj["src"]?.jsonPrimitive?.content ?: "",
-                            caption = itemObj["caption"]?.jsonPrimitive?.content
-                        )
-                        else -> null
-                    }
+                    SummaryItem(
+                        title = it["title"]?.jsonPrimitive?.content ?: "",
+                        keyConcepts = keyConcepts,
+                        summary = it["summary"]?.jsonPrimitive?.content ?: ""
+                    )
                 } catch (e: Exception) {
                     null
                 }
-            } ?: emptyList()
+            }
             
             ChapterContent(
-                markdownText = markdownText,
-                contentItems = contentItems,
-                images = images
+                htmlContent = htmlContent,
+                questions = questions,
+                summary = summary
             )
         } catch (e: Exception) {
             null
         }
     }
     
-    fun extractImageReferences(markdownText: String): List<String> {
-        val imageRegex = """!\[.*?\]\((.*?)\)""".toRegex()
-        return imageRegex.findAll(markdownText)
-            .map { it.groupValues[1] }
-            .toList()
-    }
-    
-    fun replaceImagePaths(markdownText: String, baseImagePath: String): String {
-        val imageRegex = """!\[([^\]]*)\]\(([^)]+)\)""".toRegex()
-        return imageRegex.replace(markdownText) { matchResult ->
-            val altText = matchResult.groupValues[1]
-            val imagePath = matchResult.groupValues[2]
-            val fullPath = if (imagePath.startsWith("/")) {
-                "file://$baseImagePath${imagePath.substringAfterLast("/")}"
-            } else {
-                "file://$baseImagePath/$imagePath"
-            }
-            "![$altText]($fullPath)"
-        }
-    }
+    // Helper functions for HTML content processing can be added here if needed
 }

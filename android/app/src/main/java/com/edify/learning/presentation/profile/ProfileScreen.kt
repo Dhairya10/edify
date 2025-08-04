@@ -38,7 +38,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     
     // Dialog states
     var showLanguageDialog by remember { mutableStateOf(false) }
-    var showClassDialog by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
     var showClearDataConfirmationDialog by remember { mutableStateOf(false) }
     
@@ -130,12 +129,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                         color = TextSecondary.copy(alpha = 0.3f)
                     )
                     
-                    // Class Field
-                    ProfileField(
-                        label = "Class",
-                        value = "${userProfile?.classLevel ?: 1}",
-                        onEdit = { showClassDialog = true }
-                    )
+
                 }
             }
             
@@ -182,17 +176,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             )
         }
         
-        // Class selection dialog
-        if (showClassDialog) {
-            ClassSelectionDialog(
-                currentClass = userProfile?.classLevel ?: 1,
-                onClassSelected = { classLevel ->
-                    viewModel.updateClass(classLevel)
-                    showClassDialog = false
-                },
-                onDismiss = { showClassDialog = false }
-            )
-        }
+
         
         // Name edit dialog
         if (showNameDialog) {
@@ -350,101 +334,6 @@ private fun LanguageOption(
             Text(
                 text = displayName,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (isSelected) Black else TextPrimary
-            )
-        }
-    }
-}
-
-@Composable
-fun ClassSelectionDialog(
-    currentClass: Int,
-    onClassSelected: (Int) -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = DarkSurface
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Select Class",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                    
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = TextSecondary
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Class grid (3 columns x 4 rows)
-                Column {
-                    for (row in 0 until 4) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            for (col in 0 until 3) {
-                                val classNum = row * 3 + col + 1
-                                ClassOption(
-                                    classNumber = classNum,
-                                    isSelected = classNum == currentClass,
-                                    onClick = { onClassSelected(classNum) },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(4.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClassOption(
-    classNumber: Int,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) White else DarkCard
-        )
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = classNumber.toString(),
-                fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = if (isSelected) Black else TextPrimary
             )

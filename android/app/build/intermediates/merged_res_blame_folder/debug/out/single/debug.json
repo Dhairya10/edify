@@ -28,6 +28,10 @@
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/functions_24dp_ffffff_fill1_wght400_grad0_opsz24.xml"
     },
     {
+        "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_history_24dp_ffffff_fill0_wght400_grad0_opsz24.xml.flat",
+        "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/history_24dp_ffffff_fill0_wght400_grad0_opsz24.xml"
+    },
+    {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_account_circle_24dp_ffffff_fill0_wght400_grad0_opsz24.xml.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/account_circle_24dp_ffffff_fill0_wght400_grad0_opsz24.xml"
     },
@@ -60,16 +64,16 @@
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/mipmap-hdpi/ic_launcher.webp"
     },
     {
-        "merged": "com.edify.learning.app-merged_res-79:/drawable_refresh_24dp_ffffff_fill0_wght400_grad0_opsz24.xml.flat",
-        "source": "com.edify.learning.app-main-81:/drawable/refresh_24dp_ffffff_fill0_wght400_grad0_opsz24.xml"
-    },
-    {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_slab_serif_24dp_ffffff_fill0_wght400_grad0_opsz24.xml.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/slab_serif_24dp_ffffff_fill0_wght400_grad0_opsz24.xml"
     },
     {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_draft_24dp_ffffff_fill0_wght400_grad0_opsz24.xml.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/draft_24dp_ffffff_fill0_wght400_grad0_opsz24.xml"
+    },
+    {
+        "merged": "com.edify.learning.app-merged_res-79:/drawable_table_lamp_24dp_ffffff_fill0_wght400_grad0_opsz24.xml.flat",
+        "source": "com.edify.learning.app-main-81:/drawable/table_lamp_24dp_ffffff_fill0_wght400_grad0_opsz24.xml"
     },
     {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_description_24dp_ffffff_fill1_wght400_grad0_opsz24.xml.flat",
@@ -98,6 +102,10 @@
     {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_arrow_forward_ios_24dp_000000_fill0_wght400_grad0_opsz24.xml.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/arrow_forward_ios_24dp_000000_fill0_wght400_grad0_opsz24.xml"
+    },
+    {
+        "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_refresh_24dp_ffffff_fill0_wght400_grad0_opsz24.xml.flat",
+        "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/refresh_24dp_ffffff_fill0_wght400_grad0_opsz24.xml"
     },
     {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/mipmap-hdpi_ic_launcher_foreground.webp.flat",
@@ -148,12 +156,12 @@
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/mipmap-xxxhdpi/ic_launcher_foreground.webp"
     },
     {
-        "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/xml_data_extraction_rules.xml.flat",
-        "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/xml/data_extraction_rules.xml"
-    },
-    {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/drawable_check_24dp_000000_fill0_wght400_grad0_opsz24.xml.flat",
         "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/drawable/check_24dp_000000_fill0_wght400_grad0_opsz24.xml"
+    },
+    {
+        "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/xml_data_extraction_rules.xml.flat",
+        "source": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-main-81:/xml/data_extraction_rules.xml"
     },
     {
         "merged": "/Users/marrow/.gradle/daemon/8.12/com.edify.learning.app-merged_res-79:/mipmap-xhdpi_ic_launcher_foreground.webp.flat",

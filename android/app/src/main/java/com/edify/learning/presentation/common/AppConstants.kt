@@ -20,7 +20,5 @@ object AppConstants {
         Language("ml", "Malayalam", "മലയാളം")
     )
     
-    val CLASS_RANGE = 1..12
-    
-    const val TOTAL_STEPS = 3
+    const val TOTAL_STEPS = 2
 }

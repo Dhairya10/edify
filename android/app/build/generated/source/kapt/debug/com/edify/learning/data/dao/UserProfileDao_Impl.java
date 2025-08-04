@@ -46,7 +46,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `user_profile` (`userId`,`name`,`languagePreference`,`classLevel`,`hasCompletedOnboarding`,`hasUnlockedPersonalizedQuests`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `user_profile` (`userId`,`name`,`languagePreference`,`hasCompletedOnboarding`,`hasUnlockedPersonalizedQuests`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -67,13 +67,12 @@ public final class UserProfileDao_Impl implements UserProfileDao {
         } else {
           statement.bindString(3, entity.getLanguagePreference());
         }
-        statement.bindLong(4, entity.getClassLevel());
         final int _tmp = entity.getHasCompletedOnboarding() ? 1 : 0;
-        statement.bindLong(5, _tmp);
+        statement.bindLong(4, _tmp);
         final int _tmp_1 = entity.getHasUnlockedPersonalizedQuests() ? 1 : 0;
-        statement.bindLong(6, _tmp_1);
-        statement.bindLong(7, entity.getCreatedAt());
-        statement.bindLong(8, entity.getUpdatedAt());
+        statement.bindLong(5, _tmp_1);
+        statement.bindLong(6, entity.getCreatedAt());
+        statement.bindLong(7, entity.getUpdatedAt());
       }
     };
     this.__preparedStmtOfDeleteById = new SharedSQLiteStatement(__db) {
@@ -96,7 +95,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
       @Override
       @NonNull
       public String createQuery() {
-        final String _query = "UPDATE user_profile SET name = ?, languagePreference = ?, classLevel = ?, hasCompletedOnboarding = ?, updatedAt = ? WHERE userId = ?";
+        final String _query = "UPDATE user_profile SET name = ?, languagePreference = ?, hasCompletedOnboarding = ?, updatedAt = ? WHERE userId = ?";
         return _query;
       }
     };
@@ -104,7 +103,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
 
   @Override
   public Object insertOrUpdateUserProfile(final UserProfile userProfile,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -118,12 +117,12 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object insertOrUpdate(final UserProfile userProfile,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -137,11 +136,11 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteById(final String id, final Continuation<? super Unit> $completion) {
+  public Object deleteById(final String id, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -166,12 +165,12 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object updatePersonalizationStatus(final String userId, final boolean hasUnlocked,
-      final long timestamp, final Continuation<? super Unit> $completion) {
+      final long timestamp, final Continuation<? super Unit> arg3) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -201,13 +200,12 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __preparedStmtOfUpdatePersonalizationStatus.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg3);
   }
 
   @Override
   public Object updateOnboardingInfo(final String userId, final String name, final String language,
-      final int classLevel, final boolean completed, final long timestamp,
-      final Continuation<? super Unit> $completion) {
+      final boolean completed, final long timestamp, final Continuation<? super Unit> arg5) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -226,13 +224,11 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           _stmt.bindString(_argIndex, language);
         }
         _argIndex = 3;
-        _stmt.bindLong(_argIndex, classLevel);
-        _argIndex = 4;
         final int _tmp = completed ? 1 : 0;
         _stmt.bindLong(_argIndex, _tmp);
-        _argIndex = 5;
+        _argIndex = 4;
         _stmt.bindLong(_argIndex, timestamp);
-        _argIndex = 6;
+        _argIndex = 5;
         if (userId == null) {
           _stmt.bindNull(_argIndex);
         } else {
@@ -251,11 +247,11 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           __preparedStmtOfUpdateOnboardingInfo.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg5);
   }
 
   @Override
-  public Object getAllProfiles(final Continuation<? super List<UserProfile>> $completion) {
+  public Object getAllProfiles(final Continuation<? super List<UserProfile>> arg0) {
     final String _sql = "SELECT * FROM user_profile ORDER BY createdAt DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -268,7 +264,6 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
           final int _cursorIndexOfLanguagePreference = CursorUtil.getColumnIndexOrThrow(_cursor, "languagePreference");
-          final int _cursorIndexOfClassLevel = CursorUtil.getColumnIndexOrThrow(_cursor, "classLevel");
           final int _cursorIndexOfHasCompletedOnboarding = CursorUtil.getColumnIndexOrThrow(_cursor, "hasCompletedOnboarding");
           final int _cursorIndexOfHasUnlockedPersonalizedQuests = CursorUtil.getColumnIndexOrThrow(_cursor, "hasUnlockedPersonalizedQuests");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -294,8 +289,6 @@ public final class UserProfileDao_Impl implements UserProfileDao {
             } else {
               _tmpLanguagePreference = _cursor.getString(_cursorIndexOfLanguagePreference);
             }
-            final int _tmpClassLevel;
-            _tmpClassLevel = _cursor.getInt(_cursorIndexOfClassLevel);
             final boolean _tmpHasCompletedOnboarding;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfHasCompletedOnboarding);
@@ -308,7 +301,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _item = new UserProfile(_tmpUserId,_tmpName,_tmpLanguagePreference,_tmpClassLevel,_tmpHasCompletedOnboarding,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
+            _item = new UserProfile(_tmpUserId,_tmpName,_tmpLanguagePreference,_tmpHasCompletedOnboarding,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
             _result.add(_item);
           }
           return _result;
@@ -317,12 +310,11 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
-  public Object getUserProfile(final String userId,
-      final Continuation<? super UserProfile> $completion) {
+  public Object getUserProfile(final String userId, final Continuation<? super UserProfile> arg1) {
     final String _sql = "SELECT * FROM user_profile WHERE userId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -341,7 +333,6 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           final int _cursorIndexOfUserId = CursorUtil.getColumnIndexOrThrow(_cursor, "userId");
           final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
           final int _cursorIndexOfLanguagePreference = CursorUtil.getColumnIndexOrThrow(_cursor, "languagePreference");
-          final int _cursorIndexOfClassLevel = CursorUtil.getColumnIndexOrThrow(_cursor, "classLevel");
           final int _cursorIndexOfHasCompletedOnboarding = CursorUtil.getColumnIndexOrThrow(_cursor, "hasCompletedOnboarding");
           final int _cursorIndexOfHasUnlockedPersonalizedQuests = CursorUtil.getColumnIndexOrThrow(_cursor, "hasUnlockedPersonalizedQuests");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
@@ -366,8 +357,6 @@ public final class UserProfileDao_Impl implements UserProfileDao {
             } else {
               _tmpLanguagePreference = _cursor.getString(_cursorIndexOfLanguagePreference);
             }
-            final int _tmpClassLevel;
-            _tmpClassLevel = _cursor.getInt(_cursorIndexOfClassLevel);
             final boolean _tmpHasCompletedOnboarding;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfHasCompletedOnboarding);
@@ -380,7 +369,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
             final long _tmpUpdatedAt;
             _tmpUpdatedAt = _cursor.getLong(_cursorIndexOfUpdatedAt);
-            _result = new UserProfile(_tmpUserId,_tmpName,_tmpLanguagePreference,_tmpClassLevel,_tmpHasCompletedOnboarding,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
+            _result = new UserProfile(_tmpUserId,_tmpName,_tmpLanguagePreference,_tmpHasCompletedOnboarding,_tmpHasUnlockedPersonalizedQuests,_tmpCreatedAt,_tmpUpdatedAt);
           } else {
             _result = null;
           }
@@ -390,7 +379,7 @@ public final class UserProfileDao_Impl implements UserProfileDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @NonNull

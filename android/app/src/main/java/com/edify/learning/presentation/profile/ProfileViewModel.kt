@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class ProfileField {
-    NAME, LANGUAGE, CLASS
+    NAME, LANGUAGE
 }
 
 data class ProfileUiState(
@@ -83,17 +83,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
     
-    fun updateClass(classLevel: Int) {
-        viewModelScope.launch {
-            val currentProfile = _uiState.value.userProfile ?: return@launch
-            val updatedProfile = currentProfile.copy(
-                classLevel = classLevel,
-                updatedAt = System.currentTimeMillis()
-            )
-            userProfileRepository.updateUserProfile(updatedProfile)
-            _uiState.update { it.copy(userProfile = updatedProfile) }
-        }
-    }
+
     
     fun onEditFieldRequested(field: ProfileField) {
         // For future implementation of name editing

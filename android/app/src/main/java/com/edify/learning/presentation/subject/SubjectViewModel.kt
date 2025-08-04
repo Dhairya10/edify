@@ -6,6 +6,7 @@ import com.edify.learning.data.model.Subject
 import com.edify.learning.data.model.Chapter
 import com.edify.learning.data.model.Exercise
 import com.edify.learning.data.model.UserResponse
+import com.edify.learning.data.model.RevisionSubmission
 import com.edify.learning.data.repository.LearningRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,8 +23,6 @@ class SubjectViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SubjectUiState())
     val uiState: StateFlow<SubjectUiState> = _uiState.asStateFlow()
     
-    private val _selectedMode = MutableStateFlow(SubjectMode.LEARNING)
-    val selectedMode: StateFlow<SubjectMode> = _selectedMode.asStateFlow()
     
     fun loadSubject(subjectId: String) {
         viewModelScope.launch {
@@ -56,58 +55,7 @@ class SubjectViewModel @Inject constructor(
         }
     }
     
-    fun onModeChanged(mode: SubjectMode) {
-        _selectedMode.value = mode
-        
-        // Load exercises when switching to revision mode
-        if (mode == SubjectMode.REVISION) {
-            loadExercisesForSubject()
-        }
-    }
     
-    private fun loadExercisesForSubject() {
-        viewModelScope.launch {
-            try {
-                val chapters = _uiState.value.chapters
-                val chapterExercises = mutableListOf<ChapterExercises>()
-                
-                println("SubjectViewModel: Loading exercises for ${chapters.size} chapters")
-                
-                chapters.forEach { chapter ->
-                    println("SubjectViewModel: Loading exercises for chapter: ${chapter.id} - ${chapter.title}")
-                    val exercises = repository.getExercisesForChapter(chapter.id)
-                    println("SubjectViewModel: Found ${exercises.size} exercises for chapter ${chapter.id}")
-                    
-                    if (exercises.isNotEmpty()) {
-                        chapterExercises.add(
-                            ChapterExercises(
-                                chapterId = chapter.id,
-                                chapterTitle = chapter.title,
-                                exercises = exercises
-                            )
-                        )
-                        println("SubjectViewModel: Added ${exercises.size} exercises for chapter ${chapter.title}")
-                    } else {
-                        println("SubjectViewModel: No exercises found for chapter ${chapter.id}")
-                    }
-                }
-                
-                println("SubjectViewModel: Total chapter exercises loaded: ${chapterExercises.size}")
-                
-                // Update UI state with exercises
-                _uiState.value = _uiState.value.copy(
-                    exercises = chapterExercises
-                )
-                
-            } catch (e: Exception) {
-                println("SubjectViewModel: Error loading exercises: ${e.message}")
-                e.printStackTrace()
-                _uiState.value = _uiState.value.copy(
-                    error = "Failed to load exercises: ${e.message}"
-                )
-            }
-        }
-    }
     
     fun updateUserResponse(chapterId: String, exerciseIndex: Int, response: UserResponse) {
         viewModelScope.launch {
@@ -139,8 +87,14 @@ class SubjectViewModel @Inject constructor(
         }
     }
     
+    
+    
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    fun clearSubmissionResult() {
+        _uiState.value = _uiState.value.copy(lastSubmissionResult = null)
     }
 }
 
@@ -150,6 +104,8 @@ data class SubjectUiState(
     val exercises: List<ChapterExercises> = emptyList(),
     val userResponses: Map<String, UserResponse> = emptyMap(),
     val isLoading: Boolean = false,
+    val isSubmittingAnswer: Boolean = false,
+    val lastSubmissionResult: String? = null,
     val error: String? = null
 )
 
@@ -158,8 +114,3 @@ data class ChapterExercises(
     val chapterTitle: String,
     val exercises: List<Exercise>
 )
-
-enum class SubjectMode {
-    LEARNING,
-    REVISION
-}
