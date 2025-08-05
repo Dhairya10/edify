@@ -284,7 +284,8 @@ fun PersonalizedQuestCard(
                                 onUnlock(quest.chapterId)
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White
+                                containerColor = Color.White,
+                                contentColor = Color.Black
                             ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(32.dp),

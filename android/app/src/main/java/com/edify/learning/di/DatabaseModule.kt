@@ -2,6 +2,7 @@ package com.edify.learning.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.edify.learning.data.dao.*
 import com.edify.learning.data.dao.RevisionSubmissionDao
 import com.edify.learning.data.database.TranslatedChapterDao
@@ -154,5 +155,13 @@ object DatabaseModule {
         revisionSubmissionDao: RevisionSubmissionDao
     ): RevisionEvaluationService {
         return RevisionEvaluationService(context, gemmaService, promptService, revisionSubmissionDao)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideWorkManager(
+        @ApplicationContext context: Context
+    ): WorkManager {
+        return WorkManager.getInstance(context)
     }
 }

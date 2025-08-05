@@ -186,7 +186,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
 
   @Override
   public Object insertSubmission(final RevisionSubmission submission,
-      final Continuation<? super Long> arg1) {
+      final Continuation<? super Long> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Long>() {
       @Override
       @NonNull
@@ -200,12 +200,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object deleteSubmission(final RevisionSubmission submission,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -219,12 +219,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object updateSubmission(final RevisionSubmission submission,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -238,12 +238,13 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object updateSubmissionEvaluation(final long submissionId, final String feedback,
-      final boolean isEvaluated, final long evaluatedAt, final Continuation<? super Unit> arg4) {
+      final boolean isEvaluated, final long evaluatedAt,
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -275,12 +276,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __preparedStmtOfUpdateSubmissionEvaluation.release(_stmt);
         }
       }
-    }, arg4);
+    }, $completion);
   }
 
   @Override
   public Object deleteSubmissionsForChapter(final String chapterId,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -305,7 +306,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           __preparedStmtOfDeleteSubmissionsForChapter.release(_stmt);
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
@@ -509,7 +510,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
 
   @Override
   public Object getLatestSubmissionForQuestion(final String chapterId, final int questionIndex,
-      final Continuation<? super RevisionSubmission> arg2) {
+      final Continuation<? super RevisionSubmission> $completion) {
     final String _sql = "SELECT * FROM revision_submissions WHERE chapterId = ? AND questionIndex = ? ORDER BY submittedAt DESC LIMIT 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
@@ -602,12 +603,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, arg2);
+    }, $completion);
   }
 
   @Override
   public Object getSubmissionById(final long submissionId,
-      final Continuation<? super RevisionSubmission> arg1) {
+      final Continuation<? super RevisionSubmission> $completion) {
     final String _sql = "SELECT * FROM revision_submissions WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -694,12 +695,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object getEvaluatedSubmissionsCount(final String chapterId,
-      final Continuation<? super Integer> arg1) {
+      final Continuation<? super Integer> $completion) {
     final String _sql = "SELECT COUNT(*) FROM revision_submissions WHERE chapterId = ? AND isEvaluated = 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -733,12 +734,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object getUniqueQuestionsAnswered(final String chapterId,
-      final Continuation<? super Integer> arg1) {
+      final Continuation<? super Integer> $completion) {
     final String _sql = "SELECT COUNT(DISTINCT questionIndex) FROM revision_submissions WHERE chapterId = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -772,11 +773,12 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object getPendingEvaluations(final Continuation<? super List<RevisionSubmission>> arg0) {
+  public Object getPendingEvaluations(
+      final Continuation<? super List<RevisionSubmission>> $completion) {
     final String _sql = "SELECT * FROM revision_submissions WHERE isEvaluated = 0 ORDER BY submittedAt ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -861,7 +863,7 @@ public final class RevisionSubmissionDao_Impl implements RevisionSubmissionDao {
           _statement.release();
         }
       }
-    }, arg0);
+    }, $completion);
   }
 
   @NonNull

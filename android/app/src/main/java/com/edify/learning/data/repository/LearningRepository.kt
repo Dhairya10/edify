@@ -99,12 +99,8 @@ class LearningRepository @Inject constructor(
     
     suspend fun insertNote(note: Note) {
         noteDao.insertNote(note)
-        // Trigger quest generation after adding note
+        // Update chapter stats for note (quest generation now runs daily at 6 PM)
         updateChapterStatsForNote(note.chapterId)
-        // Call in a coroutine-friendly way
-        withContext(Dispatchers.IO) {
-            questGenerationService.checkAndGenerateQuests()
-        }
     }
     
     suspend fun deleteNote(note: Note) = noteDao.deleteNote(note)
@@ -115,15 +111,10 @@ class LearningRepository @Inject constructor(
     
     suspend fun insertChatMessage(message: ChatMessage) {
         chatDao.insertMessage(message)
-        // Trigger quest generation after chat interaction
+        // Update chapter stats for chat interaction (quest generation now runs daily at 6 PM)
         if (message.isFromUser) {
-            // Only trigger on user questions, not AI responses
-            // Use message.chapterId directly instead of looking up by sessionId
+            // Only update stats on user questions, not AI responses
             updateChapterStatsForChat(message.chapterId, message.content)
-            // Call in a coroutine-friendly way
-            withContext(Dispatchers.IO) {
-                questGenerationService.checkAndGenerateQuests()
-            }
         }
     }
     
@@ -231,9 +222,8 @@ class LearningRepository @Inject constructor(
     
     suspend fun saveUserResponse(response: UserResponse) {
         userResponseDao.insertOrUpdateResponse(response)
-        // Trigger quest generation after revision answer
+        // Update chapter stats for revision answer (quest generation now runs daily at 6 PM)
         updateChapterStatsForRevision(response)
-        questGenerationService.checkAndGenerateQuests()
     }
     
     suspend fun deleteUserResponse(response: UserResponse) {

@@ -166,7 +166,10 @@ fun QuestionScreen(
                             .fillMaxWidth()
                             .padding(16.dp)
                             .height(60.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = White),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = White,
+                            contentColor = Black
+                        ),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         if (uiState.isEvaluating) {

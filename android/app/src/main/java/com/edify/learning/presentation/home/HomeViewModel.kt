@@ -47,6 +47,17 @@ class HomeViewModel @Inject constructor(
                 // Initialize Gemma model
                 repository.initializeGemma()
                 
+                // Check if subjects exist, if not initialize content data
+                val existingSubjects = repository.getAllSubjects()
+                var hasSubjects = false
+                existingSubjects.collect { subjects ->
+                    if (subjects.isEmpty() && !hasSubjects) {
+                        hasSubjects = true
+                        repository.initializeContentData()
+                    }
+                    return@collect
+                }
+                
                 _uiState.value = _uiState.value.copy(isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
