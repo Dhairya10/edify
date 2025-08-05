@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -48,14 +49,9 @@ class HomeViewModel @Inject constructor(
                 repository.initializeGemma()
                 
                 // Check if subjects exist, if not initialize content data
-                val existingSubjects = repository.getAllSubjects()
-                var hasSubjects = false
-                existingSubjects.collect { subjects ->
-                    if (subjects.isEmpty() && !hasSubjects) {
-                        hasSubjects = true
-                        repository.initializeContentData()
-                    }
-                    return@collect
+                val existingSubjects = repository.getAllSubjects().first()
+                if (existingSubjects.isEmpty()) {
+                    repository.initializeContentData()
                 }
                 
                 _uiState.value = _uiState.value.copy(isLoading = false)
