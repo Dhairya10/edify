@@ -188,9 +188,9 @@ adb  push  gemma-3n-E2B-it-int4.task  /sdcard/Download/
 
 ```bash
 
-git  clone <repository-url>
+git  clone git@github.com:Dhairya10/edify.git
 
-cd  project-unbound/android
+cd  edify/android
 
 ```
 
