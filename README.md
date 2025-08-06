@@ -2,7 +2,7 @@
 
   
 
-An Android learning companion that combines educational content with Gemma's on-device AI to create personalized, interactive study experiences. Built with Kotlin and Jetpack Compose, featuring intelligent quest generation and offline AI capabilities.
+An Android app that combines educational content with Gemma's on-device AI to create personalized & interactive study experiences
 
   
 
