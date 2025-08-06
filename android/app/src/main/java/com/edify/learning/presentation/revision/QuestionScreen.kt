@@ -131,14 +131,12 @@ fun QuestionScreen(
                     }
                 },
                 actions = {
-                    if (revisionSubmissions.isNotEmpty()) {
-                        IconButton(onClick = onNavigateToHistory) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.history_24dp_ffffff_fill0_wght400_grad0_opsz24),
-                                contentDescription = "View history",
-                                tint = TextPrimary
-                            )
-                        }
+                    IconButton(onClick = onNavigateToHistory) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.history_24dp_ffffff_fill0_wght400_grad0_opsz24),
+                            contentDescription = "View history",
+                            tint = TextPrimary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -168,7 +166,10 @@ fun QuestionScreen(
                             .fillMaxWidth()
                             .padding(16.dp)
                             .height(60.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = White),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = White,
+                            contentColor = Black
+                        ),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         if (uiState.isEvaluating) {
@@ -342,9 +343,8 @@ fun QuestionScreen(
                                     model = uri,
                                     contentDescription = "Uploaded response image",
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 250.dp),
-                                    contentScale = ContentScale.Crop
+                                        .wrapContentWidth(Alignment.Start),
+                                    contentScale = ContentScale.Fit
                                 )
                             }
                         }

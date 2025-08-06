@@ -1,5 +1,7 @@
 package com.edify.learning;
 
+import androidx.hilt.work.HiltWrapper_WorkerFactoryModule;
+import com.edify.learning.data.worker.DailyQuestWorker_HiltModule;
 import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.presentation.MainActivity_GeneratedInjector;
 import com.edify.learning.presentation.chapter.ChapterViewModel_HiltModules;
@@ -138,10 +140,12 @@ public final class EdifyApplication_HiltComponents {
   @Component(
       modules = {
           ApplicationContextModule.class,
+          DailyQuestWorker_HiltModule.class,
           DatabaseModule.class,
           ActivityRetainedCBuilderModule.class,
           ServiceCBuilderModule.class,
-          HiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule.class
+          HiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule.class,
+          HiltWrapper_WorkerFactoryModule.class
       }
   )
   @Singleton

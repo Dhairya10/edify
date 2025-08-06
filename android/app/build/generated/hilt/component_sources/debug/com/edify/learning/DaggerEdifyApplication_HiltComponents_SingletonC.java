@@ -2,10 +2,18 @@ package com.edify.learning;
 
 import android.app.Activity;
 import android.app.Service;
+import android.content.Context;
 import android.view.View;
 import androidx.fragment.app.Fragment;
+import androidx.hilt.work.HiltWorkerFactory;
+import androidx.hilt.work.HiltWrapper_WorkerFactoryModule;
+import androidx.hilt.work.WorkerAssistedFactory;
+import androidx.hilt.work.WorkerFactoryModule_ProvideFactoryFactory;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
+import androidx.work.ListenableWorker;
+import androidx.work.WorkManager;
+import androidx.work.WorkerParameters;
 import com.edify.learning.data.dao.ChapterDao;
 import com.edify.learning.data.dao.ChapterStatsDao;
 import com.edify.learning.data.dao.ChatDao;
@@ -26,6 +34,8 @@ import com.edify.learning.data.service.PromptService;
 import com.edify.learning.data.service.QuestGenerationService;
 import com.edify.learning.data.service.RevisionEvaluationService;
 import com.edify.learning.data.service.TranslationCacheService;
+import com.edify.learning.data.worker.DailyQuestWorker;
+import com.edify.learning.data.worker.DailyQuestWorker_AssistedFactory;
 import com.edify.learning.di.DatabaseModule;
 import com.edify.learning.di.DatabaseModule_ProvideChapterDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideChapterStatsDaoFactory;
@@ -43,6 +53,7 @@ import com.edify.learning.di.DatabaseModule_ProvideTranslatedChapterDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideTranslationCacheServiceFactory;
 import com.edify.learning.di.DatabaseModule_ProvideUserProfileDaoFactory;
 import com.edify.learning.di.DatabaseModule_ProvideUserResponseDaoFactory;
+import com.edify.learning.di.DatabaseModule_ProvideWorkManagerFactory;
 import com.edify.learning.domain.service.QuestScoringService;
 import com.edify.learning.presentation.MainActivity;
 import com.edify.learning.presentation.chapter.ChapterViewModel;
@@ -71,6 +82,7 @@ import com.edify.learning.presentation.subject.SubjectViewModel;
 import com.edify.learning.presentation.subject.SubjectViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.hilt.android.ActivityRetainedLifecycle;
 import dagger.hilt.android.ViewModelLifecycle;
 import dagger.hilt.android.flags.HiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule;
@@ -89,6 +101,7 @@ import dagger.hilt.android.internal.modules.ApplicationContextModule_ProvideCont
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DoubleCheck;
 import dagger.internal.Preconditions;
+import dagger.internal.SingleCheck;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Generated;
@@ -140,6 +153,16 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
     public Builder hiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule(
         HiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule hiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule) {
       Preconditions.checkNotNull(hiltWrapper_FragmentGetContextFix_FragmentGetContextFixModule);
+      return this;
+    }
+
+    /**
+     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
+     */
+    @Deprecated
+    public Builder hiltWrapper_WorkerFactoryModule(
+        HiltWrapper_WorkerFactoryModule hiltWrapper_WorkerFactoryModule) {
+      Preconditions.checkNotNull(hiltWrapper_WorkerFactoryModule);
       return this;
     }
 
@@ -556,7 +579,7 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
           return (T) new OnboardingViewModel(singletonCImpl.userProfileDao());
 
           case 6: // com.edify.learning.presentation.profile.ProfileViewModel 
-          return (T) new ProfileViewModel(singletonCImpl.userProfileRepositoryProvider.get(), singletonCImpl.learningRepositoryProvider.get());
+          return (T) new ProfileViewModel(singletonCImpl.userProfileRepositoryProvider.get(), singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get(), singletonCImpl.provideWorkManagerProvider.get());
 
           case 7: // com.edify.learning.presentation.developer.QuestScoringViewModel 
           return (T) new QuestScoringViewModel(singletonCImpl.questScoringServiceProvider.get());
@@ -660,6 +683,8 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     private Provider<QuestGenerationService> provideQuestGenerationServiceProvider;
 
+    private Provider<DailyQuestWorker_AssistedFactory> dailyQuestWorker_AssistedFactoryProvider;
+
     private Provider<LearningRepository> learningRepositoryProvider;
 
     private Provider<QuestRepository> questRepositoryProvider;
@@ -667,6 +692,8 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
     private Provider<UserProfileRepository> userProfileRepositoryProvider;
 
     private Provider<ChatResponseService> chatResponseServiceProvider;
+
+    private Provider<WorkManager> provideWorkManagerProvider;
 
     private Provider<QuestScoringService> questScoringServiceProvider;
 
@@ -680,8 +707,12 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     }
 
-    private SubjectDao subjectDao() {
-      return DatabaseModule_ProvideSubjectDaoFactory.provideSubjectDao(provideEdifyDatabaseProvider.get());
+    private ChapterStatsDao chapterStatsDao() {
+      return DatabaseModule_ProvideChapterStatsDaoFactory.provideChapterStatsDao(provideEdifyDatabaseProvider.get());
+    }
+
+    private GeneratedQuestDao generatedQuestDao() {
+      return DatabaseModule_ProvideGeneratedQuestDaoFactory.provideGeneratedQuestDao(provideEdifyDatabaseProvider.get());
     }
 
     private ChapterDao chapterDao() {
@@ -696,16 +727,21 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       return DatabaseModule_ProvideChatDaoFactory.provideChatDao(provideEdifyDatabaseProvider.get());
     }
 
+    private SubjectDao subjectDao() {
+      return DatabaseModule_ProvideSubjectDaoFactory.provideSubjectDao(provideEdifyDatabaseProvider.get());
+    }
+
+    private Map<String, Provider<WorkerAssistedFactory<? extends ListenableWorker>>> mapOfStringAndProviderOfWorkerAssistedFactoryOf(
+        ) {
+      return ImmutableMap.<String, Provider<WorkerAssistedFactory<? extends ListenableWorker>>>of("com.edify.learning.data.worker.DailyQuestWorker", ((Provider) dailyQuestWorker_AssistedFactoryProvider));
+    }
+
+    private HiltWorkerFactory hiltWorkerFactory() {
+      return WorkerFactoryModule_ProvideFactoryFactory.provideFactory(mapOfStringAndProviderOfWorkerAssistedFactoryOf());
+    }
+
     private UserResponseDao userResponseDao() {
       return DatabaseModule_ProvideUserResponseDaoFactory.provideUserResponseDao(provideEdifyDatabaseProvider.get());
-    }
-
-    private ChapterStatsDao chapterStatsDao() {
-      return DatabaseModule_ProvideChapterStatsDaoFactory.provideChapterStatsDao(provideEdifyDatabaseProvider.get());
-    }
-
-    private GeneratedQuestDao generatedQuestDao() {
-      return DatabaseModule_ProvideGeneratedQuestDaoFactory.provideGeneratedQuestDao(provideEdifyDatabaseProvider.get());
     }
 
     private UserProfileDao userProfileDao() {
@@ -722,21 +758,24 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
 
     @SuppressWarnings("unchecked")
     private void initialize(final ApplicationContextModule applicationContextModuleParam) {
-      this.provideEdifyDatabaseProvider = DoubleCheck.provider(new SwitchingProvider<EdifyDatabase>(singletonCImpl, 1));
-      this.providePromptServiceProvider = DoubleCheck.provider(new SwitchingProvider<PromptService>(singletonCImpl, 3));
-      this.provideGemmaServiceProvider = DoubleCheck.provider(new SwitchingProvider<GemmaService>(singletonCImpl, 2));
-      this.provideQuestGenerationServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestGenerationService>(singletonCImpl, 4));
-      this.learningRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<LearningRepository>(singletonCImpl, 0));
-      this.questRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<QuestRepository>(singletonCImpl, 5));
-      this.userProfileRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<UserProfileRepository>(singletonCImpl, 6));
-      this.chatResponseServiceProvider = DoubleCheck.provider(new SwitchingProvider<ChatResponseService>(singletonCImpl, 7));
-      this.questScoringServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestScoringService>(singletonCImpl, 8));
-      this.provideRevisionEvaluationServiceProvider = DoubleCheck.provider(new SwitchingProvider<RevisionEvaluationService>(singletonCImpl, 9));
-      this.provideTranslationCacheServiceProvider = DoubleCheck.provider(new SwitchingProvider<TranslationCacheService>(singletonCImpl, 10));
+      this.provideEdifyDatabaseProvider = DoubleCheck.provider(new SwitchingProvider<EdifyDatabase>(singletonCImpl, 2));
+      this.providePromptServiceProvider = DoubleCheck.provider(new SwitchingProvider<PromptService>(singletonCImpl, 4));
+      this.provideGemmaServiceProvider = DoubleCheck.provider(new SwitchingProvider<GemmaService>(singletonCImpl, 3));
+      this.provideQuestGenerationServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestGenerationService>(singletonCImpl, 1));
+      this.dailyQuestWorker_AssistedFactoryProvider = SingleCheck.provider(new SwitchingProvider<DailyQuestWorker_AssistedFactory>(singletonCImpl, 0));
+      this.learningRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<LearningRepository>(singletonCImpl, 5));
+      this.questRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<QuestRepository>(singletonCImpl, 6));
+      this.userProfileRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<UserProfileRepository>(singletonCImpl, 7));
+      this.chatResponseServiceProvider = DoubleCheck.provider(new SwitchingProvider<ChatResponseService>(singletonCImpl, 8));
+      this.provideWorkManagerProvider = DoubleCheck.provider(new SwitchingProvider<WorkManager>(singletonCImpl, 9));
+      this.questScoringServiceProvider = DoubleCheck.provider(new SwitchingProvider<QuestScoringService>(singletonCImpl, 10));
+      this.provideRevisionEvaluationServiceProvider = DoubleCheck.provider(new SwitchingProvider<RevisionEvaluationService>(singletonCImpl, 11));
+      this.provideTranslationCacheServiceProvider = DoubleCheck.provider(new SwitchingProvider<TranslationCacheService>(singletonCImpl, 12));
     }
 
     @Override
     public void injectEdifyApplication(EdifyApplication edifyApplication) {
+      injectEdifyApplication2(edifyApplication);
     }
 
     @Override
@@ -754,6 +793,12 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       return new ServiceCBuilder(singletonCImpl);
     }
 
+    @CanIgnoreReturnValue
+    private EdifyApplication injectEdifyApplication2(EdifyApplication instance) {
+      EdifyApplication_MembersInjector.injectWorkerFactory(instance, hiltWorkerFactory());
+      return instance;
+    }
+
     private static final class SwitchingProvider<T> implements Provider<T> {
       private final SingletonCImpl singletonCImpl;
 
@@ -768,37 +813,48 @@ public final class DaggerEdifyApplication_HiltComponents_SingletonC {
       @Override
       public T get() {
         switch (id) {
-          case 0: // com.edify.learning.data.repository.LearningRepository 
-          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get());
+          case 0: // com.edify.learning.data.worker.DailyQuestWorker_AssistedFactory 
+          return (T) new DailyQuestWorker_AssistedFactory() {
+            @Override
+            public DailyQuestWorker create(Context context, WorkerParameters params) {
+              return new DailyQuestWorker(context, params, singletonCImpl.provideQuestGenerationServiceProvider.get());
+            }
+          };
 
-          case 1: // com.edify.learning.data.database.EdifyDatabase 
-          return (T) DatabaseModule_ProvideEdifyDatabaseFactory.provideEdifyDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
-
-          case 2: // com.edify.learning.data.service.GemmaService 
-          return (T) DatabaseModule_ProvideGemmaServiceFactory.provideGemmaService(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.providePromptServiceProvider.get());
-
-          case 3: // com.edify.learning.data.service.PromptService 
-          return (T) DatabaseModule_ProvidePromptServiceFactory.providePromptService(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
-
-          case 4: // com.edify.learning.data.service.QuestGenerationService 
+          case 1: // com.edify.learning.data.service.QuestGenerationService 
           return (T) DatabaseModule_ProvideQuestGenerationServiceFactory.provideQuestGenerationService(singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.subjectDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get());
 
-          case 5: // com.edify.learning.data.repository.QuestRepository 
+          case 2: // com.edify.learning.data.database.EdifyDatabase 
+          return (T) DatabaseModule_ProvideEdifyDatabaseFactory.provideEdifyDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 3: // com.edify.learning.data.service.GemmaService 
+          return (T) DatabaseModule_ProvideGemmaServiceFactory.provideGemmaService(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.providePromptServiceProvider.get());
+
+          case 4: // com.edify.learning.data.service.PromptService 
+          return (T) DatabaseModule_ProvidePromptServiceFactory.providePromptService(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 5: // com.edify.learning.data.repository.LearningRepository 
+          return (T) new LearningRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.subjectDao(), singletonCImpl.chapterDao(), singletonCImpl.noteDao(), singletonCImpl.chatDao(), singletonCImpl.userResponseDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.generatedQuestDao(), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.provideQuestGenerationServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get());
+
+          case 6: // com.edify.learning.data.repository.QuestRepository 
           return (T) new QuestRepository(singletonCImpl.generatedQuestDao(), singletonCImpl.chapterStatsDao(), singletonCImpl.chapterDao(), singletonCImpl.subjectDao(), singletonCImpl.provideQuestGenerationServiceProvider.get());
 
-          case 6: // com.edify.learning.data.repository.UserProfileRepository 
+          case 7: // com.edify.learning.data.repository.UserProfileRepository 
           return (T) new UserProfileRepository(singletonCImpl.userProfileDao());
 
-          case 7: // com.edify.learning.data.service.ChatResponseService 
+          case 8: // com.edify.learning.data.service.ChatResponseService 
           return (T) new ChatResponseService(singletonCImpl.learningRepositoryProvider.get(), singletonCImpl.questRepositoryProvider.get(), singletonCImpl.chatDao(), singletonCImpl.provideGemmaServiceProvider.get());
 
-          case 8: // com.edify.learning.domain.service.QuestScoringService 
+          case 9: // androidx.work.WorkManager 
+          return (T) DatabaseModule_ProvideWorkManagerFactory.provideWorkManager(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 10: // com.edify.learning.domain.service.QuestScoringService 
           return (T) new QuestScoringService(singletonCImpl.chapterStatsDao());
 
-          case 9: // com.edify.learning.data.service.RevisionEvaluationService 
+          case 11: // com.edify.learning.data.service.RevisionEvaluationService 
           return (T) DatabaseModule_ProvideRevisionEvaluationServiceFactory.provideRevisionEvaluationService(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule), singletonCImpl.provideGemmaServiceProvider.get(), singletonCImpl.providePromptServiceProvider.get(), singletonCImpl.revisionSubmissionDao());
 
-          case 10: // com.edify.learning.data.service.TranslationCacheService 
+          case 12: // com.edify.learning.data.service.TranslationCacheService 
           return (T) DatabaseModule_ProvideTranslationCacheServiceFactory.provideTranslationCacheService(singletonCImpl.translatedChapterDao());
 
           default: throw new AssertionError(id);

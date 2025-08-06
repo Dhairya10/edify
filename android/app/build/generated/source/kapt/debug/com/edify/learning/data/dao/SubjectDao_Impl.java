@@ -199,7 +199,7 @@ public final class SubjectDao_Impl implements SubjectDao {
   }
 
   @Override
-  public Object insertSubject(final Subject subject, final Continuation<? super Unit> arg1) {
+  public Object insertSubject(final Subject subject, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -213,12 +213,12 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
   public Object insertSubjects(final List<Subject> subjects,
-      final Continuation<? super Unit> arg1) {
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -232,11 +232,11 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object deleteSubject(final Subject subject, final Continuation<? super Unit> arg1) {
+  public Object deleteSubject(final Subject subject, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -250,11 +250,11 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object updateSubject(final Subject subject, final Continuation<? super Unit> arg1) {
+  public Object updateSubject(final Subject subject, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -268,11 +268,11 @@ public final class SubjectDao_Impl implements SubjectDao {
           __db.endTransaction();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object deleteById(final String id, final Continuation<? super Unit> arg1) {
+  public Object deleteById(final String id, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -297,11 +297,11 @@ public final class SubjectDao_Impl implements SubjectDao {
           __preparedStmtOfDeleteById.release(_stmt);
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override
-  public Object deleteAllSubjects(final Continuation<? super Unit> arg0) {
+  public Object deleteAllSubjects(final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -320,12 +320,12 @@ public final class SubjectDao_Impl implements SubjectDao {
           __preparedStmtOfDeleteAllSubjects.release(_stmt);
         }
       }
-    }, arg0);
+    }, $completion);
   }
 
   @Override
   public Object updateLastReadChapter(final String subjectId, final String chapterId,
-      final long timestamp, final Continuation<? super Unit> arg3) {
+      final long timestamp, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -358,12 +358,12 @@ public final class SubjectDao_Impl implements SubjectDao {
           __preparedStmtOfUpdateLastReadChapter.release(_stmt);
         }
       }
-    }, arg3);
+    }, $completion);
   }
 
   @Override
   public Object updateProgress(final String subjectId, final int completedChapters,
-      final long timestamp, final Continuation<? super Unit> arg3) {
+      final long timestamp, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -392,7 +392,7 @@ public final class SubjectDao_Impl implements SubjectDao {
           __preparedStmtOfUpdateProgress.release(_stmt);
         }
       }
-    }, arg3);
+    }, $completion);
   }
 
   @Override
@@ -479,7 +479,7 @@ public final class SubjectDao_Impl implements SubjectDao {
   }
 
   @Override
-  public Object getSubjectById(final String id, final Continuation<? super Subject> arg1) {
+  public Object getSubjectById(final String id, final Continuation<? super Subject> $completion) {
     final String _sql = "SELECT * FROM subjects WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -561,7 +561,7 @@ public final class SubjectDao_Impl implements SubjectDao {
           _statement.release();
         }
       }
-    }, arg1);
+    }, $completion);
   }
 
   @Override

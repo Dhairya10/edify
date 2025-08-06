@@ -48,6 +48,7 @@ fun QuestDetailScreen(
                 Text(
                     text = uiState.selectedQuest?.title ?: "Quest",
                     fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
                     color = TextPrimary
                 )
             },
@@ -65,6 +66,8 @@ fun QuestDetailScreen(
             ),
             windowInsets = WindowInsets(0.dp)
         )
+        
+        Spacer(modifier = Modifier.height(8.dp))
         
         if (uiState.selectedQuest != null) {
             QuestDetailContent(
@@ -159,8 +162,8 @@ fun QuestDetailContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 150.dp, max = 330.dp) // Increased height by 10% (300dp -> 330dp)
-                    .padding(bottom = 24.dp),
+                    .heightIn(min = 150.dp, max = 330.dp)
+                    .padding(bottom = 32.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = DarkSurface
                 ),
@@ -180,6 +183,8 @@ fun QuestDetailContent(
                         .padding(16.dp)
                 )
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Answer input
             OutlinedTextField(
@@ -209,6 +214,8 @@ fun QuestDetailContent(
         }
         
         // Fixed bottom submit button with proper spacing
+        Spacer(modifier = Modifier.height(24.dp))
+        
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -244,7 +251,7 @@ fun QuestDetailContent(
                 }
             }
             
-            Spacer(modifier = Modifier.height(24.dp)) // Bottom spacing
+            Spacer(modifier = Modifier.height(16.dp)) // Bottom spacing
         }
     }
 }

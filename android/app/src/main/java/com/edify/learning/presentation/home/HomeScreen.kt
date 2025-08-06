@@ -54,41 +54,6 @@ fun HomeScreen(
             .background(Black)
             .padding(20.dp)
     ) {
-        // Developer Mode indicator when enabled
-        if (DeveloperMode.ENABLED) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                Card(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .border(1.dp, SecondaryBlue, shape = RoundedCornerShape(8.dp)),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.code_blocks_24dp_ffffff_fill1_wght400_grad0_opsz24),
-                            contentDescription = "Developer Mode",
-                            tint = SecondaryBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "Dev Mode",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = SecondaryBlue
-                        )
-                    }
-                }
-            }
-        }
         
         // Welcome Header with enhanced styling
         Text(

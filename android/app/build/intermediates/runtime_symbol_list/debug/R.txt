@@ -1277,7 +1277,11 @@ int attr yearStyle 0x7f0304a5
 int attr yearTodayStyle 0x7f0304a6
 int bool abc_action_bar_embed_tabs 0x7f040000
 int bool abc_config_actionMenuItemAllCaps 0x7f040001
+int bool enable_system_alarm_service_default 0x7f040003
+int bool enable_system_foreground_service_default 0x7f040004
+int bool enable_system_job_service_default 0x7f040005
 int bool mtrl_btn_textappearance_all_caps 0x7f040002
+int bool workmanager_test_configuration 0x7f040006
 int color abc_background_cache_hint_selector_material_dark 0x7f050000
 int color abc_background_cache_hint_selector_material_light 0x7f050001
 int color abc_btn_colored_borderless_text_material 0x7f050002
@@ -2944,6 +2948,7 @@ int drawable abc_textfield_search_material 0x7f070075
 int drawable abc_vector_test 0x7f070076
 int drawable account_circle_24dp_ffffff_fill0_wght400_grad0_opsz24 0x7f070077
 int drawable account_circle_24dp_ffffff_fill1_wght400_grad0_opsz24 0x7f070078
+int drawable apps_24dp_ffffff_fill0_wght400_grad0_opsz24 0x7f070106
 int drawable arrow_forward_ios_24dp_000000_fill0_wght400_grad0_opsz24 0x7f070079
 int drawable avd_hide_password 0x7f07007a
 int drawable avd_show_password 0x7f07007b

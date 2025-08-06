@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +35,9 @@ import com.edify.learning.ui.theme.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
+    // Debug mode flag - set to false before deployment
+    val IS_DEBUG_MODE = false
+    
     val userState by viewModel.userProfileState.collectAsState()
     val userProfile = userState.userProfile
     
@@ -40,6 +45,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
     var showClearDataConfirmationDialog by remember { mutableStateOf(false) }
+    var showQuestTimeDialog by remember { mutableStateOf(false) }
     
     Box(
         modifier = Modifier
@@ -129,11 +135,76 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                         color = TextSecondary.copy(alpha = 0.3f)
                     )
                     
+                    // DEBUG: Quest Generation Time Field (only shown in debug mode)
+                    if (IS_DEBUG_MODE) {
+                        ProfileField(
+                            label = "Daily Quest Time",
+                            value = String.format("%02d:%02d", userState.questGenerationHour, userState.questGenerationMinute),
+                            onEdit = { showQuestTimeDialog = true }
+                        )
+                        
+                        Divider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = TextSecondary.copy(alpha = 0.3f)
+                        )
+                    }
 
                 }
             }
             
             Spacer(modifier = Modifier.weight(1f))
+            
+            // DEBUG: Quest Generation Trigger Button (only shown in debug mode)
+            if (IS_DEBUG_MODE) {
+                Button(
+                    onClick = { viewModel.triggerQuestGeneration() },
+                    enabled = !userState.isGeneratingQuest,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SecondaryBlue,
+                        contentColor = White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp)
+                ) {
+                    if (userState.isGeneratingQuest) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Generating Quest...", color = White)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Generate Quest (TEST)",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = White
+                        )
+                    }
+                }
+                
+                // Quest Generation Status Message
+                userState.questGenerationMessage?.let { message ->
+                    Text(
+                        text = message,
+                        fontSize = 14.sp,
+                        color = if (message.contains("success")) SecondaryBlue else ErrorColor,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+            }
             
             Button(
                 onClick = { showClearDataConfirmationDialog = true },
@@ -144,7 +215,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .height(60.dp)
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)
             ) {
@@ -198,6 +269,19 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                     showClearDataConfirmationDialog = false
                 },
                 onDismiss = { showClearDataConfirmationDialog = false }
+            )
+        }
+        
+        // DEBUG: Quest Time selection dialog (only shown in debug mode)
+        if (IS_DEBUG_MODE && showQuestTimeDialog) {
+            QuestTimeSelectionDialog(
+                currentHour = userState.questGenerationHour,
+                currentMinute = userState.questGenerationMinute,
+                onTimeSelected = { hour, minute ->
+                    viewModel.updateQuestGenerationTime(hour, minute)
+                    showQuestTimeDialog = false
+                },
+                onDismiss = { showQuestTimeDialog = false }
             )
         }
     }

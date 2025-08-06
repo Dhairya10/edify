@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.edify.learning.app-mergeDebugResources-77:/values-hu/values-hu.xml",
+            "outputFile": "com.edify.learning.app-mergeDebugResources-81:/values-hu/values-hu.xml",
             "map": [
                 {
                     "source": "/Users/marrow/.gradle/caches/8.12/transforms/f69937935783102f73c150f45f684573/transformed/navigation-ui-2.7.6/res/values-hu/values-hu.xml",

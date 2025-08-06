@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.edify.learning.app-mergeDebugResources-77:/values-ldltr-v21/values-ldltr-v21.xml",
+            "outputFile": "com.edify.learning.app-mergeDebugResources-81:/values-ldltr-v21/values-ldltr-v21.xml",
             "map": [
                 {
                     "source": "/Users/marrow/.gradle/caches/8.12/transforms/257d5359b3aaf7dc6756d92b3396b05e/transformed/appcompat-1.6.1/res/values-ldltr-v21/values-ldltr-v21.xml",
