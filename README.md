@@ -1,4 +1,4 @@
-# Edify - AI-Powered Learning Platform
+# Edify - The Universal Tutor
 
   
 
@@ -290,65 +290,13 @@ app/src/main/java/com/edify/learning/
 
   
 
-#### **1. MVVM + Repository Pattern**
+#### MVVM + Repository Pattern**
 
 -  **ViewModels**: Manage UI state with StateFlow/LiveData
 
 -  **Repository**: `LearningRepository` centralizes data access and AI integration
 
 -  **Services**: Dedicated services for AI, quest generation, and scoring
-
-  
-
-#### **2. Clean Architecture Layers**
-
-```
-
-Presentation Layer (Compose UI + ViewModels)
-
-↕
-
-Business Logic Layer (Services + Repository)
-
-↕
-
-Data Layer (Room Database + Models)
-
-```
-
-  
-
-#### **3. Database Schema**
-
-```sql
-
--- Core entities
-
-Subject (id, name, description, icon)
-
-Chapter (id, subjectId, content as  JSON, progress)
-
-Note (id, chapterId, content, timestamp)
-
-ChatMessage (id, chapterId, content, isAI, timestamp)
-
-  
-
--- Intelligence features
-
-ChapterStats (chapterId, noteCount, chatCount, visitCount, interestScore)
-
-GeneratedQuest (id, content, difficulty, chapterIds, timestamp)
-
-RevisionSubmission (id, chapterId, content, evaluation, timestamp)
-
-  
-
--- User data
-
-UserProfile (name, language, onboardingComplete)
-
-```
   
 
 ## License
