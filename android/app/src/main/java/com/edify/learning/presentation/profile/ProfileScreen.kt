@@ -36,7 +36,7 @@ import com.edify.learning.ui.theme.*
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     // Debug mode flag - set to false before deployment
-    val IS_DEBUG_MODE = true
+    val IS_DEBUG_MODE = false
     
     val userState by viewModel.userProfileState.collectAsState()
     val userProfile = userState.userProfile
