@@ -15,9 +15,6 @@ Our architecture decisions were driven by three core principles:
 
 ### Technology Stack
 
-**Frontend Choice - Jetpack Compose:**
-We chose Jetpack Compose over traditional XML layouts because educational apps require dynamic, interactive UIs. Compose's declarative nature allows us to create responsive learning interfaces that adapt to different content types and user interactions seamlessly.
-
 **Gemma Integration - MediaPipe:**
 We implemented MediaPipe LLM Inference API to integrate Gemma 3n's multimodal capabilities in our app. We used the 2B parameter model (gemma-3n-E2B-it-int4.task)
 
@@ -26,6 +23,9 @@ We implemented Room with reactive Flow patterns to enable real-time updates acro
 
 **Architecture Pattern - MVVM with Services:**
 We extended traditional MVVM with dedicated service layers for AI operations. This separation ensures UI responsiveness while handling computationally intensive AI tasks in the background.
+
+**Frontend Choice - Jetpack Compose:**
+We chose Jetpack Compose over traditional XML layouts because educational apps require dynamic, interactive UIs. Compose's declarative nature allows us to create responsive learning interfaces that adapt to different content types and user interactions seamlessly.
 
 ## Architecture Details
 

@@ -297,15 +297,14 @@ app/src/main/java/com/edify/learning/
 -  **Repository**: `LearningRepository` centralizes data access and AI integration
 
 -  **Services**: Dedicated services for AI, quest generation, and scoring
-  
 
-## License
 
-  
+## Download APK
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+**[Download Edify APK](https://drive.google.com/file/d/11paqtgqd-9zB29M5Ar-sKGnkXu0j_xqh/view?usp=sharing)**
 
-  
+> **Note**: The app requires the Gemma 3n model file for AI features. See the "AI Model Setup" section above for detailed instructions.
+
 
 ## Acknowledgments
 
