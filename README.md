@@ -21,7 +21,7 @@ An Android app that combines educational content with Gemma's on-device AI to cr
 
   
 
-### **2. Socratic Chat Tutoring**
+### **2. Socratic Tutoring**
 
 -  **Trigger**: Chat button in chapter reading interface
 
@@ -35,7 +35,7 @@ An Android app that combines educational content with Gemma's on-device AI to cr
 
   
 
-### **3. Intelligent Revision System**
+### **3. Personalized Revision System**
 
 -  **Personalized Feedback**: AI evaluates user responses and provides detailed feedback
 
@@ -110,7 +110,7 @@ An Android app that combines educational content with Gemma's on-device AI to cr
 
   
 
-### Critical: AI Model Setup
+### Gemma Setup
 
   
 
@@ -303,7 +303,7 @@ app/src/main/java/com/edify/learning/
 
 **[Download Edify APK](https://drive.google.com/file/d/11paqtgqd-9zB29M5Ar-sKGnkXu0j_xqh/view?usp=sharing)**
 
-> **Note**: The app requires the Gemma 3n model file for AI features. See the "AI Model Setup" section above for detailed instructions.
+> **Note**: The app requires the Gemma 3n model file for AI features. See the "Gemma Setup" section above for detailed instructions.
 
 
 ## Acknowledgments
